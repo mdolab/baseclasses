@@ -45,7 +45,12 @@ from pyAero_problem import AeroProblem
 # Misc Definitions
 # =============================================================================
 
+class CaseInsensitiveDict(dict):
+    def __setitem__(self, key, value):
+        super(CaseInsensitiveDict, self).__setitem__(key.lower(), value)
 
+    def __getitem__(self, key):
+        return super(CaseInsensitiveDict, self).__getitem__(key.lower())
 
 # =============================================================================
 # AeroSolver Class
@@ -67,8 +72,8 @@ class AeroSolver(object):
         # 
         self.name = name
         self.category = category
-        self.options = {}
-        self.options['defaults'] = def_options
+        self.options = CaseInsensitiveDict()
+        self.options['defaults'] = CaseInsensitiveDict(def_options)
         self.informs = informs
         
         # Initialize Options
@@ -76,7 +81,7 @@ class AeroSolver(object):
         for key in def_keys:
             self.options[key] = def_options[key]
         #end
-        koptions = kwargs.pop('options',{})
+        koptions = kwargs.pop('options',CaseInsensitiveDict())
         kopt_keys = koptions.keys()
         for key in kopt_keys:
             self.setOption(key,koptions[key])
@@ -296,7 +301,8 @@ class AeroSolver(object):
         
         # 
         def_options = self.options['defaults']
-        if def_options.has_key(name):
+        
+        if def_options.has_key(name.lower()):
             if (type(value) == def_options[name][0]):
                 self.options[name] = [type(value),value]
             else:
