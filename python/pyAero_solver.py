@@ -341,14 +341,14 @@ class AeroSolver(object):
         
         # 
         def_options = self.options['defaults']
-        if def_options.has_key(name):
-            return self.options[name][1]
+        if def_options.has_key(name.lower()):
+            return self.options[name.lower()][1]
         else:    
             raise InputError(repr(name) + ' is not a valid option name')
         #end
         
         # 
-        self._on_getOption(name)
+        self._on_getOption(name.lower())
         
     def _on_getInform(self, info):
         
