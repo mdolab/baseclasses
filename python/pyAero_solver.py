@@ -310,7 +310,7 @@ class AeroSolver(object):
             #end
         else:
             print '%s is not a valid option name'%(name)
-            raise InputError('Not a valid option name')
+            sys.exit(0)
         #end
         
         # 
