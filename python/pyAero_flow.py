@@ -59,8 +59,8 @@ class Flow(object):
              phat=0.0, rhat=0.0, qhat=0.0, degreePol = 0,
              coefPol = [0.0], degreeFourier = 0,
              omegaFourier = 0.0, cosCoefFourier = [0.0], 
-             sinCoefFourier = [0.0],rho=1.225,P=101325.0,T=273.15,gamma=1.4,
-             mu=1.80e-5,nu=1.46e-5, *args, **kwargs):
+             sinCoefFourier = [0.0], rho=1.225, P=101325.0, T=273.15, gamma=1.4,
+             mu=1.80e-5, reynolds=None, altitude=None, *args, **kwargs):
         
         '''
         Flow Class Initialization
@@ -109,8 +109,8 @@ class Flow(object):
         self.T = T
         self.gamma = gamma
         self.mu = mu
-        self.nu = nu
-
+        self.reynolds = reynolds
+        self.altitude = altitude
     def ListAttributes(self):
         
         '''
