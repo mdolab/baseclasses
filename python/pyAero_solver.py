@@ -1,5 +1,5 @@
 #!/usr/local/bin/python
-'''
+"""
 pyAero_solver
 
 Holds the Python Aerodynamic Analysis Classes (base and inherited).
@@ -16,14 +16,7 @@ Developers:
 History
 -------
     v. 1.0    - Initial Class Creation (RP, 2008)
-'''
-
-__version__ = '$Revision: $'
-
-'''
-To Do:goto-line
-    - 
-'''
+"""
 
 # =============================================================================
 # Standard Python modules
@@ -52,22 +45,43 @@ class CaseInsensitiveDict(dict):
     def __getitem__(self, key):
         return super(CaseInsensitiveDict, self).__getitem__(key.lower())
 
+class Error(Exception):
+    """
+    Format the error message in a box to make it clear this
+    was a expliclty raised exception.
+    """
+    def __init__(self, message):
+        msg = '\n+'+'-'*78+'+'+'\n' + '| AeroSolver Error: '
+        i = 19
+        for word in message.split():
+            if len(word) + i + 1 > 78: # Finish line and start new one
+                msg += ' '*(78-i)+'|\n| ' + word + ' '
+                i = 1 + len(word)+1
+            else:
+                msg += word + ' '
+                i += len(word)+1
+        msg += ' '*(78-i) + '|\n' + '+'+'-'*78+'+'+'\n'
+        print(msg)
+        Exception.__init__(self)
+
+
 # =============================================================================
 # AeroSolver Class
 # =============================================================================
+
 class AeroSolver(object):
     
-    '''
+    """
     Abstract Class for Aerodynamic Solver Object
-    '''
+    """
     
     def __init__(self, name, category={}, def_options={}, informs={}, *args, **kwargs):
         
-        '''
+        """
         AeroSolver Class Initialization
         
         Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        '''
+        """
         
         # 
         self.name = name
@@ -88,347 +102,161 @@ class AeroSolver(object):
         #end
         
         
-    def __solve__(self, aero_problem, sol_type, *args, **kwargs):
-        
-        '''
-        Run Analyzer (Analyzer Specific Routine)
-        
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        '''
-        
-        pass
-        
-        
-    def __call__(self, aero_problem={}, sol_type='steady', *args, **kwargs):
-        
-        '''
-        Run Analyzer (Calling Routine)
-        
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        '''
-        
-        # Check Optimization Problem
-        if not isinstance(aero_problem,AeroProblem):
-            raise ValueError(" ")
-        #end
-        
-        # Checks
-        
-        # Solve Analysis Problem
-        self.__solve__(aero_problem, sol_type, *args, **kwargs)
-        
-        return 
-
-        
-    def _solve(self, flow):
-        
-        '''
-        Solve System of Equations
-        
-        Documentation last updated:  May. 26, 2008 - Ruben E. Perez
-        '''
-        
-        pass
-
-
     def resetFlow(self):
-        '''
+        """
         Reset the flow to a uniform state
-        '''
+        """
         
         pass
 
 
     def getSurfaceCoordinates(self,group_name):
-        '''
+        """
         Return the set of surface coordinates cooresponding to a
         Particular group name
-        '''
+        """
         
         pass
 
 
     def setSurfaceCoordinates(self,group_name,coordinates):
-        '''
+        """
         Set the set of surface coordinates cooresponding to a
         Particular group name
-        '''
+        """
         
         pass
 
     def getForces(self,group_name):
-        '''
+        """
         Return the set of forces at the locations defined by 
         getSurfaceCoordinates
-        '''
+        """
         
         pass
 
 
     def globalNKPreCon(self,in_vec):
-        '''
+        """
         Precondition the residual in in_vec for a coupled 
         Newton-Krylov Method
-        '''
+        """
 
         pass
 
     def totalSurfaceDerivative(self,objective):
-        '''
+        """
         Return the total derivative of the objective at surface
         coordinates
-        '''
+        """
 
         pass
 
 
     def totalAeroDerivative(self,objective):
-        '''
+        """
         Return the total derivative of the objective with respect 
         to aerodynamic-only variables
-        '''
+        """
 
         pass
 
 
     def getResNorms(self):
-        '''
+        """
         Return the inital,starting and final residual norms for 
         the solver
-        '''
+        """
         
         pass
 
 
     def getStateSize(self):
-        '''
+        """
         Return the number of degrees of freedom (states) that are
         on this processor
-        '''
+        """
 
         pass
 
 
     def getStates(self):
-        '''
+        """
         Return the states on this processor.
-        '''
+        """
 
         pass
 
 
     def setStates(self,states):
-        ''' Set the states on this processor.'''
+        """ Set the states on this processor."""
 
         pass
 
     def getResidual(self):
-        '''
+        """
         Return the reisudals on this processor.
-        '''
+        """
 
         pass
 
 
     def getSolution(self):
-        '''
+        """
         Retrieve the solution dictionary from the solver
-        '''
+        """
         
         pass
-
-
-    def initAdjoint(self, *args, **kwargs):
-        '''
-        Initialize the Ajoint problem for this test case
-        '''
-        pass
-
-
-    def setupAdjointMatrix(self, *args, **kwargs):
-        '''
-        Setup the adjoint matrix for the current solution
-        '''
-        pass
-        
 
     def solveAdjoint(self,objective, *args, **kwargs):
-        '''
+        """
         Solve the adjoint problem for the desired objective functions.
 
         objectives - List of objective functions
     
-        '''
-    
-        self._on_adjoint(objective,*args,**kwargs)
-            
-        
-    def _on_adjoint(self, objective, *args, **kwargs):
-        
-        '''
-        Adjoint
-        
-        Documentation last updated:  May. 26, 2008 - Ruben E. Perez
-        '''    
-        
-        # 
+        """
         pass
-        
-
-    def _on_setOption(self, name, value):
-        
-        '''
-        Set Optimizer Option Value (Optimizer Specific Routine)
-        
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        '''
-        
-        raise NotImplementedError()
-        
-
+            
     def setOption(self, name, value):
+        """
+        Default implementation of setOption()
+
+        Parameters
+        ----------
+        name : str
+           Name of option to set. Not case sensitive
+        value : varries
+           Value to set. Type is checked for consistency. 
         
-        '''
-        Set Optimizer Option Value (Calling Routine)
-        
-        Keyword arguments:
-        -----------------
-        name -> STRING: Option Name
-        value -> SCALAR or BOOLEAN: Option Value
-        
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        '''
-        
-        # 
+        """
         def_options = self.options['defaults']
         
         if def_options.has_key(name.lower()):
             if (type(value) == def_options[name][0]):
-                self.options[name] = [type(value),value]
+                self.options[name][1] = value
             else:
-                raise IOError('Incorrect ' + repr(name) + ' value type')
-            #end
+                raise Error(repr(name) + ' is not the correct type. The \
+                type must be ' + repr(self.options[name][0]) + '.')
         else:
-            print '%s is not a valid option name'%(name)
-            sys.exit(0)
-        #end
-        
-        # 
-    
-        self._on_setOption(name, value)
-        
-    def _on_getOption(self, name):
-        
-        '''
-        Get Optimizer Option Value (Optimizer Specific Routine)
-        
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        '''
-        
-        raise NotImplementedError()
+            raise Error(repr(name) + ' is not a valid option name')
         
     def getOption(self, name):
-        
-        '''
-        Get Optimizer Option Value (Calling Routine)
-        
-        Keyword arguments:
-        -----------------
-        name -> STRING: Option Name
-        
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        '''
-        
-        # 
+        """
+        Default implementation of getOption()
+
+        Parameters
+        ----------
+        name : str
+           Name of option to get. Not case sensitive
+
+        Returns
+        -------
+        value : varries
+           Return the curent value of the option.         
+        """
+
         def_options = self.options['defaults']
         if def_options.has_key(name.lower()):
             return self.options[name.lower()][1]
         else:    
-            raise InputError(repr(name) + ' is not a valid option name')
-        #end
-        
-        # 
-        self._on_getOption(name.lower())
-        
-    def _on_getInform(self, info):
-        
-        '''
-        Get Optimizer Result Information (Optimizer Specific Routine)
-        
-        Keyword arguments:
-        -----------------
-        id -> STRING: Option Name
-        
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        '''
-        
-        raise NotImplementedError()
-        
-        
-    def getInform(self, infocode={}):
-        
-        '''
-        Get Optimizer Result Information (Calling Routine)
-        
-        Keyword arguments:
-        -----------------
-        name -> STRING: Option Name
-        
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        '''
-        
-        # 
-        if (infocode == {}):
-            return self.informs
-        else:
-            return self._on_getInform(infocode)
-        #end
-        
-        
-    def ListAttributes(self):
-        
-        '''
-        Print Structured Attributes List
-        
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        '''
-        
-        ListAttributes(self)
-    
-
-
-#==============================================================================
-# 
-#==============================================================================
-def ListAttributes(self):
-        
-        '''
-        Print Structured Attributes List
-        
-        Documentation last updated:  March. 24, 2008 - Ruben E. Perez
-        '''
-        
-        print '\n'
-        print 'Attributes List of: ' + repr(self.__dict__['name']) + ' - ' + self.__class__.__name__ + ' Instance\n'
-        self_keys = self.__dict__.keys()
-        self_keys.sort()
-        for key in self_keys:
-            if key != 'name':
-                print str(key) + ' : ' + repr(self.__dict__[key])
-            #end
-        #end
-        print '\n'
-    
-
-
-#==============================================================================
-# Optimizer Test
-#==============================================================================
-if __name__ == '__main__':
-    
-    print 'Testing ...'
-    
-    # Test Optimizer
-    azr = AeroSolver('Test')
-    azr.ListAttributes()
-    
+            raise Error(repr(name) + ' is not a valid option name')

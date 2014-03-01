@@ -1,5 +1,5 @@
 #!/usr/local/bin/python
-'''
+"""
 pyAS_solver
 
 Holds the Python AeroStructural Analysis Classes (base).
@@ -16,14 +16,14 @@ Developers:
 History
 -------
         v. 1.0  - Initial Class Creation (CAM, 2012)
-'''
+"""
 
 __version__ = '$Revision: $'
 
-'''
+"""
 ToDo:
         - 
-'''
+"""
 
 # =============================================================================
 # Standard Python modules
@@ -52,17 +52,17 @@ import pdb
 # =============================================================================
 class ASSolver(object):
     
-    '''
+    """
     Abstract Class for Structural Solver Object
-    '''
+    """
     
     def __init__(self, name, category=None, def_options=None, informs=None, *args, **kwargs):
         
-        '''
+        """
         StructSolver Class Initialization
         
         Documentation last updated:  
-        '''
+        """
         
         # 
         self.name = name
@@ -85,22 +85,22 @@ class ASSolver(object):
         
     def __solve__(self, *args, **kwargs):
         
-        '''
+        """
         Run Analyzer (Analyzer Specific Routine)
         
         Documentation last updated: 
-        '''
+        """
         
         pass
         
         
     def __call__(self,  *args, **kwargs):
         
-        '''
+        """
         Run Analyzer (Calling Routine)
         
         Documentation last updated: 
-        '''
+        """
         
         
         # Checks
@@ -113,115 +113,73 @@ class ASSolver(object):
 
 
     def getCoordinates(self):
-        '''
+        """
         Return the set of coordinates for the
         mesh
-        '''
+        """
         
         pass
 
 
     def setCoordinates(self,coordinates):
-        '''
+        """
         Set the set of coordinates for the
         mesh
-        '''
+        """
         
         pass
 
 
 
     def totalDerivative(self,objective):
-        '''
+        """
         Return the total derivative of the objective at surface
         coordinates
-        '''
+        """
 
         pass
 
 
     def getStateSize(self):
-        '''
+        """
         Return the number of degrees of freedom (states) that are
         on this processor
-        '''
+        """
 
         pass
 
 
     def getStates(self):
-        '''
+        """
         Return the states on this processor.
-        '''
+        """
 
         pass
 
 
     def setStates(self,states):
-        ''' Set the states on this processor.'''
+        """ Set the states on this processor."""
 
         pass
 
     def getResidual(self):
-        '''
+        """
         Return the reisudals on this processor.
-        '''
+        """
 
         pass
 
 
     def getSolution(self):
-        '''
+        """
         Retrieve the solution dictionary from the solver
-        '''
+        """
         
         pass
-
-
-    def initAdjoint(self, *args, **kwargs):
-        '''
-        Initialize the Ajoint problem for this test case
-        '''
-        pass
-
-
-    def solveAdjoint(self,objective, *args, **kwargs):
-        '''
-        Solve the adjoint problem for the desired objective functions.
-
-        objectives - List of objective functions
-    
-        '''
-    
-        self._on_adjoint(objective,*args,**kwargs)
-            
-        
-    def _on_adjoint(self, objective, *args, **kwargs):
-        
-        '''
-        Adjoint
-        
-        Documentation last updated:  May. 26, 2008 - Ruben E. Perez
-        '''     
-        
-        # 
-        pass
-        
-
-    def _on_setOption(self, name, value):
-        
-        '''
-        Set Optimizer Option Value (Optimizer Specific Routine)
-        
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        '''
-        
-        raise NotImplementedError()
-        
 
     def setOption(self, name, value):
         
-        '''
+        """
         Set Optimizer Option Value (Calling Routine)
         
         Keyword arguments:
@@ -230,7 +188,7 @@ class ASSolver(object):
         value -> SCALAR or BOOLEAN: Option Value
         
         Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        '''
+        """
         
         # 
         def_options = self.options['defaults']
@@ -249,19 +207,9 @@ class ASSolver(object):
     
         self._on_setOption(name, value)
         
-    def _on_getOption(self, name):
-        
-        '''
-        Get Optimizer Option Value (Optimizer Specific Routine)
-        
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        '''
-        
-        raise NotImplementedError()
-        
     def getOption(self, name):
         
-        '''
+        """
         Get Optimizer Option Value (Calling Routine)
         
         Keyword arguments:
@@ -269,7 +217,7 @@ class ASSolver(object):
         name -> STRING: Option Name
         
         Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        '''
+        """
         
         # 
         def_options = self.options['defaults']
@@ -282,85 +230,4 @@ class ASSolver(object):
         # 
         self._on_getOption(name)
         
-    def _on_getInform(self, info):
-        
-        '''
-        Get Optimizer Result Information (Optimizer Specific Routine)
-        
-        Keyword arguments:
-        -----------------
-        id -> STRING: Option Name
-        
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        '''
-        
-        raise NotImplementedError()
-        
-        
-    def getInform(self, infocode={}):
-        
-        '''
-        Get Optimizer Result Information (Calling Routine)
-        
-        Keyword arguments:
-        -----------------
-        name -> STRING: Option Name
-        
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        '''
-        
-        # 
-        if (infocode == {}):
-            return self.informs
-        else:
-            return self._on_getInform(infocode)
-        #end
-        
-        
-    def ListAttributes(self):
-        
-        '''
-        Print Structured Attributes List
-        
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        '''
-        
-        ListAttributes(self)
-    
-
-
-#==============================================================================
-# 
-#==============================================================================
-def ListAttributes(self):
-        
-        '''
-        Print Structured Attributes List
-        
-        Documentation last updated:  March. 24, 2008 - Ruben E. Perez
-        '''
-        
-        print '\n'
-        print 'Attributes List of: ' + repr(self.__dict__['name']) + ' - ' + self.__class__.__name__ + ' Instance\n'
-        self_keys = self.__dict__.keys()
-        self_keys.sort()
-        for key in self_keys:
-            if key != 'name':
-                print str(key) + ' : ' + repr(self.__dict__[key])
-            #end
-        #end
-        print '\n'
-    
-
-
-#==============================================================================
-# Optimizer Test
-#==============================================================================
-if __name__ == '__main__':
-    
-    print 'Testing ...'
-    
-    # Test Optimizer
-    azr = ASSolver('Test')
-    azr.ListAttributes()
-    
+  
