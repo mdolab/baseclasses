@@ -185,17 +185,15 @@ xRef=0.0, zRef=0.0, alpha=3.06)
 areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                          """
     def __init__(self, name, **kwargs):
-
         # Always have to have the name
         self.name = name
-
         # These are the parameters that can be simply set directly in
         # the class. 
         paras = set(('alpha', 'beta', 'areaRef', 'chordRef', 'spanRef', 
                  'xRef', 'yRef', 'zRef','xRot', 'yRot', 'zRot',
                  'phat', 'qhat', 'rhat',
-                 'degPol', 'coefPol', 'degFourier', 'omegaFourier',
-                 'cosCoefFourier', 'sinCoefCourier'))
+                 'degreePol', 'coefPol', 'degreeFourier', 'omegaFourier',
+                 'cosCoefFourier', 'sinCoefFourier'))
 
         # By default everything is None
         for para in paras:
