@@ -366,7 +366,8 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
         for key in self.DVNames:
             dvName = self.DVNames[key]
-            setattr(self, key, x[dvName] + self.DVs[dvName].offset)
+            if dvName in x:
+                setattr(self, key, x[dvName] + self.DVs[dvName].offset)
 
     def addVariablesPyOpt(self, optProb):
         """
