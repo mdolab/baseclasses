@@ -536,7 +536,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                 mu = (muSuthDim * (
                         (TSuthDim + SSuthDim) / (self.T/1.8 + SSuthDim)) *
                        (((self.T/1.8)/TSuthDim)**1.5))
-                self.mu = mu * 47.9
+                self.mu = mu / 47.9
             else:
                 self.mu = (muSuthDim * (
                         (TSuthDim + SSuthDim) / (self.T + SSuthDim)) *
