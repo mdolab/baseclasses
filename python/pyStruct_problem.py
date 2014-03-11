@@ -131,7 +131,8 @@ class StructProblem(object):
 
         for key in self.DVNames:
             dvName = self.DVNames[key]
-            setattr(self, key, x[dvName] + self.DVs[dvName].offset)
+            if dvName in x:
+                setattr(self, key, x[dvName] + self.DVs[dvName].offset)
 
     def addVariablesPyOpt(self, optProb):
         """
