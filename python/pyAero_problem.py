@@ -97,8 +97,7 @@ class AeroProblem(object):
 
     altitude : float. Default is 0.0
         Set all thermodynamic parameters from the 1976 standard atmosphere.
-        the altitude must be given in meters. Note that all the resulting
-        parameters will be set in SI units only. 
+        the altitude must be given in meters.
 
     phat : float. Default is 0.0
         Set the rolling rate coefficient
@@ -127,10 +126,10 @@ class AeroProblem(object):
     sinCoefFourier : array_like. Default is [0.0]
         Coefficients for the sin terms
 
-    P : float. Default is 101315.0
+    P : float. 
         Set the ambient pressure
 
-    T : float. Default is 273.15
+    T : float. 
         Set the ambient temperature
 
     gamma : float. Default is 1.4
@@ -167,6 +166,8 @@ class AeroProblem(object):
     R : float
         The gas constant. By defalut we use air. R=287.05
 
+    englishUnits : bool
+        Flag to use all English units: pounds, feet, Rankine etc. 
     Examples
     --------
     >>> # DPW4 Test condition (metric)
@@ -199,6 +200,11 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         for para in paras:
             setattr(self, para, None)
 
+        # Check if we have english units:
+        self.englishUnits = False
+        if 'englishUnits' in kwargs:
+            self.englishUnits = kwargs['englishUnits']
+
         # Any matching key from kwargs that is in 'paras'
         for key in kwargs:
             if key in paras:
@@ -212,15 +218,16 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         if 'R' in kwargs:
             self.R = kwargs['R']
         else:
-            self.R = 287.870
-        # end if
+            if self.englishUnits:
+                self.R = 1716.493 #FIX THIS
+            else:
+                self.R = 287.870
 
         # Check if 'gamma' is given....if not we assume air
         if 'gamma' in kwargs:
             self.gamma = kwargs['gamma']
         else:
             self.gamma = 1.4
-        # end if
 
         # Now we can do the name matching for the data for the
         # thermodynamic condition. We actually can work backwards from
@@ -521,12 +528,18 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         SSuthDim  = 110.55
         muSuthDim = 1.716e-5
         TSuthDim  = 273.15
-        
+
         if self.T is not None:
             self.a = numpy.sqrt(self.gamma*self.R*self.T)
-            self.mu = (muSuthDim * (
-                (TSuthDim + SSuthDim) / (self.T + SSuthDim)) *
-                       ((self.T/TSuthDim)**1.5))
+            if self.englishUnits:
+                mu = (muSuthDim * (
+                        (TSuthDim + SSuthDim) / (self.T/1.8 + SSuthDim)) *
+                       (((self.T/1.8)/TSuthDim)**1.5))
+                self.mu = mu * 47.9
+            else:
+                self.mu = (muSuthDim * (
+                        (TSuthDim + SSuthDim) / (self.T + SSuthDim)) *
+                           ((self.T/TSuthDim)**1.5))
 
         if self.mach is not None and self.a is not None:
             self.V = self.mach * self.a
@@ -571,7 +584,10 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             return None, None, None
         # Convert altitude to km since this is what the ICAO
         # atmosphere uses:
-        altitude = altitude / 1000.0
+        if self.englishUnits:
+            altitude = altitude * .3048 / 1000.0
+        else:
+            altitude = altitude / 1000.0
 
         K  = 34.163195
         R0 = 6356.766 # Radius of Earth    
@@ -662,11 +678,13 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             PP = hermite(t, PP_left, PP_slope_left, PP_right, PP_slope_right)        
         # end if
 
-        #Qrho = RL * PP/(T/T0) # Density
-        #mu = C1*(T**1.5)/(T+S) # Kinematic Viscosity
         P = P0*PP # Pressure    
 
-        return P, T#, mu
+        if self.englishUnits:
+            P /= 47.88020833333  # FIX ME!
+            T *= 1.8
+
+        return P, T
 
 class aeroDV(object):
     """
