@@ -61,7 +61,9 @@ class StructProblem(object):
         if 'loadFile' in kwargs:
             self.loadFile = kwargs['loadFile']
 
-        self.loadFactor = 1.0
+        if 'loadFactor' in kwargs:
+            self.loadFactor = kwargs['loadFactor']
+            
         self.evalFuncs = set()
         if 'funcs' in kwargs:
             self.evalFuncs = set(kwargs['funcs'])
