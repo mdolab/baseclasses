@@ -63,10 +63,17 @@ class StructProblem(object):
 
         if 'loadFactor' in kwargs:
             self.loadFactor = kwargs['loadFactor']
-            
+
+        # Check for function list:
         self.evalFuncs = set()
+        if 'evalFuncs' in kwargs:
+            self.evalFuncs = set(kwargs['evalFuncs'])
         if 'funcs' in kwargs:
-            self.evalFuncs = set(kwargs['funcs'])
+            warnings.warn("funcs should **not** be an argument. Use 'evalFuncs'"
+                          "instead.")
+            if self.evalFuncs is None:
+                self.evalFuncs = set(kwargs['funcs'])
+
         # When a solver calls its evalFunctions() it must write the
         # unique name it gives to funcNames. 
         self.funcNames = {}

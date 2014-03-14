@@ -14,7 +14,7 @@ History
 # Imports
 # =============================================================================
 import numpy
-
+import warnings
 class Error(Exception):
     """
     Format the error message in a box to make it clear this
@@ -211,9 +211,14 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                 setattr(self, key, kwargs[key])
 
         # Check for function list:
+        self.evalFuncs = set()
+        if 'evalFuncs' in kwargs:
+            self.evalFuncs = set(kwargs['evalFuncs'])
         if 'funcs' in kwargs:
+            warnings.warn("funcs should **not** be an argument. Use 'evalFuncs'"
+                          "instead.")
             self.evalFuncs = set(kwargs['funcs'])
-
+                
         # Check if 'R' is given....if not we assume air
         if 'R' in kwargs:
             self.R = kwargs['R']
@@ -682,7 +687,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         P = P0*PP # Pressure    
 
         if self.englishUnits:
-            P /= 47.88020833333  # FIX ME!
+            P /= 47.88020833333 
             T *= 1.8
 
         return P, T
