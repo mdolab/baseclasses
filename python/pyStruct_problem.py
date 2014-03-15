@@ -10,7 +10,7 @@ Developers:
 # Imports
 # =============================================================================
 import numpy
-
+import warnings
 class Error(Exception):
     """
     Format the error message in a box to make it clear this
