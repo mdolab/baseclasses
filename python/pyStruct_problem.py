@@ -57,6 +57,7 @@ class StructProblem(object):
 
         # Defaults
         self.loadFile = None
+        self.loadFactor = 1.0
 
         if 'loadFile' in kwargs:
             self.loadFile = kwargs['loadFile']
