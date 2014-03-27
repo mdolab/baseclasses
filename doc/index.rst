@@ -22,6 +22,7 @@ The classes that the user will interact with are:
    pyAero_problem
    pyStruct_problem
    pyAeroStruct_problem
+   pyMission_problem
 
 The remainder of the documentation for the solver base classes can be
 found on the full API documentation page:
