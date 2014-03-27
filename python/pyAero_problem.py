@@ -15,6 +15,8 @@ History
 # =============================================================================
 import numpy
 import warnings
+from ICAOAtmosphere import ICAOAtmosphere 
+
 class Error(Exception):
     """
     Format the error message in a box to make it clear this
@@ -204,6 +206,9 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         self.englishUnits = False
         if 'englishUnits' in kwargs:
             self.englishUnits = kwargs['englishUnits']
+           
+        # create an internal instance of the atmosphere to use
+        self.atm = ICAOAtmosphere(englishUnits=self.englishUnits)
 
         # Any matching key from kwargs that is in 'paras'
         for key in kwargs:
@@ -524,7 +529,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     @altitude.setter
     def altitude(self, value):
          self.__dict__['altitude'] = value
-         self.P, self.T = self._getAltitudeParams(value)
+         self.P, self.T = self.atm(value)
  
     def _update(self):
         """
@@ -582,115 +587,6 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
         return rDict
     
-    def _getAltitudeParams(self, altitude):
-        """
-        Compute the atmospheric properties at altitude, 'altitude' in meters
-        """
-        if altitude is None:
-            return None, None, None
-        # Convert altitude to km since this is what the ICAO
-        # atmosphere uses:
-        if self.englishUnits:
-            altitude = altitude * .3048 / 1000.0
-        else:
-            altitude = altitude / 1000.0
-
-        K  = 34.163195
-        R0 = 6356.766 # Radius of Earth    
-        H  = altitude/(1.0 + altitude/R0)
-
-        # Smoothing region on either side. 0.1 is 100m, seems to work
-        # well. Please don't change. 
-        dH_smooth = 0.1
-
-        # Sea Level Values
-        P0 = 101325 # Pressure
-
-        # The set of break-points in the altitude (in km)
-        H_break = numpy.array([11, 20, 32, 47, 51, 71, 84.852])
-
-        def hermite(t, p0, m0, p1, m1):
-            """Compute a standard cubic hermite interpolant"""
-            return p0*(2*t**3 - 3*t**2 + 1) + m0*(t**3 - 2*t**2 + t) + \
-                p1*(-2*t**3 + 3*t**2) + m1*(t**3-t**2)
-
-        def getTP(H, index):
-            """Compute temperature and pressure"""
-            if index == 0:
-                T = 288.15 - 6.5*H
-                PP = (288.15/T)**(-K/6.5)
-            elif index == 1:
-                T = 216.65
-                PP = 0.22336*numpy.exp(-K*(H-11)/216.65)
-            elif index == 2:
-                T = 216.65 + (H-20)
-                PP = 0.054032*(216.65/T)**K
-            elif index == 3:
-                T = 228.65 + 2.8*(H-32)
-                PP = 0.0085666*(228.65/T)**(K/2.8)
-            elif index == 4:
-                T = 270.65
-                PP = 0.0010945*numpy.exp(-K*(H-47)/270.65)
-            elif index == 5:
-                T = 270.65 - 2.8*(H-51)
-                PP = 0.00066063*(270.65/T)**(-K/2.8)
-            elif index == 6:
-                T = 214.65 - 2*(H-71)
-                PP = 0.000039046*(214.65/T)**(-K/2)
-               
-            return T, PP
-
-        # Determine if we need to do smoothing or not:
-        smooth = False
-        for index in xrange(len(H_break)):
-            if (numpy.real(H) > H_break[index] - dH_smooth and
-                numpy.real(H) < H_break[index] + dH_smooth):
-                smooth = True
-                break
-
-        if not smooth:
-            index = H_break.searchsorted(H, side='left')
-
-            # Get the nominal values we need
-            T, PP = getTP(H, index)
-        else:
-            H0 = H_break[index]
-            # Parametric distance along smoothing region        
-            H_left = H0 - dH_smooth
-            H_right = H0 + dH_smooth
-            
-            t = (H - H_left)/(H_right-H_left) # Parametric value from 0 to 1
-
-            # Compute slope and values at the left boundary
-            Tph, PPph = getTP(H_left + 1e-40j, index)
-
-            T_left = numpy.real(Tph)
-            PP_left = numpy.real(PPph)
-
-            T_slope_left = numpy.imag(Tph)/1e-40 * (dH_smooth*2)
-            PP_slope_left = numpy.imag(PPph)/1e-40 * (dH_smooth*2)
-
-            # Compute slope and values at the right boundary
-            Tph, PPph = getTP(H_right + 1e-40j, index+1)
-
-            T_right = numpy.real(Tph)
-            PP_right = numpy.real(PPph)
-
-            T_slope_right = numpy.imag(Tph)/1e-40 * (dH_smooth*2)
-            PP_slope_right = numpy.imag(PPph)/1e-40 * (dH_smooth*2)
-
-            # Standard cubic hermite spline interpolation
-            T = hermite(t, T_left, T_slope_left, T_right, T_slope_right)
-            PP = hermite(t, PP_left, PP_slope_left, PP_right, PP_slope_right)        
-        # end if
-
-        P = P0*PP # Pressure    
-
-        if self.englishUnits:
-            P /= 47.88020833333 
-            T *= 1.8
-
-        return P, T
 
 class aeroDV(object):
     """
