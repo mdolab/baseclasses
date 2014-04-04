@@ -66,22 +66,43 @@ class MissionProblem(object):
         self.name=name
         
         self.profiles = []
+        self.missionSegments = []
 
         # Check for function list:
         self.evalFuncs = set()
         if 'evalFuncs' in kwargs:
             self.evalFuncs = set(kwargs['evalFuncs'])
+            
+        self.segCounter = 1
 
     def addProfile(self,profile):
         '''
-        append a mission profile to the list
+        append a mission profile to the list. update the internal
+        segment indices to correspond
         '''
-
+        
+        for seg in profile.segments:
+            seg.segIdx = self.segCounter
+            self.segCounter+=1
+            self.missionSegments.extend([seg])
+        # end
+        
         self.profiles.append(profile)
 
+        
         return
     
+    def getNSeg(self):
+        '''
+        return the number of segments in the mission
+        '''
+        return self.segCounter
 
+    def getSegments(self):
+        '''
+        return a list of the segments in the mission in order
+        '''
+        return self.missionSegments
 
 class MissionProfile(object):
     '''
@@ -299,6 +320,10 @@ class MissionSegment(object):
         self.DVNames = {}
 
         self.isFirstStateSeg=False
+        
+        # set the index for where this sits in the mission. 
+        # defaults to 1 for fortran numbering
+        self.segIdx = 1
 
         return
         
@@ -546,7 +571,44 @@ class MissionSegment(object):
 
         return TAS
 
-        
+    def setMissionData(self, module, segTypeDict, idx, nIntervals):
+        '''
+        set the data for the current segment in the fortran module
+        '''
+        h1 = getattr(self,'initAlt')
+        if h1 == None:
+            h1 = 0.0
+        h2 = getattr(self,'finalAlt')
+        if h2 == None:
+            h2 = 0.0
+        M1 = getattr(self,'initMach')
+        if M1 == None:
+            M1 = 0.0
+        M2 = getattr(self,'finalMach')
+        if M2 == None:
+            M2 = 0.0
+        V1 = getattr(self,'initCAS')
+        if V1 == None:
+            V1 = 0.0
+        V2 = getattr(self,'finalCAS')
+        if V2 == None:
+            V2 = 0.0
+        deltaTime = getattr(self,'segTime')
+        if deltaTime == None:
+            deltaTime = 0.0
+        # end
+        fuelFraction = getattr(self,'fuelFraction')
+        if fuelFraction == None:
+            fuelFraction = 0.0
+        # end
+
+        segType = segTypeDict[getattr(self,'phase')]
+
+        print 'mission segment input',idx,self.segIdx, h1, h2, M1, M2, V1, V2,deltaTime,fuelFraction,segType,nIntervals
+        module.setmissionsegmentdata(idx,self.segIdx, h1, h2, M1, M2, V1, V2,
+                                     deltaTime,fuelFraction,segType,nIntervals)
+
+
     def addDV(self, key, value=None, lower=None, upper=None, scale=1.0,
               name=None, offset=0.0):
         """
