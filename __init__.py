@@ -6,6 +6,10 @@ from .python.pyAero_solver import AeroSolver
 from .python.pyAS_solver import ASSolver
 
 from .python.pyBasic_solver import BasicSolver
+
+from .python.pyMission_solver import MissionSolver
 from .python.pyMission_problem import MissionProblem
 from .python.pyMission_problem import MissionProfile
 from .python.pyMission_problem import MissionSegment
+
+from .python.MExt import MExt
