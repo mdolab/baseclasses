@@ -67,6 +67,7 @@ class MissionProblem(object):
         
         self.profiles = []
         self.missionSegments = []
+        self.funcNames = {}
 
         # Check for function list:
         self.evalFuncs = set()
@@ -82,7 +83,6 @@ class MissionProblem(object):
         '''
         
         for seg in profile.segments:
-            seg.segIdx = self.segCounter
             self.segCounter+=1
             self.missionSegments.extend([seg])
         # end
@@ -96,7 +96,7 @@ class MissionProblem(object):
         '''
         return the number of segments in the mission
         '''
-        return self.segCounter
+        return self.segCounter-1
 
     def getSegments(self):
         '''
@@ -294,7 +294,8 @@ class MissionSegment(object):
         
         paras =set(('initMach','initAlt','initCAS','initTAS',
                     'finalMach','finalAlt','finalCAS',
-                    'finalTAS','fuelFraction','segTime'))
+                    'finalTAS','fuelFraction','segTime',
+                    'rangeFraction'))
         
         # By default everything is None
         for para in paras:
@@ -321,10 +322,6 @@ class MissionSegment(object):
 
         self.isFirstStateSeg=False
         
-        # set the index for where this sits in the mission. 
-        # defaults to 1 for fortran numbering
-        self.segIdx = 1
-
         return
         
     def _syncMachVAndAlt(self,endPoint='start'):
@@ -390,7 +387,8 @@ class MissionSegment(object):
         '''
         Set the final V,M,h base on initial values and segType.
         '''
-        if self.phase.lower() == 'acceleratedcruise':
+        if self.phase.lower() == 'acceleratedcruise' or \
+               self.phase.lower() == 'deceleratedcruise' :
             setattr(self,'finalAlt',getattr(self,'initAlt'))
         elif self.phase.lower() == 'cvelclimb':
             # we require that Vi,hi and Mf are specified
@@ -502,9 +500,12 @@ class MissionSegment(object):
             TAS = self._CAS2TAS(CAS,alt+dAlt)
             M2 = TAS/a
             res2 = M2 - mach
-
             df = (res2 - res) / dAlt
-            alt -= res/df
+            if abs(res/df) <1000.:
+                alt -=  res/df
+            else:
+                alt -= (1.0/2.0)* res/df
+            # end
 
         return alt
 
@@ -545,7 +546,6 @@ class MissionSegment(object):
         a = self._getSoundSpeed(h)
         P,T,rho = self._getPTRho(h)
 
-
         PRatio = P/P0
         TRatio = T/T0
         RhoRatio = rho/rho0
@@ -571,7 +571,7 @@ class MissionSegment(object):
 
         return TAS
 
-    def setMissionData(self, module, segTypeDict, idx, nIntervals):
+    def setMissionData(self, module, segTypeDict, idx, nIntervals,segIdx):
         '''
         set the data for the current segment in the fortran module
         '''
@@ -601,12 +601,18 @@ class MissionSegment(object):
         if fuelFraction == None:
             fuelFraction = 0.0
         # end
+            
+        rangeFraction = getattr(self,'rangeFraction')
+        if rangeFraction == None:
+            rangeFraction = 1.0
+        # end
 
         segType = segTypeDict[getattr(self,'phase')]
-
-        print 'mission segment input',idx,self.segIdx, h1, h2, M1, M2, V1, V2,deltaTime,fuelFraction,segType,nIntervals
-        module.setmissionsegmentdata(idx,self.segIdx, h1, h2, M1, M2, V1, V2,
-                                     deltaTime,fuelFraction,segType,nIntervals)
+       
+        print 'mission segment input',idx,segIdx, h1, h2, M1, M2, V1, V2,deltaTime,fuelFraction,segType,nIntervals
+        module.setmissionsegmentdata(idx,segIdx, h1, h2, M1, M2, V1, V2,
+                                     deltaTime,fuelFraction,rangeFraction,
+                                     segType,nIntervals)
 
 
     def addDV(self, key, value=None, lower=None, upper=None, scale=1.0,

@@ -101,23 +101,31 @@ class ICAOAtmosphere(object):
             
             t = (H - H_left)/(H_right-H_left) # Parametric value from 0 to 1
 
+            # set an FD step to compute the derivs
+                       
+            dh_FD = 1.e-4 #confirmed with stepsize study do not change from 1e-4
+
             # Compute slope and values at the left boundary
-            Tph, PPph = getTP(H_left + 1e-40j, index)
-
-            T_left = numpy.real(Tph)
-            PP_left = numpy.real(PPph)
-
-            T_slope_left = numpy.imag(Tph)/1e-40 * (dH_smooth*2)
-            PP_slope_left = numpy.imag(PPph)/1e-40 * (dH_smooth*2)
+            TL, PPL = getTP(H_left, index)
+            Tph, PPph = getTP(H_left + dh_FD, index)
+            Tmh, PPmh = getTP(H_left - dh_FD, index)
+                
+            T_left = TL
+            PP_left = PPL
+                
+            T_slope_left = (Tph-Tmh)/(2*dh_FD) * (dH_smooth*2)
+            PP_slope_left = (PPph-PPmh)/(2*dh_FD) * (dH_smooth*2)
 
             # Compute slope and values at the right boundary
-            Tph, PPph = getTP(H_right + 1e-40j, index+1)
+            TR, PPR = getTP(H_right, index+1)
+            Tph, PPph = getTP(H_right + dh_FD, index+1)
+            Tmh, PPmh = getTP(H_right - dh_FD, index+1)
 
-            T_right = numpy.real(Tph)
-            PP_right = numpy.real(PPph)
+            T_right = TR
+            PP_right = PPR
 
-            T_slope_right = numpy.imag(Tph)/1e-40 * (dH_smooth*2)
-            PP_slope_right = numpy.imag(PPph)/1e-40 * (dH_smooth*2)
+            T_slope_right = (Tph-Tmh)/(2*dh_FD) * (dH_smooth*2)
+            PP_slope_right = (PPph-PPmh)/(2*dh_FD) * (dH_smooth*2)
 
             # Standard cubic hermite spline interpolation
             T = hermite(t, T_left, T_slope_left, T_right, T_slope_right)
@@ -131,3 +139,16 @@ class ICAOAtmosphere(object):
             T *= 1.8
 
         return P, T
+#==============================================================================
+# Analysis Test
+#==============================================================================
+if __name__ == '__main__':
+    print 'Testing ...'
+    
+    Atm = ICAOAtmosphere()
+
+    print Atm(11000.001)
+    R = 287.870
+    P,T = Atm(457.2)
+    rho = P/(R*T)
+    print P,T,rho
