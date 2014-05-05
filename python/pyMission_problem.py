@@ -156,7 +156,7 @@ class MissionProfile(object):
                     if (getattr(seg,'initAlt') is None):
                         raise Error('%s: Initial altitude must be\
                                      specified for the first non fuel fraction\
-                                     segment in the profile'%s(self.name))
+                                     segment in the profile'%(self.name))
                     # end
 
                     if (getattr(seg,'initMach') is None) and\
@@ -609,7 +609,7 @@ class MissionSegment(object):
 
         segType = segTypeDict[getattr(self,'phase')]
        
-        print 'mission segment input',idx,segIdx, h1, h2, M1, M2, V1, V2,deltaTime,fuelFraction,segType,nIntervals
+        #print 'mission segment input',idx,segIdx, h1, h2, M1, M2, V1, V2,deltaTime,fuelFraction,segType,nIntervals
         module.setmissionsegmentdata(idx,segIdx, h1, h2, M1, M2, V1, V2,
                                      deltaTime,fuelFraction,rangeFraction,
                                      segType,nIntervals)
