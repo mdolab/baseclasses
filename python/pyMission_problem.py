@@ -156,7 +156,7 @@ class MissionProfile(object):
                     if (getattr(seg,'initAlt') is None):
                         raise Error('%s: Initial altitude must be\
                                      specified for the first non fuel fraction\
-                                     segment in the profile'%s(self.name))
+                                     segment in the profile'%(self.name))
                     # end
 
                     if (getattr(seg,'initMach') is None) and\
@@ -295,7 +295,7 @@ class MissionSegment(object):
         paras =set(('initMach','initAlt','initCAS','initTAS',
                     'finalMach','finalAlt','finalCAS',
                     'finalTAS','fuelFraction','segTime',
-                    'rangeFraction'))
+                    'rangeFraction','engType'))
         
         # By default everything is None
         for para in paras:
@@ -571,7 +571,7 @@ class MissionSegment(object):
 
         return TAS
 
-    def setMissionData(self, module, segTypeDict, idx, nIntervals,segIdx):
+    def setMissionData(self, module, segTypeDict, engTypeDict, idx, nIntervals,segIdx):
         '''
         set the data for the current segment in the fortran module
         '''
@@ -607,12 +607,20 @@ class MissionSegment(object):
             rangeFraction = 1.0
         # end
 
-        segType = segTypeDict[getattr(self,'phase')]
+        segTypeID = segTypeDict[getattr(self,'phase')]
+
+        # Get the engine type and ensure the engine type is defined in engTypeDict
+        if self.engType not in engTypeDict and self.engType != None:
+            raise Error('engType %s defined in segment %s not defined in engTypeDict'%
+                        (self.engType, self.phase))
+        if self.engType == None:
+            self.engType = 'None'
+        engTypeID = engTypeDict[getattr(self,'engType')]
        
-        print 'mission segment input',idx,segIdx, h1, h2, M1, M2, V1, V2,deltaTime,fuelFraction,segType,nIntervals
+        print 'mission segment input',idx,segIdx, h1, h2, M1, M2, V1, V2,deltaTime,fuelFraction,segTypeID,nIntervals
         module.setmissionsegmentdata(idx,segIdx, h1, h2, M1, M2, V1, V2,
                                      deltaTime,fuelFraction,rangeFraction,
-                                     segType,nIntervals)
+                                     segTypeID,engTypeID,nIntervals)
 
 
     def addDV(self, key, value=None, lower=None, upper=None, scale=1.0,
