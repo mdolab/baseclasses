@@ -617,7 +617,7 @@ class MissionSegment(object):
             self.engType = 'None'
         engTypeID = engTypeDict[getattr(self,'engType')]
        
-        print 'mission segment input',idx,segIdx, h1, h2, M1, M2, V1, V2,deltaTime,fuelFraction,segTypeID,nIntervals
+        #print 'mission segment input',idx,segIdx, h1, h2, M1, M2, V1, V2,deltaTime,fuelFraction,segType,nIntervals
         module.setmissionsegmentdata(idx,segIdx, h1, h2, M1, M2, V1, V2,
                                      deltaTime,fuelFraction,rangeFraction,
                                      segTypeID,engTypeID,nIntervals)
