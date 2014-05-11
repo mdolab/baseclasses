@@ -76,6 +76,14 @@ class MissionProblem(object):
             
         self.segCounter = 1
 
+    def addProfiles(self, profileList):
+        '''
+        Add all the mission profiles at the same time
+        '''
+
+        for profile in profileList:
+            self.addProfile(profile)
+
     def addProfile(self,profile):
         '''
         append a mission profile to the list. update the internal
@@ -557,8 +565,8 @@ class MissionSegment(object):
         M = numpy.sqrt(5 * ((DP/P + 1)**(2./7.) - 1))
 
         if M > 1:
-            raise Error('_CAS2TAS: The current mission class is\
-                         limited to subsonic missions: %f %f'%(M,CAS))
+            raise Error('%s_CAS2TAS: The current mission class is\
+                         limited to subsonic missions: %f %f'%(self.phase,M,CAS))
             # M_diff = 1.0
             # while M_diff > 1e-4:
             #     # computing Mach number in a supersonic compressible flow by using the
@@ -597,17 +605,20 @@ class MissionSegment(object):
         if deltaTime == None:
             deltaTime = 0.0
         # end
-        fuelFraction = getattr(self,'fuelFraction')
-        if fuelFraction == None:
-            fuelFraction = 0.0
-        # end
             
         rangeFraction = getattr(self,'rangeFraction')
         if rangeFraction == None:
             rangeFraction = 1.0
         # end
 
-        segTypeID = segTypeDict[getattr(self,'phase')]
+        # Get the fuel-fraction, if provided, then segment is a generic fuel fraction type
+        fuelFraction = getattr(self,'fuelFraction')
+        if fuelFraction == None:
+            segTypeID = segTypeDict[getattr(self,'phase').lower()]
+            fuelFraction = 0.0
+        else:
+            segTypeID = segTypeDict['generic']
+        # end
 
         # Get the engine type and ensure the engine type is defined in engTypeDict
         if self.engType not in engTypeDict and self.engType != None:
