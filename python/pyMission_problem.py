@@ -18,9 +18,12 @@ History
 	v. 1.0 - Initial Class Creation (CM,GK, 2014)
 
 '''
-import numpy,copy
+
+import sys, numpy, copy
 import warnings
+
 from ICAOAtmosphere import ICAOAtmosphere 
+
 
 class Error(Exception):
     """
@@ -41,6 +44,7 @@ class Error(Exception):
         print(msg)
         Exception.__init__(self)
 
+
 class MissionProblem(object):
     '''
     Mission Problem Object:
@@ -57,15 +61,15 @@ class MissionProblem(object):
     evalFuncs : iteratble object containing strings
         The names of the functions the user wants evaluated for this mission 
         problem
-    
     '''
-    def __init__(self,name, **kwargs):
+
+    def __init__(self, name, **kwargs):
         """
         Initialize the mission problem
         """
         self.name=name
         
-        self.profiles = []
+        self.missionProfiles = []
         self.missionSegments = []
         self.funcNames = {}
 
@@ -76,41 +80,90 @@ class MissionProblem(object):
             
         self.segCounter = 1
 
-    def addProfiles(self, profileList):
+    def addProfile(self, profiles):
         '''
-        Add all the mission profiles at the same time
-        '''
-
-        for profile in profileList:
-            self.addProfile(profile)
-
-    def addProfile(self,profile):
-        '''
-        append a mission profile to the list. update the internal
+        Append a mission profile to the list. update the internal
         segment indices to correspond
         '''
-        
-        for seg in profile.segments:
-            self.segCounter+=1
-            self.missionSegments.extend([seg])
-        # end
-        
-        self.profiles.append(profile)
 
-        
+        # Check if profile is of type MissionProfile or list, otherwise raise Error
+        if type(profiles) == MissionProfile:
+            profiles = [profiles]
+        elif type(profiles) == list:
+            pass
+        else:
+            raise Error('addProfile() takes in either a list of or a single MissionProfile')
+            
+        # Add the profiles to missionProfiles and segments to missionSegments
+        for prof in profiles:
+            self.missionProfiles.append(prof)
+            for seg in prof.segments:
+                self.segCounter += 1
+                self.missionSegments.extend([seg])
+            # end
+
         return
+
+    def addVariablesPyOpt(pyOptProb):
+        '''
+        Add the current set of variables to the optProb object.
+
+        Parameters
+        ----------
+        optProb : pyOpt_optimization class
+            Optimization problem definition to which variables are added
+        '''
+
+        for profile in self.missionProfiles:
+            for dvName in profile.dvList:
+                dv = profile.dvList[dvName]
+                pyOptProb.addVar(dvName, 'c', scale=dv.scale,
+                                 value=dv.value, lower=dv.lower, upper=dv.upper)
+
+        return pyOptProb
+
+    def setDesignVars(self, missionDVs):
+        '''
+        Pass the DVs to each of the profiles and have the profiles set the DVs
+
+        Parameters
+        ----------
+        missionDVs : dict
+            Dictionary of variables which may or may not contain the
+            design variable names this object needs
+        '''
+
+        for profile in self.missionProfiles:
+            profile.setDesignVars(missionDVs)
+
     
     def getNSeg(self):
         '''
         return the number of segments in the mission
         '''
+
         return self.segCounter-1
 
     def getSegments(self):
         '''
         return a list of the segments in the mission in order
         '''
+
         return self.missionSegments
+
+    def __str__(self):
+        '''
+        Return a string representation of the profiles within this mission
+        '''
+
+        string = 'MISSION PROBLEM: %s \n'%self.name
+        for i in xrange(len(self.missionProfiles)):
+            profTag = 'P%02d'%i
+            string += self.missionProfiles[i].__str__(profTag)
+            string += '\n'
+
+        return string
+
 
 class MissionProfile(object):
     '''
@@ -122,24 +175,99 @@ class MissionProfile(object):
 
     '''
     
-    def __init__(self,name):
+    def __init__(self, name):
         '''
         Initialize the mission profile
         '''
+
         self.name = name
 
-        self.segments= []
+        self.segments = []
+        self.dvList = {}
         
         self.firstSegSet=False
 
-    def addSegments(self,segments):
+    def addSegments(self, segments):
         '''
         Take in a list of segments and append it to the the current list.
         Check for consistency while we are at it.
         '''
+
+        # Check if profile is of type MissionProfile or list, otherwise raise Error
+        if type(segments) == MissionSegment:
+            segments = [segments]
+        elif type(segments) == list:
+            pass
+        else:
+            raise Error('addSegments() takes in either a list or a single MissionSegment')
+
+        nSeg_Before = len(self.segments)
         self.segments.extend(segments)
-        
+
+        # Loop over each *new* segment in search for DVs
+        for i in xrange(len(segments)):
+            seg = segments[i]
+            segID = i + nSeg_Before
+
+            # Loop over the DVs in the segment, if any
+            for dvName in seg.dvList:
+                dvNameGlobal = self.name + '_' + dvName
+                # Save a reference of the DV object and set its segment ID 
+                self.dvList[dvNameGlobal] = seg.dvList[dvName]
+                self.dvList[dvNameGlobal].setSegmentID(segID)
+
+            # Propagate the segment inputs from one to next
+            for var in segments[i-1].segInputs:
+                if 'final' in var:
+                    newVar = var.replace('final','init')
+                    seg.segInputs.add(newVar)
+            seg.determineInputs()
+
         self._checkStateConsistancy()
+
+    def setDesignVars(self, missionDVs):
+        '''
+        Set the variables for this mission profile
+
+        Parameters
+        ----------
+        missionDVs : dict
+            Dictionary of variables which may or may not contain the
+            design variable names this object needs
+        '''
+       
+        for dvName in missionDVs:
+            # Only concern about the DVs that are in this profile
+            if dvName in self.dvList:
+                dvObj = self.dvList[dvName]
+                dvVal = missionDVs[dvName]
+                dvType = dvObj.type       # String: 'Mach', 'Alt', 'TAS', 'CAS'
+                segID = dvObj.segID
+                isInitVal = dvObj.isInitVal
+
+                # Update the segment for which the DV object belongs to
+                seg = self.segments[segID]
+                updatePrev, updateNext = seg.setParameters(dvVal, dvType, isInitVal)
+
+                # Update any PREVIOUS segments that depends on this DV
+                while updatePrev:
+                    segID -= 1
+                    seg = self.segments[segID]
+                    updatePrev, tmp = seg.setParameters(dvVal, dvType, isInitVal=False)
+
+                # Update any FOLLOWING segments that depends on this DV
+                segID = dvObj.segID
+                while updateNext:
+                    segID += 1
+                    seg = self.segments[segID]
+                    tmp, updateNext = seg.setParameters(dvVal, dvType, isInitVal=True)
+
+        # After setting all the design variables, update the remaining segment states
+        for seg in self.segments:
+            seg.propagateParameters()
+
+        self._checkStateConsistancy()
+                
 
     def _checkStateConsistancy(self):
         # loop over the segments.
@@ -175,15 +303,8 @@ class MissionProfile(object):
                                      segment in the profile'%(self.name))
                     # end
                     
-                    # Synchronize
-                    #seg._printSegStates()
-                    seg._syncMachVAndAlt(endPoint='start')
-                    # calculate final
-                    #seg._printSegStates()
-                    seg._propagateStateValues()
-                    # synchronize the states at the end of the segment
-                    #seg._printSegStates()
-                    seg._syncMachVAndAlt(endPoint='end')
+                    # Determine the remaining segment parameters (Alt, Mach, CAS, TAS)
+                    seg.propagateParameters()
                     
                 else:
                     prevSeg = self.segments[i-1]
@@ -197,7 +318,7 @@ class MissionProfile(object):
                     Alti = getattr(seg,'initAlt')
                     if not CASi is None:
                         if not CASi==refCAS:
-                             raise Error('%s: Specified initCAS \
+                            raise Error('%s: Specified initCAS \
                                           inconsistent with\
                                           previous finalCAS: %f, %f \
                                           '%(seg.phase,CASi,refCAS))
@@ -207,7 +328,8 @@ class MissionProfile(object):
                     # end
                     if not TASi is None:
                         if not TASi==refTAS:
-                             raise Error('%s: Specified initTAS \
+                            print 'TAS', TASi, refTAS, seg.phase
+                            raise Error('%s: Specified initTAS \
                                           inconsistent with\
                                           previous finalTAS: %f, %f \
                                           '%(seg.phase,TASi,refTAS))
@@ -233,22 +355,25 @@ class MissionProfile(object):
                     else:
                         setattr(seg,'initMach',refMach)
                     # end
-                        
-                    # syncronize the states at the start of the segment
-                    #seg._printSegStates()
-                    seg._syncMachVAndAlt(endPoint='start')
 
-                    # calculate final
-                    #seg._printSegStates()
-                    seg._propagateStateValues()
-                    #seg._printSegStates()
-
-                    # synchronize the states at the end of the segment
-                    seg._syncMachVAndAlt(endPoint='end')
-                    #seg._printSegStates()
+                    # Determine the remaining segment parameters (Alt, Mach, CAS, TAS)
+                    seg.propagateParameters()
                 # end
             # end
         # end
+
+    def __str__(self, idTag=''):
+        '''
+        Return a string representation of the segments within this profile
+        '''
+
+        string = 'MISSION PROFILE: %s \n'%self.name
+        for i in xrange(len(self.segments)):
+            segTag = '%sS%02d'%(idTag,i)
+            string += self.segments[i].__str__(segTag)
+            string += '\n'
+            
+        return string
                     
 
 class MissionSegment(object):
@@ -269,13 +394,14 @@ class MissionSegment(object):
     englishUnits : bool
         Flag to use all English units: pounds, feet, Rankine etc. 
     '''
-    def __init__(self, phase , **kwargs):
+
+    def __init__(self, phase, **kwargs):
 
         # have to have a phase type
         self.phase = phase
 
         # Check if we have english units:
-        self.englishUnits = False
+        self.englishUnits = True
         if 'englishUnits' in kwargs:
             self.englishUnits = kwargs['englishUnits']
            
@@ -297,13 +423,10 @@ class MissionSegment(object):
         else:
             self.gamma = 1.4
 
-        # These are the parameters that can be simply set directly in
-        # the class. 
-        
-        paras =set(('initMach','initAlt','initCAS','initTAS',
-                    'finalMach','finalAlt','finalCAS',
-                    'finalTAS','fuelFraction','segTime',
-                    'rangeFraction','engType'))
+        # These are the parameters that can be simply set directly in the class. 
+        paras = set(('initMach','initAlt','initCAS','initTAS',
+                     'finalMach','finalAlt','finalCAS','finalTAS',
+                     'fuelFraction','rangeFraction','segTime','engType'))
         
         # By default everything is None
         for para in paras:
@@ -316,22 +439,94 @@ class MissionSegment(object):
 
         # identify the possible design variables based on what parameters
         # have been set 
-        varFuncs =['initMach','initAlt','initTAS','initCAS',
-                   'finalMach','finalAlt','finalCAS','finalTAS']
+        varFuncs = ['initMach','initAlt','initTAS','initCAS',
+                    'finalMach','finalAlt','finalCAS','finalTAS']
 
         self.possibleDVs = set()
+        self.segInputs = set()
         for var in varFuncs:
             if getattr(self, var) is not None:
                 self.possibleDVs.add(var)
-                
+                self.segInputs.add(var)
+   
         # Storage of DVs
-        self.DVs = {}
-        self.DVNames = {}
+        self.dvList = {}
+
+        if self.phase.lower() in ['cvelclimb','cveldescent']:
+            self.constMachDV = False
+            self.constVelDV = True
+            self.constAltDV = False
+        elif self.phase.lower() in ['cmachclimb','cmachdescent']:
+            self.constMachDV = True
+            self.constVelDV = False
+            self.constAltDV = False
+        elif self.phase.lower() in ['cruise','loiter']:
+            self.constMachDV = True
+            self.constVelDV = True
+            self.constAltDV = True
+        elif self.phase.lower() in ['acceleratedCruise','deceleratedCruise']:
+            self.constMachDV = False
+            self.constVelDV = False
+            self.constAltDV = True
+        else:
+            self.constMachDV = False
+            self.constVelDV = False
+            self.constAltDV = False
 
         self.isFirstStateSeg=False
         
         return
+
+    def determineInputs(self):
+        '''
+        Determine which of the four parameters (h, M, CAS, TAS) are inputs,
+        which can be updated directly by the DV. For each end, there should 
+        be two inputs. At this point, the two beginning inputs should already
+        be determined during initalization or by the MissionProfile.
+        '''
         
+        # Check there are two inputs for the segment start
+        count = 0
+        for var in self.segInputs:
+            if 'init' in var:
+                count += 1
+        if count < 2 and self.fuelFraction == None:
+            raise Error('%s: There does not appear to be two inputs at the \
+                         start of this segment'%self.phase)
+        elif count > 2 and self.fuelFraction == None:
+            raise Error('%s: There appears to be more than two inputs at the \
+                         start of this segment, may not be consistent'%self.phase)
+
+        # If there are two inputs for the segment end, done; 
+        # otherwise determine based on start
+        count = 0
+        for var in self.segInputs:
+            if 'final' in var:
+                count += 1
+        if count == 2:
+            return
+        elif count > 2:
+            raise Error('%s: There appears to be more than two inputs at the \
+                         start of this segment, may not be consistent'%self.phase)
+        else:
+            # For any segment with constant Mach, CAS, or altitude...
+            if 'cmach' in self.phase.lower():
+                self.segInputs.add('finalMach')
+            elif 'cvel' in self.phase.lower():
+                self.segInputs.add('finalCAS')
+            elif 'cruise' in self.phase.lower() or self.phase.lower() == 'loiter':
+                self.segInputs.add('finalAlt')
+            
+            # For cruise segments, copy the initial speeds to final
+            if self.phase.lower() == 'cruise' or self.phase.lower() == 'loiter':
+                if 'initMach' in self.segInputs:
+                    self.segInputs.add('finalMach')
+                elif 'initCAS' in self.segInputs:
+                    self.segInputs.add('finalCAS')
+                elif 'initTAS' in self.segInputs:
+                    self.segInputs.add('finalTAS')
+
+    '''
     def _syncMachVAndAlt(self,endPoint='start'):
         # get speed of sound at initial point
         if endPoint.lower()=='start':
@@ -366,6 +561,7 @@ class MissionSegment(object):
         P,T,Rho = self._getPTRho(h)
        
         if not (CAS is None and TAS is None):
+            # Specified either (h,CAS) or (h,TAS)
             if CAS is None:
                 CAS = self._TAS2CAS(TAS,h)
                 setattr(self,CASTag,CAS)
@@ -385,23 +581,104 @@ class MissionSegment(object):
                 setattr(self,machTag,MCalc)
             # end
         else:
+            # Specified (M,h)
             TAS = M*a
             CAS = self._TAS2CAS(TAS,h)
             setattr(self,TASTag,TAS)
             setattr(self,CASTag,CAS)
         # end
+    '''
 
-    def _propagateStateValues(self):
+    def propagateParameters(self):
         '''
         Set the final V,M,h base on initial values and segType.
         '''
-        if self.phase.lower() == 'acceleratedcruise' or \
-               self.phase.lower() == 'deceleratedcruise' :
-            setattr(self,'finalAlt',getattr(self,'initAlt'))
-        elif self.phase.lower() == 'cvelclimb':
+
+        if self.fuelFraction != None:
+            # A FuelFraction type segment, nothing to propagate
+            return
+
+        elif self.phase.lower() in ['cruise', 'loiter']:
+            # Given M, CAS, or TAS, calculate the other two speeds
+            self._calculateSpeed(endPoint='start')
+
+            # take everything from init and copy to final
+            self.finalAlt = self.initAlt
+            self.finalCAS = self.initCAS
+            self.finalTAS = self.initTAS
+            self.finalMach = self.initMach
+        
+        elif self.phase.lower() in ['acceleratedcruise','deceleratedcruise']:
+            self.finalAlt = self.initAlt
+            self._calculateSpeed(endPoint='start')
+            self._calculateSpeed(endPoint='end')
+
+        elif self.phase.lower() in ['cvelclimb','cveldescent']:
+            # Requires either (v, hi, hf), (v, hi, Mf), or (v, Mi, hf)
+            self.finalCAS = self.initCAS
+
+            if set(['initCAS','initAlt','finalAlt']).issubset(self.segInputs):
+                # (v, hi, hf): Solve for the TAS and then for Mach
+                self._calculateSpeed(endPoint='start')
+                self._calculateSpeed(endPoint='end')
+
+            elif set(['initCAS','initAlt','finalMach']).issubset(self.segInputs):
+                # (v, hi, Mf): Solve for finalAlt and then TAS
+                self.finalAlt = self._solveMachCASIntercept(self.initCAS, self.finalMach)
+                self.finalTAS = self._CAS2TAS(self.finalCAS, self.finalAlt)
+                self.initTAS = self._CAS2TAS(self.initCAS, self.initAlt)
+                a = self._getSoundSpeed(self.initAlt)
+                self.initMach = self.initTAS / a
+
+            elif set(['initCAS','initMach','finalAlt']).issubset(self.segInputs):
+                # (v, Mi, hf): Solve for initAlt and then TAS
+                self.initAlt = self._solveMachCASIntercept(self.initCAS, self.initMach)
+                self.initTAS = self._CAS2TAS(self.initCAS, self.initAlt)
+                self.finalTAS = self._CAS2TAS(self.finalCAS, self.finalAlt)
+                a = self._getSoundSpeed(self.finalAlt)
+                self.finalMach = self.finalTAS / a
+
+            else:
+                raise Error('%s',self.phase)
+
+        elif self.phase.lower() in ['cmachclimb','cmachdescent']:
+            # Requires either (M, hi, hf), (M, vi, hf), or (M, hi, vf)
+            self.finalMach = self.initMach
+        
+            if set(['initMach','initAlt','finalAlt']).issubset(self.segInputs):
+                # (M, hi, hf): Solve for the TAS and then CAS
+                self._calculateSpeed(endPoint='start')
+                self._calculateSpeed(endPoint='end')
+
+            elif set(['initMach','initCAS','finalAlt']).issubset(self.segInputs):
+                # (M, vi, hf): Solve for initAlt and then initTAS, finalTAS then finalCAS
+                self.initAlt = self._solveMachCASIntercept(self.initCAS, self.initMach)
+                self.initTAS = self._CAS2TAS(self.initCAS, self.initAlt)
+                a = self._getSoundSpeed(self.finalAlt)
+                self.finalTAS = self.finalMach * a
+                self.finalCAS = self._TAS2CAS(self.finalTAS, self.finalAlt)
+
+            elif set(['initMach','initAlt','finalCAS']).issubset(self.segInputs):
+                # (M, hi, vf): Solve for finalAlt and then finalTAS, initTAS then initCAS
+                self.finalAlt = self._solveMachCASIntercept(self.finalCAS, self.finalMach)
+                self.finalTAS = self._CAS2TAS(self.finalCAS, self.finalAlt)
+                a = self._getSoundSpeed(self.initAlt)
+                self.initTAS = self.initMach * a
+                self.initCAS = self._TAS2CAS(self.initTAS, self.initAlt)
+
+            else:
+                raise Error('%s',self.phase)
+
+        else:
+            self._calculateSpeed(endPoint='start')
+            self._calculateSpeed(endPoint='end')
+
+                
+        '''
+        elif self.phase.lower() in ['cvelclimb','climb_cvel']:
             # we require that Vi,hi and Mf are specified
             # calculate hf from Vi and Mf
-            setattr(self,'finalCAS',getattr(self,'initCAS'))
+            self.finalCAS = self.initCAS
             
             #solve for h given M and V
             CAS = getattr(self,'finalCAS')
@@ -410,7 +687,7 @@ class MissionSegment(object):
             TAS = self._CAS2TAS(CAS,finalAlt)
             setattr(self,'finalAlt',finalAlt)
             setattr(self,'finalTAS',TAS)
-        elif self.phase.lower() == 'cmachclimb':
+        elif self.phase.lower() in ['cmachclimb','climb_cmach']:
             # we require that Mi,hg and Vi are specified
             # calculate hi from Vi and Mf
             CAS = getattr(self,'initCAS')
@@ -420,18 +697,8 @@ class MissionSegment(object):
             setattr(self,'initAlt',initAlt)
             TAS = self._CAS2TAS(CAS,initAlt)
             setattr(self,'initTAS',TAS)
-        elif self.phase.lower() == 'cruise' or \
-                self.phase.lower() == 'loiter':
-            # take everything from init and copy to final
-            CAS = getattr(self,'initCAS')
-            TAS = getattr(self,'initTAS')
-            M = getattr(self,'initMach')
-            Alt = getattr(self,'initAlt')
-            setattr(self,'finalCAS',CAS)
-            setattr(self,'finalTAS',TAS)
-            setattr(self,'finalMach',M)
-            setattr(self,'finalAlt',Alt)
-        elif self.phase.lower() == 'cmachdescent':
+
+        elif self.phase.lower() in ['cmachdescent','descent_cmach']:
             # use final CAS and init Mach (copied to final Mach) 
             # to calculate the intersection altitude of the M and
             # CAS values
@@ -442,7 +709,7 @@ class MissionSegment(object):
             setattr(self,'finalAlt',finalAlt)
             TAS = self._CAS2TAS(CAS,finalAlt)
             setattr(self,'finalTAS',TAS)
-        elif self.phase.lower() == 'cveldescent':
+        elif self.phase.lower() in ['cveldescent','descent_cvel']:
             # copy CAS directly, then compute TAS and M from CAS
             # and h
             CAS = getattr(self,'initCAS')
@@ -454,6 +721,50 @@ class MissionSegment(object):
             setattr(self,'finalTAS',TAS)
             setattr(self,'finalMach',M)
         # end
+        '''
+
+    def _calculateSpeed(self, endPoint='start'):
+        '''
+        This assumes that the altitude and one of three speeds 
+        (CAS, TAS, or Mach) are given, and calculates the other two speeds.
+        '''
+        
+        if endPoint.lower() == 'start':
+            CASTag = 'initCAS'
+            TASTag = 'initTAS'
+            machTag = 'initMach'
+            altTag = 'initAlt'
+        elif endPoint.lower() == 'end':
+            CASTag = 'finalCAS'
+            TASTag = 'finalTAS'
+            machTag = 'finalMach'
+            altTag = 'finalAlt'
+        else:
+            # invalid endpoint
+            raise Error('%s: _calculateSpeed, invalid endPoint:\
+                         %s'%(self.phase,endPoint))
+         
+        CAS = getattr(self, CASTag)
+        TAS = getattr(self, TASTag)
+        mach = getattr(self, machTag)
+        alt = getattr(self, altTag)
+
+        # Given M, CAS, or TAS, calculate the other two speeds
+        a = self._getSoundSpeed(alt)
+        if CASTag in self.segInputs:
+            TAS = self._CAS2TAS(CAS, alt)
+            mach = TAS / a
+        elif TASTag in self.segInputs:
+            CAS = self._TAS2CAS(TAS, alt)
+            mach = TAS / a
+        elif machTag in self.segInputs:
+            TAS = mach * a
+            CAS = self._TAS2CAS(TAS, alt)
+
+        setattr(self, CASTag, CAS)
+        setattr(self, TASTag, TAS)
+        setattr(self, machTag, mach)
+        setattr(self, altTag, alt)
 
     def _getSoundSpeed(self,alt):
         '''
@@ -474,7 +785,8 @@ class MissionSegment(object):
         rho = P/(self.R*T)
 
         return P,T,rho
- 
+
+    '''
     def _printSegStates(self):
         '''
         Print the initial and final states for this segment
@@ -486,6 +798,7 @@ class MissionSegment(object):
         print 'Final: CAS: %s, TAS: %s, M: %s, h: %s'%(self.finalCAS, self.finalTAS, self.finalMach,
                                            self.finalAlt)
         print '------------'
+    '''
 
     def _solveMachCASIntercept(self, CAS, mach, initAlt=3048.):
         # TAS: True Air speed
@@ -560,7 +873,7 @@ class MissionSegment(object):
 
         # Source: http://williams.best.vwh.net/avform.htm#Intro
         # Differential pressure: Units of CAS and a0 must be consistent
-        DP = P0 * ((1 + 0.2*(CAS/a0)**2)**(7./2.) - 1)   # impact pressure                                                            
+        DP = P0 * ((1 + 0.2*(CAS/a0)**2)**(7./2.) - 1)   # impact pressure
         
         M = numpy.sqrt(5 * ((DP/P + 1)**(2./7.) - 1))
 
@@ -628,14 +941,11 @@ class MissionSegment(object):
             self.engType = 'None'
         engTypeID = engTypeDict[getattr(self,'engType')]
        
-        #print 'mission segment input',idx,segIdx, h1, h2, M1, M2, V1, V2,deltaTime,fuelFraction,segType,nIntervals
         module.setmissionsegmentdata(idx,segIdx, h1, h2, M1, M2, V1, V2,
                                      deltaTime,fuelFraction,rangeFraction,
                                      segTypeID,engTypeID,nIntervals)
 
-
-    def addDV(self, key, value=None, lower=None, upper=None, scale=1.0,
-              name=None, offset=0.0):
+    def addDV(self, dvName, paramKey, lower=-1e20, upper=1e20, scale=1.0):
         """
         Add one of the class attributes as a mission design
         variable. Typical variables are mach or velocity and altitude
@@ -691,35 +1001,113 @@ class MissionSegment(object):
         """
 
         # First check if we are allowed to add the DV:
-        if key not in self.possibleDVs:
+        if paramKey not in self.possibleDVs:
             raise Error('The DV \'%s\' could not be added. Potential DVs MUST\
             be specified when the missionSegment class is created. \
             For example, if you want initMach as a design variable \
             (...,alpha=value, ...) must\
             be given. The list of possible DVs are: %s.'% (
-                            key, repr(self.possibleDVs)))
+                            paramKey, repr(self.possibleDVs)))
 
-        if name is None:
-            dvName = key + '_%s'% self.phase
+        # if name is None:
+        #     dvName = key + '_%s'% self.phase
+        # else:
+        #     dvName = name
+
+        value = getattr(self, paramKey)
+        # Remove 'init' or 'final' from paramKey and set to dvType
+        dvType = paramKey.replace('init','').replace('final','')
+        if 'init' in paramKey:
+            isInitVal = True
+        elif 'final' in paramKey:
+            isInitVal = False
+
+        self.dvList[dvName] = SegmentDV(dvType, isInitVal, value, lower, upper, scale)
+
+    def setParameters(self, value, paramType, isInitVal):
+        '''
+        Design variable handling, where 'initMach' will be of paramType='Mach' 
+        and isInitVal=True, and the finalMach will be automatically adjusted if needed.
+        Also determines if the previous or next segment will be affect as well
+        '''
+
+        # Determine whether the following or previous segment needs to be updated
+        if isInitVal:
+            key = 'init'+paramType
+            updatePrev = True
+            if paramType == 'Mach':
+                updateNext = self.constMachDV
+            elif paramType == 'Alt':
+                updateNext = self.constAltDV
+            elif paramType == 'CAS' or parmaType == 'TAS':
+                updateNext = self.constVelDV
         else:
-            dvName = name
+            key = 'final'+paramType
+            updateNext = True
+            if paramType == 'Mach':
+                updatePrev = self.constMachDV
+            elif paramType == 'Alt':
+                updatePrev = self.constAltDV
+            elif paramType == 'CAS' or paramType == 'TAS':
+                updatePrev = self.constVelDV
 
-        if value is None:
-            value = getattr(self, key)
-         
-        self.DVs[dvName] = segmentDV(key, value, lower, upper, scale, offset)
-        self.DVNames[key] = dvName
+        # Update the value in the current segment
+        setattr(self, key, value)
 
-class segmentDV(object):
+        # If this segment has a constant value, update the init/final value
+        if isInitVal and updateNext:
+            key = 'final'+paramType
+            setattr(self, key, value)
+        elif (not isInitVal) and updatePrev:
+            key = 'init'+paramType
+            setattr(self, key, value)
+
+        return updatePrev, updateNext
+
+
+    def __str__(self, idTag=''):
+        '''
+        Return a string representation of the states in this segment
+        '''
+
+        if len(idTag) > 0:
+            idTag = '  ---  %s'%idTag
+
+        # Putting the states into an array automatically convert Nones to nans
+        states = numpy.zeros([2,4])
+        states[0,:] = [self.initAlt, self.initMach, self.initCAS, self.initTAS]
+        states[1,:] = [self.finalAlt, self.finalMach, self.finalCAS, self.finalTAS]
+
+        string = '%20s  '%self.phase
+        string += '%8s  %8s  %8s  %8s %s \n'%('Alt','Mach','CAS','TAS', idTag)
+        string += '%20s  %8.2f  %8.6f  %8.4f  %8.4f \n' % \
+            ('', states[0,0], states[0,1], states[0,2], states[0,3])
+        string += '%20s  %8.2f  %8.6f  %8.4f  %8.4f   ' % \
+            ('', states[1,0], states[1,1], states[1,2], states[1,3])
+
+        return string        
+
+
+class SegmentDV(object):
     """
-    A container storing information regarding an 'aerodynamic' variable.
+    A container storing information regarding a mission profile variable.
     """
     
-    def __init__(self, key, value, lower, upper, scale, offset):
-        self.key = key
+    def __init__(self, dvType, isInitVal, value, lower, upper, scale=1.0):
+
+        self.type = dvType           # String: 'Mach', 'Alt', 'TAS', 'CAS'
+        self.isInitVal = isInitVal   # Boolean: 
         self.value = value
         self.lower = lower
         self.upper = upper
         self.scale = scale
-        self.offset = offset
+        
+        self.segID = -1              # The segment ID this DV obj was initalized
+        # self.offset = offset
 
+    def setSegmentID(self, ID):
+        '''
+        Set the segment ID in which this DV belongs to within the profile
+        '''
+
+        self.segID = ID
