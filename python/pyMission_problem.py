@@ -464,7 +464,7 @@ class MissionSegment(object):
             self.constMachDV = True
             self.constVelDV = True
             self.constAltDV = True
-        elif self.phase.lower() in ['acceleratedCruise','deceleratedCruise']:
+        elif self.phase.lower() in ['acceleratedcruise','deceleratedcruise']:
             self.constMachDV = False
             self.constVelDV = False
             self.constAltDV = True
@@ -786,19 +786,17 @@ class MissionSegment(object):
 
         return P,T,rho
 
-    '''
-    def _printSegStates(self):
-        '''
-        Print the initial and final states for this segment
-        '''
-        print '------------'
-        print 'Segment : %s'%(self.phase)
-        print 'Init: CAS: %s, TAS: %s, M: %s, h: %s'%(self.initCAS, self.initTAS, self.initMach,
-                                           self.initAlt)
-        print 'Final: CAS: %s, TAS: %s, M: %s, h: %s'%(self.finalCAS, self.finalTAS, self.finalMach,
-                                           self.finalAlt)
-        print '------------'
-    '''
+    # def _printSegStates(self):
+    #     '''
+    #     Print the initial and final states for this segment
+    #     '''
+    #     print '------------'
+    #     print 'Segment : %s'%(self.phase)
+    #     print 'Init: CAS: %s, TAS: %s, M: %s, h: %s'%(self.initCAS, self.initTAS, self.initMach,
+    #                                        self.initAlt)
+    #     print 'Final: CAS: %s, TAS: %s, M: %s, h: %s'%(self.finalCAS, self.finalTAS, self.finalMach,
+    #                                        self.finalAlt)
+    #     print '------------'
 
     def _solveMachCASIntercept(self, CAS, mach, initAlt=3048.):
         # TAS: True Air speed
