@@ -401,7 +401,7 @@ class MissionSegment(object):
         self.phase = phase
 
         # Check if we have english units:
-        self.englishUnits = True
+        self.englishUnits = False
         if 'englishUnits' in kwargs:
             self.englishUnits = kwargs['englishUnits']
            
