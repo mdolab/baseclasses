@@ -104,7 +104,7 @@ class MissionProblem(object):
 
         return
 
-    def addVariablesPyOpt(pyOptProb):
+    def addVariablesPyOpt(self, pyOptProb):
         '''
         Add the current set of variables to the optProb object.
 
@@ -160,7 +160,7 @@ class MissionProblem(object):
         for i in xrange(len(self.missionProfiles)):
             profTag = 'P%02d'%i
             string += self.missionProfiles[i].__str__(profTag)
-            string += '\n'
+#            string += '\n'
 
         return string
 
@@ -250,14 +250,14 @@ class MissionProfile(object):
                 updatePrev, updateNext = seg.setParameters(dvVal, dvType, isInitVal)
 
                 # Update any PREVIOUS segments that depends on this DV
-                while updatePrev:
+                while updatePrev and segID > 0:
                     segID -= 1
                     seg = self.segments[segID]
                     updatePrev, tmp = seg.setParameters(dvVal, dvType, isInitVal=False)
 
                 # Update any FOLLOWING segments that depends on this DV
                 segID = dvObj.segID
-                while updateNext:
+                while updateNext and segID < len(self.segments)-1:
                     segID += 1
                     seg = self.segments[segID]
                     tmp, updateNext = seg.setParameters(dvVal, dvType, isInitVal=True)
@@ -371,7 +371,7 @@ class MissionProfile(object):
         for i in xrange(len(self.segments)):
             segTag = '%sS%02d'%(idTag,i)
             string += self.segments[i].__str__(segTag)
-            string += '\n'
+#            string += '\n'
             
         return string
                     
@@ -1080,7 +1080,7 @@ class MissionSegment(object):
         string += '%8s  %8s  %8s  %8s %s \n'%('Alt','Mach','CAS','TAS', idTag)
         string += '%20s  %8.2f  %8.6f  %8.4f  %8.4f \n' % \
             ('', states[0,0], states[0,1], states[0,2], states[0,3])
-        string += '%20s  %8.2f  %8.6f  %8.4f  %8.4f   ' % \
+        string += '%20s  %8.2f  %8.6f  %8.4f  %8.4f \n' % \
             ('', states[1,0], states[1,1], states[1,2], states[1,3])
 
         return string        
