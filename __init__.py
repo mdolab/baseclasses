@@ -11,3 +11,5 @@ from .python.pyMission_solver import MissionSolver
 from .python.pyMission_problem import MissionProblem
 from .python.pyMission_problem import MissionProfile
 from .python.pyMission_problem import MissionSegment
+
+from .python.ICAOAtmosphere import ICAOAtmosphere
