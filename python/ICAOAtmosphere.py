@@ -27,7 +27,7 @@ class ICAOAtmosphere(object):
         Compute the atmospheric properties at altitude, 'altitude' in meters
         """
         if altitude is None:
-            return None, None, None
+            return None, None
         # Convert altitude to km since this is what the ICAO
         # atmosphere uses:
         if self.englishUnits:
