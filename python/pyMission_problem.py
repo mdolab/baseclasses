@@ -750,6 +750,9 @@ class MissionSegment(object):
         alt = getattr(self, altTag)
 
         # Given M, CAS, or TAS, calculate the other two speeds
+        if alt == None:
+            print 'Alt = None:', self.phase, CAS, TAS, mach, alt
+            sys.exit(0)
         a = self._getSoundSpeed(alt)
         if CASTag in self.segInputs:
             TAS = self._CAS2TAS(CAS, alt)
