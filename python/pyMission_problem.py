@@ -72,6 +72,7 @@ class MissionProblem(object):
         self.missionProfiles = []
         self.missionSegments = []
         self.funcNames = {}
+        self.currentDVs = {}
 
         # Check for function list:
         self.evalFuncs = set()
@@ -100,6 +101,9 @@ class MissionProblem(object):
             for seg in prof.segments:
                 self.segCounter += 1
                 self.missionSegments.extend([seg])
+
+            for dvName in prof.dvList:
+                self.currentDVs[dvName] = prof.dvList[dvName].value
             # end
 
         return
@@ -119,6 +123,7 @@ class MissionProblem(object):
                 dv = profile.dvList[dvName]
                 pyOptProb.addVar(dvName, 'c', scale=dv.scale,
                                  value=dv.value, lower=dv.lower, upper=dv.upper)
+                self.currentDVs[dvName] = dv.value
 
         return pyOptProb
 
@@ -133,9 +138,38 @@ class MissionProblem(object):
             design variable names this object needs
         '''
 
+        # Update the set of design variable values being used
+        self.currentDVs.update(missionDVs)
+
         for profile in self.missionProfiles:
             profile.setDesignVars(missionDVs)
 
+    def evalDVSens(self, stepSize=1e-20):
+        '''
+        Evaluate the sensitivity of each of the 8 segment parameters
+        (Alt, Mach, IAS, TAS) with respect to the design variables
+        '''
+
+        dvSens = {}
+        
+        # Perturbate each of the DV with complex step
+        for dvName in self.currentDVs:
+            tmpDV = {dvName: self.currentDVs[dvName] + stepSize*1j}
+            profSens = []
+            for profile in self.missionProfiles:
+                profile.setDesignVars(tmpDV)
+                profSens.append( profile.getSegmentParameters() )
+                profile.setDesignVars(self.currentDVs)
+
+            # Replace the NaNs with 0
+            profSens = numpy.hstack(profSens)
+            indNaNs = numpy.isnan(profSens)
+            profSens[indNaNs] = 0.0
+
+            profSens = profSens.imag / stepSize
+            dvSens[dvName] = profSens
+
+        return dvSens                
     
     def getNSeg(self):
         '''
@@ -155,12 +189,13 @@ class MissionProblem(object):
         '''
         Return a string representation of the profiles within this mission
         '''
-
+        
+        segCount = 1
         string = 'MISSION PROBLEM: %s \n'%self.name
         for i in xrange(len(self.missionProfiles)):
-            profTag = 'P%02d'%i
-            string += self.missionProfiles[i].__str__(profTag)
-#            string += '\n'
+            # profTag = 'P%02d'%i
+            string += self.missionProfiles[i].__str__(segCount)
+            segCount += len(self.missionProfiles[i].segments)
 
         return string
 
@@ -267,7 +302,28 @@ class MissionProfile(object):
             seg.propagateParameters()
 
         self._checkStateConsistancy()
-                
+
+    def getSegmentParameters(self):
+        '''
+        Get the 8 segment parameters from each of the segment it owns
+        Order is [h1, M1, CAS1, TAS1, h2, M2, CAS2, TAS2]
+        '''
+
+        nSeg = len(self.segments)
+        
+        segParameters = numpy.zeros(8*nSeg, dtype='D')
+        for i in xrange(nSeg):
+            seg = self.segments[i]
+            segParameters[8*i  ] = seg.initAlt
+            segParameters[8*i+1] = seg.initMach
+            segParameters[8*i+2] = seg.initCAS
+            segParameters[8*i+3] = seg.initTAS
+            segParameters[8*i+4] = seg.finalAlt
+            segParameters[8*i+5] = seg.finalMach
+            segParameters[8*i+6] = seg.finalCAS
+            segParameters[8*i+7] = seg.finalTAS
+
+        return segParameters
 
     def _checkStateConsistancy(self):
         # loop over the segments.
@@ -362,16 +418,15 @@ class MissionProfile(object):
             # end
         # end
 
-    def __str__(self, idTag=''):
+    def __str__(self, segStartNum=0):
         '''
         Return a string representation of the segments within this profile
         '''
 
         string = 'MISSION PROFILE: %s \n'%self.name
         for i in xrange(len(self.segments)):
-            segTag = '%sS%02d'%(idTag,i)
-            string += self.segments[i].__str__(segTag)
-#            string += '\n'
+            # segTag = '%sS%02d'%(idTag,i)
+            string += self.segments[i].__str__(segStartNum+i)
             
         return string
                     
@@ -1066,24 +1121,32 @@ class MissionSegment(object):
         return updatePrev, updateNext
 
 
-    def __str__(self, idTag=''):
+    def __str__(self, segNum=None):
         '''
         Return a string representation of the states in this segment
         '''
 
-        if len(idTag) > 0:
-            idTag = '  ---  %s'%idTag
+        # if len(idTag) > 0:
+        #     idTag = '  ---  %s'%idTag
+        if segNum == None:
+            idTag = ''
+        else:
+            idTag = '%02d:'%segNum
 
         # Putting the states into an array automatically convert Nones to nans
         states = numpy.zeros([2,4])
         states[0,:] = [self.initAlt, self.initMach, self.initCAS, self.initTAS]
         states[1,:] = [self.finalAlt, self.finalMach, self.finalCAS, self.finalTAS]
+        if self.fuelFraction != None:
+            fuelFrac = self.fuelFraction
+        else:
+            fuelFrac = numpy.nan
 
-        string = '%20s  '%self.phase
-        string += '%8s  %8s  %8s  %8s %s \n'%('Alt','Mach','CAS','TAS', idTag)
-        string += '%20s  %8.2f  %8.6f  %8.4f  %8.4f \n' % \
-            ('', states[0,0], states[0,1], states[0,2], states[0,3])
-        string += '%20s  %8.2f  %8.6f  %8.4f  %8.4f \n' % \
+        string = '%3s %18s  '%(idTag, self.phase)
+        string += '%8s  %8s  %8s  %8s  %8s \n'%('Alt','Mach','CAS','TAS','FuelFrac')
+        string += '%22s  %8.2f  %8.6f  %8.4f  %8.4f  %8.4f \n' % \
+            ('', states[0,0], states[0,1], states[0,2], states[0,3], fuelFrac)
+        string += '%22s  %8.2f  %8.6f  %8.4f  %8.4f \n' % \
             ('', states[1,0], states[1,1], states[1,2], states[1,3])
 
         return string        
