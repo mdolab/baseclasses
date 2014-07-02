@@ -405,7 +405,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
         return self.funcNames[key]
 
-    def evalFunctions(self, funcs, evalFuncs):
+    def evalFunctions(self, funcs, evalFuncs, ignoreMissing=False):
         """
         Evaluate the desired aerodynamic functions. It may seem
         strange that the aeroProblem has 'functions' associated with
@@ -448,11 +448,12 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                 self.funcNames[f] = key
                 funcs[key] = getattr(self, f)
         else:
-            raise Error('One of the functions in \'evalFuncs\' was not\
-            valid. The valid list of functions is: %s.'% (
-                            repr(self.possibleFunctions)))
+            if not ignoreMissing:
+                raise Error("One of the functions in 'evalFunctionsSens' was "
+                            "not valid. The valid list of functions is: %s."% (
+                                repr(self.possibleFunctions)))
 
-    def evalFunctionsSens(self, funcsSens, evalFuncs):
+    def evalFunctionsSens(self, funcsSens, evalFuncs, ignoreMissing=True):
         """
         Evaluate the sensitivity of the desired aerodynamic functions.
 
@@ -473,10 +474,10 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             for f in evalFuncs:
                 funcsSens[self.funcNames[f]] = self._getDVSens(f)
         else:
-            raise Error('One of the functions in \'evalFunctionsSens\' was not\
-            valid. The valid list of functions is: %s.'% (
-                            repr(self.possibleFunctions)))
-
+            if not ignoreMissing:
+                raise Error("One of the functions in 'evalFunctionsSens' was "
+                            "not valid. The valid list of functions is: %s."% (
+                                repr(self.possibleFunctions)))
     @property
     def mach(self):
         return self.__dict__['mach']

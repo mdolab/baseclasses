@@ -163,7 +163,7 @@ class StructProblem(object):
 
         return self.funcNames[key]
 
-    def evalFunctions(self, funcs, evalFuncs):
+    def evalFunctions(self, funcs, evalFuncs, ignoreMissing=False):
         """
         No current functions
         
@@ -183,11 +183,12 @@ class StructProblem(object):
                 self.funcNames[f] = key
                 funcs[key] = getattr(self, f)
         else:
-            raise Error('One of the functions in \'evalFuncs\' was not\
-            valid. The valid list of functions is: %s.'% (
-                            repr(self.possibleFunctions)))
+            if not ignoreMissing:
+                raise Error("One of the functions in 'evalFuncs' was not "
+                            "valid. The valid list of functions is: %s."% (
+                                repr(self.possibleFunctions)))
 
-    def evalFunctionsSens(self, funcsSens, evalFuncs):
+    def evalFunctionsSens(self, funcsSens, evalFuncs, ignoreMissing=False):
         """
         Evaluate the sensitivity of the desired functions
 
@@ -201,16 +202,17 @@ class StructProblem(object):
 
         # Make sure all the functions have been evaluated.
         tmp = {}
-        self.evalFunctions(tmp, evalFuncs)
+        self.evalFunctions(tmp, evalFuncs, ignoreMissing)
 
         # Check that all functions are ok:
         if set(evalFuncs) <= self.possibleFunctions:
             for f in evalFuncs:
                 funcsSens[self.funcNames[f]] = self._getDVSens(f)
         else:
-            raise Error('One of the functions in \'evalFunctionsSens\' was not\
-            valid. The valid list of functions is: %s.'% (
-                            repr(self.possibleFunctions)))
+            if not ignoreMissing:
+                raise Error("One of the functions in 'evalFunctionsSens' was "
+                            "not valid. The valid list of functions is: %s."% (
+                                repr(self.possibleFunctions)))
 
 
 class structDV(object):

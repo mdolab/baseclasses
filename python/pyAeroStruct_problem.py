@@ -103,8 +103,8 @@ class AeroStructProblem(object):
         """
         Evaluate functions of the AP and SP.
         """
-        self.AP.evalFunctions(funcs, evalFuncs)
-        self.SP.evalFunctions(funcs, evalFuncs)
+        self.AP.evalFunctions(funcs, evalFuncs, ignoreMissing=True)
+        self.SP.evalFunctions(funcs, evalFuncs, ignoreMissing=True)
 
     def evalFunctionsSens(self, funcsSens, evalFuncs):
         """
@@ -117,7 +117,7 @@ class AeroStructProblem(object):
         evalFuncs : iterable object containing strings
             The functions that the user wants evaluated
             """
-        self.AP.evalFunctionsSens(funcsSens, evalFuncs)
-        self.SP.evalFunctionsSens(funcsSens, evalFuncs)
+        self.AP.evalFunctionsSens(funcsSens, evalFuncs, ignoreMissing=True)
+        self.SP.evalFunctionsSens(funcsSens, evalFuncs, ignoreMissing=True)
 
     
