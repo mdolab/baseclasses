@@ -252,6 +252,7 @@ class MissionProfile(object):
                 self.dvList[dvNameGlobal].setSegmentID(segID)
 
             # Propagate the segment inputs from one to next
+            # POSSIBLE PROBLEMATIC STATEMENTS...
             for var in segments[i-1].segInputs:
                 if 'final' in var:
                     newVar = var.replace('final','init')
@@ -964,12 +965,6 @@ class MissionSegment(object):
         M2 = getattr(self,'finalMach')
         if M2 == None:
             M2 = 0.0
-        V1 = getattr(self,'initCAS')
-        if V1 == None:
-            V1 = 0.0
-        V2 = getattr(self,'finalCAS')
-        if V2 == None:
-            V2 = 0.0
         deltaTime = getattr(self,'segTime')
         if deltaTime == None:
             deltaTime = 0.0
@@ -997,7 +992,7 @@ class MissionSegment(object):
             self.engType = 'None'
         engTypeID = engTypeDict[getattr(self,'engType')]
        
-        module.setmissionsegmentdata(idx,segIdx, h1, h2, M1, M2, V1, V2,
+        module.setmissionsegmentdata(idx,segIdx, h1, h2, M1, M2,
                                      deltaTime,fuelFraction,rangeFraction,
                                      segTypeID,engTypeID,nIntervals)
 
@@ -1032,24 +1027,6 @@ class MissionSegment(object):
             only used when the user wishes to have multiple
             aeroProblems to explictly use the same design variable.
 
-        offset : float. Default is 0.0
-
-            Specify a specific (constant!) offset of the value used,
-            as compared to the actual design variable. This is most
-            often used when a single aerodynamic variable is used to
-            change multiple aeroProblems. For example. if you have
-            three aeroProblems for a multiPoint analysis, and you want
-            mach numbers of 0.84, 0.85 and 0.86, but want want only to
-            change the center one, and have the other two slave, we
-            would do this::
-
-              >>> ap1.addDV('mach',...,name='centerMach', offet=-0.01)
-              >>> ap2.addDV('mach',...,name='centerMach', offet= 0.00)
-              >>> ap3.addDV('mach',...,name='centerMach', offet=+0.01)
-
-            The result is a single design variable driving three
-            different mach numbers. 
-            
         Examples
         --------
         >>> # Add initMach variable with typical bounds
