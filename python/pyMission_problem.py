@@ -146,8 +146,8 @@ class MissionProblem(object):
 
     def evalDVSens(self, stepSize=1e-20):
         '''
-        Evaluate the sensitivity of each of the 8 segment parameters
-        (Alt, Mach, IAS, TAS) with respect to the design variables
+        Evaluate the sensitivity of each of the 4 segment parameters
+        (Mach, Alt) with respect to the design variables
         '''
 
         dvSens = {}
@@ -158,11 +158,11 @@ class MissionProblem(object):
             profSens = []
             for profile in self.missionProfiles:
                 profile.setDesignVars(tmpDV)
-                profSens.append( profile.getSegmentParameters() )
+                profSens.extend( profile.getSegmentParameters() )
                 profile.setDesignVars(self.currentDVs)
 
             # Replace the NaNs with 0
-            profSens = numpy.hstack(profSens)
+            profSens = numpy.array(profSens)
             indNaNs = numpy.isnan(profSens)
             profSens[indNaNs] = 0.0
 
@@ -252,11 +252,11 @@ class MissionProfile(object):
                 self.dvList[dvNameGlobal].setSegmentID(segID)
 
             # Propagate the segment inputs from one to next
-            # POSSIBLE PROBLEMATIC STATEMENTS...
-            for var in segments[i-1].segInputs:
-                if 'final' in var:
-                    newVar = var.replace('final','init')
-                    seg.segInputs.add(newVar)
+            if i > 0:   # don't propagate from last (i=-1) to first (i=0) segment
+                for var in segments[i-1].segInputs:
+                    if 'final' in var:
+                        newVar = var.replace('final','init')
+                        seg.segInputs.add(newVar)
             seg.determineInputs()
 
         self._checkStateConsistancy()
@@ -312,17 +312,22 @@ class MissionProfile(object):
 
         nSeg = len(self.segments)
         
-        segParameters = numpy.zeros(8*nSeg, dtype='D')
+        segParameters = numpy.zeros(4*nSeg, dtype='D')
         for i in xrange(nSeg):
             seg = self.segments[i]
-            segParameters[8*i  ] = seg.initAlt
-            segParameters[8*i+1] = seg.initMach
-            segParameters[8*i+2] = seg.initCAS
-            segParameters[8*i+3] = seg.initTAS
-            segParameters[8*i+4] = seg.finalAlt
-            segParameters[8*i+5] = seg.finalMach
-            segParameters[8*i+6] = seg.finalCAS
-            segParameters[8*i+7] = seg.finalTAS
+            #print seg.initMach, seg.initAlt, seg.finalMach, seg.finalAlt
+            segParameters[4*i  ] = seg.initMach
+            segParameters[4*i+1] = seg.initAlt
+            segParameters[4*i+2] = seg.finalMach
+            segParameters[4*i+3] = seg.finalAlt
+            # segParameters[8*i  ] = seg.initMach
+            # segParameters[8*i+1] = seg.initAlt
+            # segParameters[8*i+2] = seg.initCAS
+            # segParameters[8*i+3] = seg.initTAS
+            # segParameters[8*i+4] = seg.finalMach
+            # segParameters[8*i+5] = seg.finalAlt
+            # segParameters[8*i+6] = seg.finalCAS
+            # segParameters[8*i+7] = seg.finalTAS
 
         return segParameters
 
@@ -504,7 +509,7 @@ class MissionSegment(object):
             if getattr(self, var) is not None:
                 self.possibleDVs.add(var)
                 self.segInputs.add(var)
-   
+
         # Storage of DVs
         self.dvList = {}
 
