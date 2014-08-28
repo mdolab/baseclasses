@@ -210,12 +210,13 @@ class MissionProfile(object):
 
     '''
     
-    def __init__(self, name):
+    def __init__(self, name, units='SI'):
         '''
         Initialize the mission profile
         '''
 
         self.name = name
+        self.units = units
 
         self.segments = []
         self.dvList = {}
@@ -242,6 +243,7 @@ class MissionProfile(object):
         # Loop over each *new* segment in search for DVs
         for i in xrange(len(segments)):
             seg = segments[i]
+            seg.setUnitSystem(self.units)
             segID = i + nSeg_Before
 
             # Loop over the DVs in the segment, if any
@@ -461,22 +463,22 @@ class MissionSegment(object):
         # have to have a phase type
         self.phase = phase
 
-        # Check if we have english units:
-        self.englishUnits = False
-        if 'englishUnits' in kwargs:
-            self.englishUnits = kwargs['englishUnits']
+        # # Check if we have english units:
+        # self.englishUnits = False
+        # if 'englishUnits' in kwargs:
+        #     self.englishUnits = kwargs['englishUnits']
            
-        # create an internal instance of the atmosphere to use
-        self.atm = ICAOAtmosphere(englishUnits=self.englishUnits)
+        # # create an internal instance of the atmosphere to use
+        # self.atm = ICAOAtmosphere(englishUnits=self.englishUnits)
 
-             # Check if 'R' is given....if not we assume air
-        if 'R' in kwargs:
-            self.R = kwargs['R']
-        else:
-            if self.englishUnits:
-                self.R = 1716.493 
-            else:
-                self.R = 287.870
+        #      # Check if 'R' is given....if not we assume air
+        # if 'R' in kwargs:
+        #     self.R = kwargs['R']
+        # else:
+        #     if self.englishUnits:
+        #         self.R = 1716.493 
+        #     else:
+        #         self.R = 287.870
 
         # Check if 'gamma' is given....if not we assume air
         if 'gamma' in kwargs:
@@ -537,6 +539,16 @@ class MissionSegment(object):
         self.isFirstStateSeg=False
         
         return
+
+    def setUnitSystem(self, units='SI'):
+        
+        units = units.lower()
+        if units == 'si' or units == 'metric':
+            self.atm = ICAOAtmosphere(englishUnits=False)
+            self.R = 287.870
+        elif units == 'imperial' or units == 'english':
+            self.atm = ICAOAtmosphere(englishUnits=True)
+            self.R = 1716.493 
 
     def determineInputs(self):
         '''
