@@ -13,3 +13,4 @@ from .python.pyMission_problem import MissionProfile
 from .python.pyMission_problem import MissionSegment
 
 from .python.ICAOAtmosphere import ICAOAtmosphere
+from .python.pyEngine_problem import EngineProblem
