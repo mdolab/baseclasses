@@ -73,6 +73,7 @@ class MissionProblem(object):
         self.missionSegments = []
         self.funcNames = {}
         self.currentDVs = {}
+        self.hasProfileDVs = False
 
         # Check for function list:
         self.evalFuncs = set()
@@ -124,6 +125,7 @@ class MissionProblem(object):
                 pyOptProb.addVar(dvName, 'c', scale=dv.scale,
                                  value=dv.value, lower=dv.lower, upper=dv.upper)
                 self.currentDVs[dvName] = dv.value
+                self.hasProfileDVs = True
 
         return pyOptProb
 
@@ -151,7 +153,7 @@ class MissionProblem(object):
         '''
 
         dvSens = {}
-        
+
         # Perturbate each of the DV with complex step
         for dvName in self.currentDVs:
             tmpDV = {dvName: self.currentDVs[dvName] + stepSize*1j}
@@ -169,7 +171,47 @@ class MissionProblem(object):
             profSens = profSens.imag / stepSize
             dvSens[dvName] = profSens
 
-        return dvSens                
+        return dvSens
+
+    def getAltitudeCons(self, CAS, mach, alt):
+        ''' 
+        Solve for the altitude at which CAS=mach
+        '''
+
+        if type(CAS) == str and CAS in self.currentDVs:
+            CAS = self.currentDVs[CAS]
+        if type(mach) == str and mach in self.currentDVs:
+            mach = self.currentDVs[mach]
+        if type(alt) == str and alt in self.currentDVs:
+            alt = self.currentDVs[alt]
+        
+        seg = self.missionSegments[0]
+        altIntercept = seg._solveMachCASIntercept(CAS, mach)
+        
+        return alt - altIntercept
+
+    def getAltitudeConsSens(self, CAS, mach, alt, stepSize=1e-20):
+        ''' 
+        Solve for the altitude sensitivity at which CAS=mach
+        '''
+
+        seg = self.missionSegments[0]
+        altSens = {}
+
+        if type(CAS) == str and CAS in self.currentDVs:
+            CASVal = self.currentDVs[CAS]
+            dAltdCAS = seg._solveMachCASIntercept(CASVal+stepSize*1j, mach)
+            altSens[CAS] = -dAltdCAS.imag / stepSize
+
+        if type(mach) == str and mach in self.currentDVs:
+            machVal = self.currentDVs[mach]
+            dAltdMach = seg._solveMachCASIntercept(CAS, machVal+stepSize*1j)
+            altSens[mach] = -dAltdMach.imag / stepSize
+
+        if type(alt) == str and alt in self.currentDVs:
+            altSens[alt] = 1.0            
+
+        return altSens
     
     def getNSeg(self):
         '''
@@ -879,7 +921,7 @@ class MissionSegment(object):
         # CAS: Calibrated air speed
         
         # Simple Newton's method to solve for the altitude at which
-        # TAS=mach 
+        # CAS=mach 
 
         alt = initAlt
         dAlt = 1e+1
