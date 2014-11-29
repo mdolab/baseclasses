@@ -296,7 +296,8 @@ class MissionProfile(object):
                 self.dvList[dvNameGlobal].setSegmentID(segID)
 
             # Propagate the segment inputs from one to next
-            if i > 0:   # don't propagate from last (i=-1) to first (i=0) segment
+            # except don't propagate from last (i=-1) to first (i=0) segment
+            if i > 0 and seg.propagateInputs: 
                 for var in segments[i-1].segInputs:
                     if 'final' in var:
                         newVar = var.replace('final','init')
@@ -383,7 +384,7 @@ class MissionProfile(object):
         # if they don't exist, copy.
         for i in range(len(self.segments)):
             seg = self.segments[i]
-            if getattr(seg, 'fuelFraction') is not None:
+            if seg.propagateInputs == False:
                 # Segment is a fuel fraction segment nothing needs to be done
                 #print getattr(seg, 'phase')
                 pass
@@ -531,7 +532,7 @@ class MissionSegment(object):
         # These are the parameters that can be simply set directly in the class. 
         paras = set(('initMach','initAlt','initCAS','initTAS',
                      'finalMach','finalAlt','finalCAS','finalTAS',
-                     'fuelFraction','rangeFraction','segTime','engType'))
+                     'fuelFraction','rangeFraction','segTime','engType','throttle'))
         
         # By default everything is None
         for para in paras:
@@ -553,6 +554,12 @@ class MissionSegment(object):
             if getattr(self, var) is not None:
                 self.possibleDVs.add(var)
                 self.segInputs.add(var)
+
+        # propagateInputs should be true for everything 
+        # except fuelFraction and fixedThrottle segments
+        self.propagateInputs = True
+        if self.fuelFraction != None or self.throttle != None:
+            self.propagateInputs = False
 
         # Storage of DVs
         self.dvList = {}
@@ -599,7 +606,7 @@ class MissionSegment(object):
         be two inputs. At this point, the two beginning inputs should already
         be determined during initalization or by the MissionProfile.
         '''
-        
+
         # Check there are two inputs for the segment start
         count = 0
         for var in self.segInputs:
@@ -640,6 +647,18 @@ class MissionSegment(object):
                     self.segInputs.add('finalCAS')
                 elif 'initTAS' in self.segInputs:
                     self.segInputs.add('finalTAS')
+
+            # # For set throttle segment types
+            # if self.throttle != None:
+            #     if 'finalMach' not in self.segInputs and 'initMach' in self.segInputs:
+            #         self.segInputs.add('finalMach')
+            #     if 'finalAlt' not in self.segInputs and 'initAlt' in self.segInputs:
+            #         self.segInputs.add('finalAlt')
+            #     if 'finalCAS' not in self.segInputs and 'initCAS' in self.segInputs:
+            #         self.segInputs.add('finalCAS')
+            #     if 'finalTAS' not in self.segInputs and 'initTAS' in self.segInputs:
+            #         self.segInputs.add('finalTAS')
+
 
     '''
     def _syncMachVAndAlt(self,endPoint='start'):
@@ -709,7 +728,7 @@ class MissionSegment(object):
         Set the final V,M,h base on initial values and segType.
         '''
 
-        if self.fuelFraction != None:
+        if self.propagateInputs == False:
             # A FuelFraction type segment, nothing to propagate
             return
 
@@ -1036,11 +1055,17 @@ class MissionSegment(object):
 
         # Get the fuel-fraction, if provided, then segment is a generic fuel fraction type
         fuelFraction = getattr(self,'fuelFraction')
-        if fuelFraction == None:
+        throttle = getattr(self,'throttle')
+        if fuelFraction == None and throttle == None:
             segTypeID = segTypeDict[getattr(self,'phase').lower()]
             fuelFraction = 0.0
-        else:
-            segTypeID = segTypeDict['generic']
+            throttle = 0.0
+        elif fuelFraction != None:
+            segTypeID = segTypeDict['fuelFraction']
+            throttle = 0.0
+        elif throttle != None:
+            segTypeID = segTypeDict['fixedThrottle']
+            fuelFraction = 0.0
         # end
 
         # Get the engine type and ensure the engine type is defined in engTypeDict
@@ -1052,7 +1077,7 @@ class MissionSegment(object):
         engTypeID = engTypeDict[getattr(self,'engType')]
        
         module.setmissionsegmentdata(idx,segIdx, h1, h2, M1, M2,
-                                     deltaTime,fuelFraction,rangeFraction,
+                                     deltaTime,fuelFraction,throttle,rangeFraction,
                                      segTypeID,engTypeID,nIntervals)
 
     def addDV(self, dvName, paramKey, lower=-1e20, upper=1e20, scale=1.0):
