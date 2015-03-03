@@ -371,6 +371,16 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         self.DVs[dvName] = aeroDV(key, value, lower, upper, scale, offset)
         self.DVNames[key] = dvName
 
+    def updateInternalDVs(self):
+        """
+        A specialized function that allows for the updating of the
+        internally stored DVs. This would be used for, example, if a
+        CLsolve is done before the optimization and that value needs
+        to be used."""
+        
+        for key in self.DVNames:
+            self.DVs[self.DVNames[key]].value = getattr(self, key)
+
     def setDesignVars(self, x):
         """
         Set the variables in the x-dict for this object.
