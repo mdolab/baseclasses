@@ -61,6 +61,12 @@ class AeroProblem(object):
     'mach' + 'T' + 'P':
         Any arbitrary temperature and pressure.
 
+    'V' + 'rho' + 'T'
+        Generally for low speed specifications
+
+    'V' + 'rho' + 'P'
+        Generally for low speed specifications
+
     The combinations listed above are the **only** valid combinations
     of arguments that are permitted. Furthermore, since the internal
     processing is based (permenantly) on these parameters, it is
@@ -263,11 +269,21 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             self.mach = kwargs['mach']
             self.altitude = kwargs['altitude']
             self._update()
+        elif set(('V', 'rho', 'T')) <= keys:
+            self.V = kwargs['V']
+            self.rho = kwargs['rho']
+            self.T = kwargs['T']
+            self._update()
+        elif set(('V', 'rho', 'P')) <= keys:
+            self.V = kwargs['V']
+            self.rho = kwargs['rho']
+            self.P = kwargs['P']
+            self._update()
         else:
-            raise Error('There was not sufficient information to form\
-            an aerodynamic state. See AeroProblem documentation in for\
-            pyAero_problem.py for information on how to correctly \
-            specify the aerodynamic state')
+            raise Error('There was not sufficient information to form '
+                        'an aerodynamic state. See AeroProblem documentation '
+                        'in for pyAero_problem.py for information on how '
+                        'to correctly specify the aerodynamic state')
    
         # Specify the set of possible design variables:
         varFuncs = ['alpha', 'beta', 'areaRef', 'chordRef', 'spanRef',
@@ -567,13 +583,19 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
         if self.mach is not None and self.a is not None:
             self.V = self.mach * self.a
-            
+
+        if self.a is not None and self.V is not None:
+            self.__dict__['mach'] = self.V/self.a
+
         if  self.P is not None and self.T is not None:
             self.__dict__['rho'] = self.P/(self.R*self.T)
 
         if self.rho is not None and self.T is not None:
             self.__dict__['P'] = self.rho*self.R*self.T
-            
+
+        if self.rho is not None and self.P is not None:
+            self.__dict__['T'] = self.P /(self.rho*self.R)
+
         if self.mu is not None and self.rho is not None:
             self.nu = self.mu / self.rho
             
