@@ -74,6 +74,7 @@ class MissionProblem(object):
         self.funcNames = {}
         self.currentDVs = {}
         self.hasProfileDVs = False
+        self.solveFailed = False
 
         # Check for function list:
         self.evalFuncs = set()
