@@ -69,7 +69,6 @@ class EngineProblem(object):
         # Storage of DVs
         self.DVs = {}
         self.DVNames = {}
-        self.DVNames.update(self.AP.DVNames)
         self.possibleDVs = set(['throttle'])
         
     def addDV(self, key, value=None, lower=None, upper=None, scale=1.0,
@@ -132,8 +131,8 @@ class EngineProblem(object):
         for key in self.DVNames:
             dvName = self.DVNames[key]
             if dvName in x:
-                setattr(self, key, x[dvName] + self.DVs[dvName].offset)
-        self.AP.setDesignVars(self.AP)
+                setattr(self, key, x[dvName])
+        self.AP.setDesignVars(x)
         
     def addVariablesPyOpt(self, optProb):
         """
