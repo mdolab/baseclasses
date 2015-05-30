@@ -61,6 +61,12 @@ class AeroProblem(object):
     'mach' + 'T' + 'P':
         Any arbitrary temperature and pressure.
 
+    'V' + 'rho' + 'T'
+        Generally for low speed specifications
+
+    'V' + 'rho' + 'P'
+        Generally for low speed specifications
+
     The combinations listed above are the **only** valid combinations
     of arguments that are permitted. Furthermore, since the internal
     processing is based (permenantly) on these parameters, it is
@@ -239,7 +245,34 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             self.gamma = kwargs['gamma']
         else:
             self.gamma = 1.4
+            
+        # Check if 'Pr' is given....if not we assume air
+        if 'Pr' in kwargs:
+            self.Pr = kwargs['Pr']
+        else:
+            self.Pr = 0.72
+           
+        # Check if constants to sutherlands law should be changed....if not we assume air
+        if 'SSuthDim' in kwargs or 'muSuthDim' in kwargs or 'TSuthDim' in kwargs:
+            if not all(name in kwargs for name in ('muSuthDim','muSuthDim','TSuthDim')):
+                warnings.warn("One or more constant for Sutherlands law might be missing!\
+                Make sure to provide all three!")
+        
+        if 'SSuthDim' in kwargs:
+            self.SSuthDim = kwargs['SSuthDim']
+        else:
+            self.SSuthDim = 110.55
 
+        if 'muSuthDim' in kwargs:
+            self.muSuthDim = kwargs['muSuthDim']
+        else:
+            self.muSuthDim = 1.716e-5
+                    
+        if 'TSuthDim' in kwargs:
+            self.TSuthDim = kwargs['TSuthDim']
+        else:
+            self.TSuthDim = 273.15
+        
         # Now we can do the name matching for the data for the
         # thermodynamic condition. We actually can work backwards from
         # the list given in the doc string.
@@ -263,11 +296,21 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             self.mach = kwargs['mach']
             self.altitude = kwargs['altitude']
             self._update()
+        elif set(('V', 'rho', 'T')) <= keys:
+            self.V = kwargs['V']
+            self.rho = kwargs['rho']
+            self.T = kwargs['T']
+            self._update()
+        elif set(('V', 'rho', 'P')) <= keys:
+            self.V = kwargs['V']
+            self.rho = kwargs['rho']
+            self.P = kwargs['P']
+            self._update()
         else:
-            raise Error('There was not sufficient information to form\
-            an aerodynamic state. See AeroProblem documentation in for\
-            pyAero_problem.py for information on how to correctly \
-            specify the aerodynamic state')
+            raise Error('There was not sufficient information to form '
+                        'an aerodynamic state. See AeroProblem documentation '
+                        'in for pyAero_problem.py for information on how '
+                        'to correctly specify the aerodynamic state')
    
         # Specify the set of possible design variables:
         varFuncs = ['alpha', 'beta', 'areaRef', 'chordRef', 'spanRef',
@@ -297,7 +340,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         self.DVNames = {}
         
     def addDV(self, key, value=None, lower=None, upper=None, scale=1.0,
-              name=None, offset=0.0):
+              name=None, offset=0.0, addToPyOpt=True):
         """
         Add one of the class attributes as an 'aerodynamic' design
         variable. Typical variables are alpha, mach, altitude,
@@ -346,6 +389,12 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             The result is a single design variable driving three
             different mach numbers. 
             
+        addToPyOpt : bool. Default True. 
+            Flag specifying if this variable should be added. Normally this 
+            is True. However, if there are multiple aeroProblems sharing
+            the same variable, only one needs to add the variables to pyOpt
+            and the others can set this to False. 
+
         Examples
         --------
         >>> # Add alpha variable with typical bounds
@@ -354,11 +403,11 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
         # First check if we are allowed to add the DV:
         if key not in self.possibleDVs:
-            raise Error('The DV \'%s\' could not be added. Potential DVs MUST\
-            be specified when the aeroProblem class is created. For example, \
-            if you want alpha as a design variable (...,alpha=value, ...) must\
-            be given. The list of possible DVs are: %s.'% (
-                            key, repr(self.possibleDVs)))
+            raise Error("The DV '%s' could not be added. Potential DVs MUST "
+                        "be specified when the aeroProblem class is created. "
+                        "For example, if you want alpha as a design variable "
+                        "(...,alpha=value, ...) must be given. The list of "
+                        "possible DVs are: %s."% (key, repr(self.possibleDVs)))
 
         if name is None:
             dvName = key + '_%s'% self.name
@@ -368,8 +417,18 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         if value is None:
             value = getattr(self, key)
          
-        self.DVs[dvName] = aeroDV(key, value, lower, upper, scale, offset)
+        self.DVs[dvName] = aeroDV(key, value, lower, upper, scale, offset, addToPyOpt)
         self.DVNames[key] = dvName
+
+    def updateInternalDVs(self):
+        """
+        A specialized function that allows for the updating of the
+        internally stored DVs. This would be used for, example, if a
+        CLsolve is done before the optimization and that value needs
+        to be used."""
+        
+        for key in self.DVNames:
+            self.DVs[self.DVNames[key]].value = getattr(self, key)
 
     def setDesignVars(self, x):
         """
@@ -400,12 +459,18 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
         for key in self.DVs:
             dv = self.DVs[key]
-            optProb.addVar(key, 'c', value=dv.value, lower=dv.lower,
-                           upper=dv.upper, scale=dv.scale)
+            if dv.addToPyOpt:
+                optProb.addVar(key, 'c', value=dv.value, lower=dv.lower,
+                               upper=dv.upper, scale=dv.scale)
             
     def __getitem__(self, key):
 
         return self.funcNames[key]
+        
+    def __str__(self):
+        for key,val in self.__dict__.items():
+           print ("{0:20} : {1:<16}".format(key,val))
+            
 
     def evalFunctions(self, funcs, evalFuncs, ignoreMissing=False):
         """
@@ -539,31 +604,37 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         Try to finish the complete state:
         """
 
-        SSuthDim  = 110.55
-        muSuthDim = 1.716e-5
-        TSuthDim  = 273.15
+        #SSuthDim  = 110.55
+        #muSuthDim = 1.716e-5
+        #TSuthDim  = 273.15
 
         if self.T is not None:
             self.a = numpy.sqrt(self.gamma*self.R*self.T)
             if self.englishUnits:
-                mu = (muSuthDim * (
-                        (TSuthDim + SSuthDim) / (self.T/1.8 + SSuthDim)) *
-                       (((self.T/1.8)/TSuthDim)**1.5))
+                mu = (self.muSuthDim * (
+                        (self.TSuthDim + self.SSuthDim) / (self.T/1.8 + self.SSuthDim)) *
+                       (((self.T/1.8)/self.TSuthDim)**1.5))
                 self.mu = mu / 47.9
             else:
-                self.mu = (muSuthDim * (
-                        (TSuthDim + SSuthDim) / (self.T + SSuthDim)) *
-                           ((self.T/TSuthDim)**1.5))
+                self.mu = (self.muSuthDim * (
+                        (self.TSuthDim + self.SSuthDim) / (self.T + self.SSuthDim)) *
+                           ((self.T/self.TSuthDim)**1.5))
 
         if self.mach is not None and self.a is not None:
             self.V = self.mach * self.a
-            
+
+        if self.a is not None and self.V is not None:
+            self.__dict__['mach'] = self.V/self.a
+
         if  self.P is not None and self.T is not None:
             self.__dict__['rho'] = self.P/(self.R*self.T)
 
         if self.rho is not None and self.T is not None:
             self.__dict__['P'] = self.rho*self.R*self.T
-            
+
+        if self.rho is not None and self.P is not None:
+            self.__dict__['T'] = self.P /(self.rho*self.R)
+
         if self.mu is not None and self.rho is not None:
             self.nu = self.mu / self.rho
             
@@ -596,10 +667,11 @@ class aeroDV(object):
     A container storing information regarding an 'aerodynamic' variable.
     """
     
-    def __init__(self, key, value, lower, upper, scale, offset):
+    def __init__(self, key, value, lower, upper, scale, offset, addToPyOpt):
         self.key = key
         self.value = value
         self.lower = lower
         self.upper = upper
         self.scale = scale
         self.offset = offset
+        self.addToPyOpt = addToPyOpt
