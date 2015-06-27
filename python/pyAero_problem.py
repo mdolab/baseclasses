@@ -604,10 +604,6 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         Try to finish the complete state:
         """
 
-        #SSuthDim  = 110.55
-        #muSuthDim = 1.716e-5
-        #TSuthDim  = 273.15
-
         if self.T is not None:
             self.a = numpy.sqrt(self.gamma*self.R*self.T)
             if self.englishUnits:
