@@ -12,5 +12,8 @@ from .python.pyMission_problem import MissionProblem
 from .python.pyMission_problem import MissionProfile
 from .python.pyMission_problem import MissionSegment
 
+from .python.pyWeight_problem import WeightProblem
+from .python.pyWeight_problem import FuelCase
+
 from .python.ICAOAtmosphere import ICAOAtmosphere
 from .python.pyEngine_problem import EngineProblem
