@@ -132,6 +132,10 @@ class EngineProblem(object):
             dvName = self.DVNames[key]
             if dvName in x:
                 setattr(self, key, x[dvName])
+                try: # To set in the DV as well if the DV exists:
+                    self.DVs[dvName].value = x[dvName]
+                except:
+                    pass
         self.AP.setDesignVars(x)
         
     def addVariablesPyOpt(self, optProb):
