@@ -170,6 +170,24 @@ class WeightProblem(object):
                     optProb.addVar(dvName, 'c', value=dv.value, lower=dv.lower,
                                    upper=dv.upper, scale=dv.scale)
 
+    def getVarNames(self):
+        '''
+        Get the variable names associate with this weight problem
+        '''
+
+        names = []
+        for compKey in self.components.keys():
+            comp= self.components[compKey]
+            for key in comp.DVs:
+                dvName = self.name+'_'+key
+                names.append(dvName)
+
+        for case in self.fuelcases:
+            for key in case.DVs:
+                dvName = self.name+'_'+key
+                names.append(dvName)
+
+        return names
 
     def addConstraintsPyOpt(self,optProb):
         """
