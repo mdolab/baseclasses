@@ -29,26 +29,9 @@ ToDo:
 # Standard Python modules
 # =============================================================================
 import os, sys
-import pdb
 
 # =============================================================================
-# External Python modules
-# =============================================================================
-#import external
-
-# =============================================================================
-# Extension modules
-# =============================================================================
-
-
-# =============================================================================
-# Misc Definitions
-# =============================================================================
-
-
-
-# =============================================================================
-# AeroSolver Class
+# BasicSolver Class
 # =============================================================================
 class BasicSolver(object):
     
@@ -56,7 +39,7 @@ class BasicSolver(object):
     Abstract Class for a basic Solver Object
     '''
     
-    def __init__(self, name, category=None, def_options=None, informs=None, *args, **kwargs):
+    def __init__(self, name, category=None, def_options=None, **kwargs):
         
         '''
         StructSolver Class Initialization
@@ -69,21 +52,21 @@ class BasicSolver(object):
         self.category = category
         self.options = {}
         self.options['defaults'] = def_options
-        self.informs = informs
         
-        # Initialize Options
+       # Initialize Options
         def_keys = def_options.keys()
         for key in def_keys:
             self.options[key] = def_options[key]
         #end
         koptions = kwargs.pop('options',{})
+        print 'basicsolver options',koptions
         kopt_keys = koptions.keys()
         for key in kopt_keys:
             self.setOption(key,koptions[key])
         #end
         
         
-    def __solve__(self, *args, **kwargs):
+    def __solve__(self, *args,**kwargs):
         
         '''
         Run Analyzer (Analyzer Specific Routine)
@@ -109,18 +92,7 @@ class BasicSolver(object):
         self.__solve__(*args, **kwargs)
         
         return 
-     
-
-    def _on_setOption(self, name, value):
-        
-        '''
-        Set Optimizer Option Value (Optimizer Specific Routine)
-        
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        '''
-        
-        raise NotImplementedError()
-        
+    
 
     def setOption(self, name, value):
         
@@ -147,21 +119,7 @@ class BasicSolver(object):
             print '%s is not a valid option name'%(name)
             raise InputError('Not a valid option name')
         #end
-        
-        # 
-    
-        self._on_setOption(name, value)
-        
-    def _on_getOption(self, name):
-        
-        '''
-        Get Optimizer Option Value (Optimizer Specific Routine)
-        
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        '''
-        
-        raise NotImplementedError()
-        
+                
     def getOption(self, name):
         
         '''
@@ -183,77 +141,7 @@ class BasicSolver(object):
         #end
         
         # 
-        self._on_getOption(name)
-        
-    def _on_getInform(self, info):
-        
-        '''
-        Get Optimizer Result Information (Optimizer Specific Routine)
-        
-        Keyword arguments:
-        -----------------
-        id -> STRING: Option Name
-        
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        '''
-        
-        raise NotImplementedError()
-        
-        
-    def getInform(self, infocode={}):
-        
-        '''
-        Get Optimizer Result Information (Calling Routine)
-        
-        Keyword arguments:
-        -----------------
-        name -> STRING: Option Name
-        
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        '''
-        
-        # 
-        if (infocode == {}):
-            return self.informs
-        else:
-            return self._on_getInform(infocode)
-        #end
-        
-        
-    def ListAttributes(self):
-        
-        '''
-        Print Structured Attributes List
-        
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        '''
-        
-        ListAttributes(self)
-    
 
-
-#==============================================================================
-# 
-#==============================================================================
-def ListAttributes(self):
-        
-        '''
-        Print Structured Attributes List
-        
-        Documentation last updated:  March. 24, 2008 - Ruben E. Perez
-        '''
-        
-        print '\n'
-        print 'Attributes List of: ' + repr(self.__dict__['name']) + ' - ' + self.__class__.__name__ + ' Instance\n'
-        self_keys = self.__dict__.keys()
-        self_keys.sort()
-        for key in self_keys:
-            if key != 'name':
-                print str(key) + ' : ' + repr(self.__dict__[key])
-            #end
-        #end
-        print '\n'
-    
 
 
 #==============================================================================
@@ -265,5 +153,5 @@ if __name__ == '__main__':
     
     # Test Optimizer
     azr = BasicSolver('Test')
-    azr.ListAttributes()
+    dir(azr)
 
