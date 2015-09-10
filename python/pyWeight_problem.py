@@ -54,17 +54,21 @@ class WeightProblem(object):
     
     name : str
         A name for the configuration
+
+    units : str
+        Define the units that this weight problem will use. This set of units is transferred to all components when the are added to the weight problem. It is assumed that all user defined parameters provided to the components are in this unit system. Each component converts the user provided inputs from this unit system to the one used internally to perform calculations and then converts the output back to the user defined system.
     
     evalFuncs : iteratble object containing strings
         The names of the functions the user wants evaluated for this weight 
         problem
     '''
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, units,**kwargs):
         """
         Initialize the mission problem
         """
         self.name=name
+        self.units = units.lower()
         
         self.components = {}
         self.fuelcases = []
@@ -92,6 +96,7 @@ class WeightProblem(object):
 
         # Add the components to the internal list
         for comp in components:
+            comp.setUnitSystem(self.units)
             self.components[comp.name]=comp
 
             for dvName in comp.DVs:
@@ -332,6 +337,25 @@ class WeightProblem(object):
 
         f.close()
         return        
+
+    def writeProblemData(self,fileName):
+        '''
+        Write the problem data to a file
+        '''
+        fileHandle = fileName+'.txt'
+        f = open(fileHandle,'w')
+        f.write('Name, W, Mass, CG \n')
+        for key in sorted(self.components.keys()):
+            CG = self.components[key].getCG(self.units,'current')
+            mass =  self.components[key].getMass(self.units)
+            W =  self.components[key].getWeight(self.units)
+            name = self.components[key].name
+            f.write('%s: %f, %f, %f %f %f \n'%(name,W,mass,CG[0],CG[1],CG[2]))
+        # end
+
+        f.close()
+        return
+            
 
     def __str__(self):
         '''
