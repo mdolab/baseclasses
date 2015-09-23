@@ -199,8 +199,7 @@ class ASSolver(object):
                 raise IOError('Incorrect ' + repr(name) + ' value type')
             #end
         else:
-            print '%s is not a valid option name'%(name)
-            raise InputError('Not a valid option name')
+            raise KeyError('%s is not a valid option name'%(name))
         #end
         
         # 
@@ -224,7 +223,7 @@ class ASSolver(object):
         if def_options.has_key(name):
             return self.options[name][1]
         else:   
-            raise InputError(repr(name) + ' is not a valid option name')
+            raise KeyError('%s is not a valid option name'%(name))
         #end
         
         # 
