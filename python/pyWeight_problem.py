@@ -198,7 +198,7 @@ class WeightProblem(object):
 
         return names
 
-    def addConstraintsPyOpt(self,optProb):
+    def addConstraintsPyOpt(self,optProb=None):
         """
         Add the linear constraints for each of the fuel cases.
 
@@ -207,8 +207,10 @@ class WeightProblem(object):
         optProb : pyOpt_optimization class
             Optimization problem definition to which variables are added
         """
+        constraints = []
         for case in self.fuelcases:
-            case.addLinearConstraint(optProb,self.name)
+            constraints.append(case.addLinearConstraint(optProb=optProb,prefix=self.name))
+        return constraints
 
     def addFuelCases(self, cases):
         '''
@@ -499,7 +501,7 @@ class FuelCase(object):
                 setattr(self, key, x[dvName] + self.DVs[dvName].offset)
                 self.DVs[dvName].value = x[dvName]
 
-    def addLinearConstraint(self,optProb,prefix):
+    def addLinearConstraint(self,optProb=None,prefix=None):
         '''
         add the linear constraint for the fuel fractions
         '''
@@ -515,15 +517,20 @@ class FuelCase(object):
         conName = prefix+'_'+self.name+'_fuelcase'
         var1Name = prefix+'_'+self.name+'_fuelFraction'
         var2Name = prefix+'_'+self.name+'_reserveFraction'
+        args = ()
         if reserveDV and fuelDV:
-            optProb.addCon(conName,lower=0,upper=1,scale=1,linear=True,wrt=[var1Name,var2Name],jac={var1Name:[[1]], var2Name:[[1]]})
+            args = (conName, {'lower':0,'upper':1,'scale':1,
+                              'linear':True,'wrt':[var1Name,var2Name],'jac':{var1Name:[[1]], var2Name:[[1]]}})
         elif reserveDV:
-            optProb.addCon(conName,lower=0,upper=1-self.fuelFraction,scale=1,linear=True,wrt=[var2Name],jac={var2Name:[[1]]})
+            args = (conName,{'lower':0,'upper':1-self.fuelFraction,'scale':1,
+                    'linear':True,'wrt':[var2Name],'jac':{var2Name:[[1]]}})
         elif fuelDV:
-            optProb.addCon(conName,lower=0,upper=1-self.reserveFraction,scale=1,linear=True,wrt=[var1Name],jac={var1Name:[[1]]})
-
-
-
+            args = (conName, {'lower':0,'upper':1-self.reserveFraction,'scale':1,
+                    'linear':True,'wrt':[var1Name],'jac':{var1Name:[[1]]}})
+        
+        if optProb and args: # might be none, if you just want the constraint args for OpenMDAO
+            optProb.addCon(args[0], **args[1])
+        return args
 
 
 class fuelCaseDV(object):
