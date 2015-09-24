@@ -80,6 +80,10 @@ class WeightProblem(object):
         self.evalFuncs = set()
         if 'evalFuncs' in kwargs:
             self.evalFuncs = set(kwargs['evalFuncs'])
+
+        self.mlwfraction = 0.75
+        if 'mlwFraction' in kwargs:
+            self.mlwfraction = kwargs['mlwFraction']
             
     def addComponents(self, components): #*components?
         '''
