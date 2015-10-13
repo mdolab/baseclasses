@@ -98,6 +98,12 @@ class AeroProblem(object):
     mach : float. Default is 0.0
         Set the mach number for the simulation
 
+    machRef : float. Default is None
+        Sets the reference mach number for the simulation.
+
+    machGrid : float. Default is None
+        Set the mach number for the grid. 
+
     alpha : float. Default is 0.0
         Set the angle of attack
 
@@ -203,7 +209,8 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                  'xRef', 'yRef', 'zRef','xRot', 'yRot', 'zRot',
                  'phat', 'qhat', 'rhat',
                  'degreePol', 'coefPol', 'degreeFourier', 'omegaFourier',
-                 'cosCoefFourier', 'sinCoefFourier'))
+                 'cosCoefFourier', 'sinCoefFourier',
+                 'machRef', 'machGrid'))
 
         # By default everything is None
         for para in paras:
