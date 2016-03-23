@@ -235,6 +235,55 @@ class WeightProblem(object):
             # end
         return
 
+    def getFuelCase(self,caseName):
+        '''
+        Get the fuel case object associated with the caseName.
+
+        Parameters
+        ----------
+        caseName : str
+            Name of the fuel case to return
+        '''
+        currentCase = None
+        for case in self.fuelcases:
+            if case.name==caseName:
+                currentCase = case
+
+        if currentCase:
+            return currentCase
+        else:
+            raise Error('Supplied fuel caseName: %s, not found'%caseName)
+                
+    
+    def setFuelCase(self,case):
+        '''
+        loop over the components and set the specified fuel case
+
+        Parameters
+        ----------
+        case : fuelCase object
+           The fuel case to set
+
+        '''
+
+        # Get just the fuel components
+        fuelKeys = self._getComponentKeys(includeType='fuel')
+    
+        for key in fuelKeys:
+            self.components[key].setFuelCase(case)
+        # end
+
+    def resetFuelCase(self):
+        '''
+        reset the fuel weight for this case.
+        '''
+        # Get just the fuel components
+        fuelKeys = self._getComponentKeys(includeType='fuel')
+    
+        for key in fuelKeys:
+            self.components[key].resetFuelCase()
+        # end
+
     def _getComponentKeys(self, include=None, exclude=None, 
                           includeType=None, excludeType=None):
         '''

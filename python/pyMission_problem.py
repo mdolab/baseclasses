@@ -83,6 +83,8 @@ class MissionProblem(object):
             
         self.segCounter = 1
 
+        self.states = None
+
     def addProfile(self, profiles):
         '''
         Append a mission profile to the list. update the internal
@@ -1091,7 +1093,10 @@ class MissionSegment(object):
 
         Parameters
         ----------
-        key : str
+        dvName : str
+            Name used by the optimizer for this variables.
+
+        paramKey : str
             Name of variable to add. See above for possible ones
 
         value : float. Default is None
