@@ -279,50 +279,33 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             self.TSuthDim = kwargs['TSuthDim']
         else:
             self.TSuthDim = 273.15
-        
-        # Now we can do the name matching for the data for the
-        # thermodynamic condition. We actually can work backwards from
-        # the list given in the doc string.
-        fullState = set(['mach', 'V', 'P', 'T', 'rho', 'mu', 'nu', 'a',
-                         'q', 'altitude', 're'])
-        for key in fullState:
-            self.__dict__[key] = None
 
+        # these are the possible input values
+        possibleInputStates = set(['mach', 'V', 'P', 'T', 'rho', 'altitude', 'reynolds', 
+                                  'reynoldsLength'])
+
+        # turn the kwargs into a set
         keys = set(kwargs.keys())
-        if set(('mach', 'T', 'P')) <= keys:
-            self.mach = kwargs['mach']
-            self.T = kwargs['T']
-            self.P = kwargs['P']
-            self._update()
-        elif set(('mach', 'reynolds', 'reynoldsLength', 'T')) <= keys:
-            self.mach = kwargs['mach']
-            self.T = kwargs['T']
-            self.re = kwargs['reynolds']/kwargs['reynoldsLength']
-            self._update()
-        elif set(('mach', 'altitude')) <= keys:
-            self.mach = kwargs['mach']
-            self.altitude = kwargs['altitude']
-            self._update()
-        elif set(('V', 'rho', 'T')) <= keys:
-            self.V = kwargs['V']
-            self.rho = kwargs['rho']
-            self.T = kwargs['T']
-            self._update()
-        elif set(('V', 'rho', 'P')) <= keys:
-            self.V = kwargs['V']
-            self.rho = kwargs['rho']
-            self.P = kwargs['P']
-            self._update()
-        else:
-            raise Error('There was not sufficient information to form '
-                        'an aerodynamic state. See AeroProblem documentation '
-                        'in for pyAero_problem.py for information on how '
-                        'to correctly specify the aerodynamic state')
+
+        # save the initials states
+        self.inputs = {}
+        for key in keys:
+            if key in possibleInputStates:
+                self.inputs[key]= kwargs[key]
+
+        # full list of states in the class
+        self.fullState = set(['mach', 'V', 'P', 'T', 'rho', 'mu', 'nu', 'a',
+                              'q', 'altitude', 're','reynolds','reynoldsLength'])
+
+        # now call the routine to setup the states
+        self._setStates(self.inputs)
+
    
         # Specify the set of possible design variables:
         varFuncs = ['alpha', 'beta', 'areaRef', 'chordRef', 'spanRef',
                     'xRef', 'yRef', 'zRef', 'xRot', 'yRot', 'zRot',
-                    'phat', 'qhat', 'rhat', 'mach', 'altitude', 'P', 'T']
+                    'phat', 'qhat', 'rhat', 'mach', 'altitude', 'P', 'T',
+                    'reynolds','reynoldsLength']
 
         self.possibleDVs = set()
         for var in varFuncs:
@@ -334,7 +317,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         self.possibleFunctions = set(self.possibleDVs)
 
         # And anything in fullState can be a function:
-        for var in fullState:
+        for var in self.fullState:
             if getattr(self, var) is not None:
                 self.possibleFunctions.add(var)
                 
@@ -345,6 +328,73 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         # Storage of DVs
         self.DVs = {}
         self.DVNames = {}
+
+    def _setStates(self,inputDict):
+        '''
+        Take in a dictionary and set up the full set of states.
+        '''
+
+        # Now we can do the name matching for the data for the
+        # thermodynamic condition. We actually can work backwards from
+        # the list given in the doc string.
+     
+        for key in self.fullState:
+            self.__dict__[key] = None
+
+        keys = set(inputDict.keys())
+        inKeys = set(self.inputs.keys())
+
+        # first check that the keys in inputDict are valid
+        for key in keys:
+            if key in self.inputs.keys():
+                pass
+            else:
+                validKeys = ''
+                for vkey in self.inputs:
+                    validKeys += vkey+', '
+
+                raise Error('Invalid input parameter: %s . Only values initially specifed'
+                            ' as inputs may be modifed. valid inputs include: %s'%(key,validKeys))
+        # now we know our inputs are valid. update self.Input and update states
+        for key in inputDict:
+            self.inputs[key]=inputDict[key]
+
+        if set(('mach', 'T', 'P')) <= inKeys:
+            self.__dict__['mach'] = self.inputs['mach']
+            self.__dict__['T'] = self.inputs['T']
+            self.__dict__['P'] = self.inputs['P']
+            self._update()
+        elif set(('mach', 'reynolds', 'reynoldsLength', 'T')) <= inKeys:
+            self.__dict__['mach'] = self.inputs['mach']
+            self.__dict__['T'] = self.inputs['T']
+            self.__dict__['re'] = self.inputs['reynolds']/self.inputs['reynoldsLength']
+            self.__dict__['reynolds'] = self.inputs['reynolds']
+            self.__dict__['reynoldsLength'] = self.inputs['reynoldsLength']
+            self._update()
+        elif set(('mach', 'altitude')) <= inKeys:
+            self.__dict__['mach'] = self.inputs['mach']
+            self.__dict__['altitude'] = self.inputs['altitude']
+            P, T = self.atm(self.inputs['altitude'])
+            self.__dict__['T'] = T
+            self.__dict__['P'] = P
+            self._update()
+        elif set(('V', 'rho', 'T')) <= inKeys:
+            self.__dict__['V'] = self.inputs['V']
+            self.__dict__['rho'] = self.inputs['rho']
+            self.__dict__['T'] = self.inputs['T']
+            self._update()
+        elif set(('V', 'rho', 'P')) <= inKeys:
+            self.__dict__['V'] = self.inputs['V']
+            self.__dict__['rho'] = self.inputs['rho']
+            self.__dict__['P'] = self.inputs['P']
+            self._update()
+        else:
+            raise Error('There was not sufficient information to form '
+                        'an aerodynamic state. See AeroProblem documentation '
+                        'in for pyAero_problem.py for information on how '
+                        'to correctly specify the aerodynamic state')
+        
+
         
     def addDV(self, key, value=None, lower=None, upper=None, scale=1.0,
               name=None, offset=0.0, addToPyOpt=True):
@@ -561,8 +611,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
     @mach.setter
     def mach(self, value):
-        self.__dict__['mach'] = value
-        self._update()
+        self._setStates({'mach':value})
 
     @property
     def T(self):
@@ -570,8 +619,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
     @T.setter
     def T(self, value):
-        self.__dict__['T'] = value
-        self._update()
+        self._setStates({'T':value})
 
     @property
     def P(self):
@@ -579,8 +627,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
     @P.setter
     def P(self, value):
-        self.__dict__['P'] = value
-        self._update()
+        self._setStates({'P':value})      
 
     @property
     def rho(self):
@@ -588,8 +635,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
     @rho.setter
     def rho(self, value):
-        self.__dict__['rho'] = value
-        self._update()
+        self._setStates({'rho':value})  
         
     @property
     def re(self):
@@ -597,8 +643,23 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
     @re.setter
     def re(self, value):
-        self.__dict__['re'] = value
-        self._update()
+        self._setStates({'re':value})  
+
+    @property
+    def reynolds(self):
+        return self.__dict__['reynolds']
+
+    @reynolds.setter
+    def reynolds(self, value):
+        self._setStates({'reynolds':value})  
+
+    @property
+    def reynoldsLength(self):
+        return self.__dict__['reynoldsLength']
+
+    @reynoldsLength.setter
+    def reynoldsLength(self, value):
+        self._setStates({'reynoldsLength':value})  
 
     @property
     def altitude(self):
@@ -606,14 +667,13 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
     @altitude.setter
     def altitude(self, value):
-         self.__dict__['altitude'] = value
-         self.P, self.T = self.atm(value)
+        self._setStates({'altitude':value})  
  
     def _update(self):
         """
         Try to finish the complete state:
         """
-
+        
         if self.T is not None:
             self.a = numpy.sqrt(self.gamma*self.R*self.T)
             if self.englishUnits:
