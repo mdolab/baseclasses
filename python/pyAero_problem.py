@@ -58,13 +58,26 @@ class AeroProblem(object):
         Used to precisely match reynolds numbers. Complete
         thermodynamic state is computed. 
 
+    'V' + 'reynolds' + 'reynoldsLength' + 'T':
+        Used to precisely match reynolds numbers for low speed cases.
+        Complete thermodynamic state is computed. 
+
     'mach' + 'T' + 'P':
         Any arbitrary temperature and pressure.
+
+    'mach' + 'T' + 'rho':
+        Any arbitrary temperature and density.
+
+    'mach' + 'rho' + 'P':
+        Any arbitrary density and pressure.
 
     'V' + 'rho' + 'T'
         Generally for low speed specifications
 
     'V' + 'rho' + 'P'
+        Generally for low speed specifications
+
+    'V' + 'T' + 'P'
         Generally for low speed specifications
 
     The combinations listed above are the **only** valid combinations
@@ -363,31 +376,68 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             self.__dict__['mach'] = self.inputs['mach']
             self.__dict__['T'] = self.inputs['T']
             self.__dict__['P'] = self.inputs['P']
-            self._update()
+            self.__dict__['rho'] = self.P/(self.R*self.T)
+            # now calculate remaining states
+            self._updateFromM()
+        elif set(('mach', 'T', 'rho')) <= inKeys:
+            self.__dict__['mach'] = self.inputs['mach']
+            self.__dict__['T'] = self.inputs['T']
+            self.__dict__['rho'] = self.inputs['rho']
+            self.__dict__['P'] = self.rho*self.R*self.T
+            # now calculate remaining states
+            self._updateFromM()
+        elif set(('mach', 'P', 'rho')) <= inKeys:
+            self.__dict__['mach'] = self.inputs['mach']
+            self.__dict__['rho'] = self.inputs['rho']
+            self.__dict__['P'] = self.inputs['P']
+            self.__dict__['T'] = self.P /(self.rho*self.R)
+            # now calculate remaining states
+            self._updateFromM()
         elif set(('mach', 'reynolds', 'reynoldsLength', 'T')) <= inKeys:
             self.__dict__['mach'] = self.inputs['mach']
             self.__dict__['T'] = self.inputs['T']
             self.__dict__['re'] = self.inputs['reynolds']/self.inputs['reynoldsLength']
             self.__dict__['reynolds'] = self.inputs['reynolds']
             self.__dict__['reynoldsLength'] = self.inputs['reynoldsLength']
-            self._update()
+            # now calculate remaining states
+            self._updateFromRe()
+        elif set(('V', 'reynolds', 'reynoldsLength', 'T')) <= inKeys:
+            self.__dict__['V'] = self.inputs['V']
+            self.__dict__['T'] = self.inputs['T']
+            self.__dict__['re'] = self.inputs['reynolds']/self.inputs['reynoldsLength']
+            self.__dict__['reynolds'] = self.inputs['reynolds']
+            self.__dict__['reynoldsLength'] = self.inputs['reynoldsLength']
+            # now calculate remaining states
+            self._updateFromRe()                        
         elif set(('mach', 'altitude')) <= inKeys:
             self.__dict__['mach'] = self.inputs['mach']
             self.__dict__['altitude'] = self.inputs['altitude']
             P, T = self.atm(self.inputs['altitude'])
             self.__dict__['T'] = T
             self.__dict__['P'] = P
-            self._update()
+            self.__dict__['rho'] = self.P/(self.R*self.T)
+            self._updateFromM()
         elif set(('V', 'rho', 'T')) <= inKeys:
             self.__dict__['V'] = self.inputs['V']
             self.__dict__['rho'] = self.inputs['rho']
             self.__dict__['T'] = self.inputs['T']
-            self._update()
+            # calculate pressure
+            self.__dict__['P'] = self.rho*self.R*self.T
+            self._updateFromV()
         elif set(('V', 'rho', 'P')) <= inKeys:
             self.__dict__['V'] = self.inputs['V']
             self.__dict__['rho'] = self.inputs['rho']
             self.__dict__['P'] = self.inputs['P']
-            self._update()
+            #start by calculating the T
+            self.__dict__['T'] = self.P /(self.rho*self.R)
+            self._updateFromV()
+        elif set(('V', 'T', 'P')) <= inKeys:
+            self.__dict__['V'] = self.inputs['V']
+            self.__dict__['T'] = self.inputs['T']
+            self.__dict__['P'] = self.inputs['P']
+            #start by calculating the T
+            self.__dict__['rho'] = self.P/(self.R*self.T)
+            self._updateFromV()
         else:
             raise Error('There was not sufficient information to form '
                         'an aerodynamic state. See AeroProblem documentation '
@@ -669,49 +719,145 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     def altitude(self, value):
         self._setStates({'altitude':value})  
  
-    def _update(self):
-        """
-        Try to finish the complete state:
-        """
+    # def _update(self):
+    #     """
+    #     Try to finish the complete state:
+    #     """
         
-        if self.T is not None:
-            self.a = numpy.sqrt(self.gamma*self.R*self.T)
-            if self.englishUnits:
-                mu = (self.muSuthDim * (
-                        (self.TSuthDim + self.SSuthDim) / (self.T/1.8 + self.SSuthDim)) *
-                       (((self.T/1.8)/self.TSuthDim)**1.5))
-                self.mu = mu / 47.9
-            else:
-                self.mu = (self.muSuthDim * (
-                        (self.TSuthDim + self.SSuthDim) / (self.T + self.SSuthDim)) *
-                           ((self.T/self.TSuthDim)**1.5))
+    #     if self.T is not None:
+    #         self.a = numpy.sqrt(self.gamma*self.R*self.T)
+    #         if self.englishUnits:
+    #             mu = (self.muSuthDim * (
+    #                     (self.TSuthDim + self.SSuthDim) / (self.T/1.8 + self.SSuthDim)) *
+    #                    (((self.T/1.8)/self.TSuthDim)**1.5))
+    #             self.mu = mu / 47.9
+    #         else:
+    #             self.mu = (self.muSuthDim * (
+    #                     (self.TSuthDim + self.SSuthDim) / (self.T + self.SSuthDim)) *
+    #                        ((self.T/self.TSuthDim)**1.5))
 
-        if self.mach is not None and self.a is not None:
+    #     if self.mach is not None and self.a is not None:
+    #         self.V = self.mach * self.a
+
+    #     if self.a is not None and self.V is not None:
+    #         self.__dict__['mach'] = self.V/self.a
+
+    #     if  self.P is not None and self.T is not None:
+    #         self.__dict__['rho'] = self.P/(self.R*self.T)
+
+    #     if self.rho is not None and self.T is not None:
+    #         self.__dict__['P'] = self.rho*self.R*self.T
+
+    #     if self.rho is not None and self.P is not None:
+    #         self.__dict__['T'] = self.P /(self.rho*self.R)
+
+    #     if self.mu is not None and self.rho is not None:
+    #         self.nu = self.mu / self.rho
+            
+    #     if self.rho is not None and self.V is not None:
+    #         self.q = 0.5*self.rho*self.V**2
+
+    #     if self.rho is not None and self.V is not None and self.mu is not None:
+    #         self.__dict__['re'] = self.rho*self.V/self.mu
+            
+    #     if self.re is not None and self.mu is not None and self.V is not None:
+    #         self.__dict__['rho'] = self.re*self.mu/self.V
+
+    def _updateFromRe(self):
+        '''
+        update the full set of states from M,T,P
+        '''
+        # calculate the speed of sound
+        self.a = numpy.sqrt(self.gamma*self.R*self.T)
+
+        # calculate the dynamic viscosity
+        if self.englishUnits:
+            mu = (self.muSuthDim * (
+                (self.TSuthDim + self.SSuthDim) / (self.T/1.8 + self.SSuthDim)) *
+                  (((self.T/1.8)/self.TSuthDim)**1.5))
+            self.mu = mu / 47.9
+        else:
+            self.mu = (self.muSuthDim * (
+                (self.TSuthDim + self.SSuthDim) / (self.T + self.SSuthDim)) *
+                       ((self.T/self.TSuthDim)**1.5))
+
+        # calculate Velocity
+        if self.V is None:
             self.V = self.mach * self.a
-
-        if self.a is not None and self.V is not None:
+        else:
             self.__dict__['mach'] = self.V/self.a
 
-        if  self.P is not None and self.T is not None:
-            self.__dict__['rho'] = self.P/(self.R*self.T)
+        # calculate density
+        self.__dict__['rho'] = self.re*self.mu/self.V
+        # calculate pressure
+        self.__dict__['P'] = self.rho*self.R*self.T
 
-        if self.rho is not None and self.T is not None:
-            self.__dict__['P'] = self.rho*self.R*self.T
+        # calculate kinematic viscosity
+        self.nu = self.mu / self.rho
 
-        if self.rho is not None and self.P is not None:
-            self.__dict__['T'] = self.P /(self.rho*self.R)
+        # calculate dynamic pressure
+        self.q = 0.5*self.rho*self.V**2
 
-        if self.mu is not None and self.rho is not None:
-            self.nu = self.mu / self.rho
-            
-        if self.rho is not None and self.V is not None:
-            self.q = 0.5*self.rho*self.V**2
+    def _updateFromM(self):
+        '''
+        update the full set of states from M,T,P, Rho
+        '''
+        # calculate the speed of sound
+        self.a = numpy.sqrt(self.gamma*self.R*self.T)
 
-        if self.rho is not None and self.V is not None and self.mu is not None:
-            self.__dict__['re'] = self.rho*self.V/self.mu
-            
-        if self.re is not None and self.mu is not None and self.V is not None:
-            self.__dict__['rho'] = self.re*self.mu/self.V
+        # calculate the dynamic viscosity
+        if self.englishUnits:
+            mu = (self.muSuthDim * (
+                (self.TSuthDim + self.SSuthDim) / (self.T/1.8 + self.SSuthDim)) *
+                  (((self.T/1.8)/self.TSuthDim)**1.5))
+            self.mu = mu / 47.9
+        else:
+            self.mu = (self.muSuthDim * (
+                (self.TSuthDim + self.SSuthDim) / (self.T + self.SSuthDim)) *
+                       ((self.T/self.TSuthDim)**1.5))
+
+        # calculate Velocity
+        self.V = self.mach * self.a
+
+        # calulate reynolds per length
+        self.__dict__['re'] = self.rho*self.V/self.mu
+
+        # calculate kinematic viscosity
+        self.nu = self.mu / self.rho
+
+        # calculate dynamic pressure
+        self.q = 0.5*self.rho*self.V**2
+
+    def _updateFromV(self):
+        '''
+        update the full set of states from V,T,P, Rho
+        '''
+        # calculate the speed of sound
+        self.a = numpy.sqrt(self.gamma*self.R*self.T)
+
+        # calculate the dynamic viscosity
+        if self.englishUnits:
+            mu = (self.muSuthDim * (
+                (self.TSuthDim + self.SSuthDim) / (self.T/1.8 + self.SSuthDim)) *
+                  (((self.T/1.8)/self.TSuthDim)**1.5))
+            self.mu = mu / 47.9
+        else:
+            self.mu = (self.muSuthDim * (
+                (self.TSuthDim + self.SSuthDim) / (self.T + self.SSuthDim)) *
+                       ((self.T/self.TSuthDim)**1.5))
+        
+        # calculate kinematic viscosity
+        self.nu = self.mu / self.rho
+        
+        # calculate dynamic pressure
+        self.q = 0.5*self.rho*self.V**2
+
+        # calculate Mach Number
+        self.__dict__['mach'] = self.V/self.a
+
+        # calulate reynolds per length
+        self.__dict__['re'] = self.rho*self.V/self.mu
+
 
     def _getDVSens(self, func):
         """
