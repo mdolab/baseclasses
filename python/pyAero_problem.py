@@ -196,6 +196,14 @@ class AeroProblem(object):
 
     englishUnits : bool
         Flag to use all English units: pounds, feet, Rankine etc. 
+
+    solverOptions : dict
+        A set of solver specific options that temprorily overide the solver's 
+        internal options for this aero problem only. It must contain the name of 
+        the solver followed by a dictionary of options for that solver. For example
+        solverOptions ={'sumb':{'vis4':0.018}}. Currently only the only solver
+        supported is 'sumb' and must use the specific key 'sumb'. 
+
     Examples
     --------
     >>> # DPW4 Test condition (metric)
