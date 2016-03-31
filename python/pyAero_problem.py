@@ -237,6 +237,13 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         # create an internal instance of the atmosphere to use
         self.atm = ICAOAtmosphere(englishUnits=self.englishUnits)
 
+        # Set or create a empty dictionary for additional solver
+        # options
+        if 'solverOptions' in kwargs:
+            self.solverOptions = kwargs['solverOptions']
+        else:
+            self.solverOptions = {}
+
         # Any matching key from kwargs that is in 'paras'
         for key in kwargs:
             if key in paras:
@@ -341,6 +348,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         # Storage of DVs
         self.DVs = {}
         self.DVNames = {}
+
 
     def _setStates(self,inputDict):
         '''
