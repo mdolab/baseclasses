@@ -18,6 +18,13 @@ import numpy
 import warnings
 from ICAOAtmosphere import ICAOAtmosphere 
 
+class CaseInsensitiveDict(dict):
+    def __setitem__(self, key, value):
+        super(CaseInsensitiveDict, self).__setitem__(key.lower(), value)
+
+    def __getitem__(self, key):
+        return super(CaseInsensitiveDict, self).__getitem__(key.lower())
+
 class Error(Exception):
     """
     Format the error message in a box to make it clear this
@@ -247,10 +254,10 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
         # Set or create a empty dictionary for additional solver
         # options
+        self.solverOptions = CaseInsensitiveDict({})
         if 'solverOptions' in kwargs:
-            self.solverOptions = kwargs['solverOptions']
-        else:
-            self.solverOptions = {}
+            for key in kwargs['solverOptions']:
+                self.solverOptions[key]  = kwargs['solverOptions'][key]
 
         # Any matching key from kwargs that is in 'paras'
         for key in kwargs:
