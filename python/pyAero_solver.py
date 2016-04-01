@@ -87,20 +87,17 @@ class AeroSolver(object):
         self.name = name
         self.category = category
         self.options = CaseInsensitiveDict()
-        self.options['defaults'] = CaseInsensitiveDict(def_options)
+        self.defaultOptions = def_options
         self.informs = informs
         
         # Initialize Options
-        def_keys = def_options.keys()
-        for key in def_keys:
-            self.options[key] = def_options[key]
-        #end
-        koptions = kwargs.pop('options',CaseInsensitiveDict())
-        kopt_keys = koptions.keys()
-        for key in kopt_keys:
-            self.setOption(key,koptions[key])
-        #end
-        
+        for key in self.defaultOptions:
+            self.setOption(key, self.defaultOptions[key][1])
+
+        koptions = kwargs.pop('options', CaseInsensitiveDict())
+        for key in koptions:
+            self.setOption(key, koptions[key])
+      
         
     def resetFlow(self):
         """
@@ -229,10 +226,9 @@ class AeroSolver(object):
            Value to set. Type is checked for consistency. 
         
         """
-        def_options = self.options['defaults']
-        
-        if def_options.has_key(name.lower()):
-            if (type(value) == def_options[name][0]):
+
+        if self.defaultOptions.has_key(name.lower()):
+            if (type(value) == self.defaultOptions[name][0]):
                 self.options[name][1] = value
             else:
                 raise Error(repr(name) + ' is not the correct type. The \
@@ -255,8 +251,7 @@ class AeroSolver(object):
            Return the curent value of the option.         
         """
 
-        def_options = self.options['defaults']
-        if def_options.has_key(name.lower()):
+        if self.defaultOptions.has_key(name.lower()):
             return self.options[name.lower()][1]
         else:    
             raise Error(repr(name) + ' is not a valid option name')
