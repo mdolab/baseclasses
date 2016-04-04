@@ -241,7 +241,7 @@ class AeroSolver(object):
             raise Error("Datatype for Option %-35s was not valid \n "
                         "Expected data type is %-47s \n "
                         "Received data type is %-47s"% (
-                            name, self.options[name][0], type(value)))
+                            name, self.defaultOptions[name][0], type(value)))
                     
     def getOption(self, name):
         """
