@@ -226,16 +226,23 @@ class AeroSolver(object):
            Value to set. Type is checked for consistency. 
         
         """
+        name = name.lower()
+        try: 
+            self.defaultOptions[name]
+        except KeyError:
+            Error("Option \'%-30s\' is not a valid %s option."%(
+                self.name,  name))
 
-        if self.defaultOptions.has_key(name.lower()):
-            if (type(value) == self.defaultOptions[name][0]):
-                self.options[name][1] = value
-            else:
-                raise Error(repr(name) + ' is not the correct type. The \
-                type must be ' + repr(self.options[name][0]) + '.')
+        # Now we know the option exists, lets check if the type is ok:
+        if type(value) == self.defaultOptions[name][0]:
+            # Just set:
+            self.options[name] = [type(value), value]
         else:
-            raise Error(repr(name) + ' is not a valid option name')
-        
+            raise Error("Datatype for Option %-35s was not valid \n "
+                        "Expected data type is %-47s \n "
+                        "Received data type is %-47s"% (
+                            name, self.options[name][0], type(value)))
+                    
     def getOption(self, name):
         """
         Default implementation of getOption()
@@ -251,7 +258,8 @@ class AeroSolver(object):
            Return the curent value of the option.         
         """
 
-        if self.defaultOptions.has_key(name.lower()):
+        if name.lower() in self.defaultOptions:
             return self.options[name.lower()][1]
-        else:    
-            raise Error(repr(name) + ' is not a valid option name')
+        else:
+            raise Error('%s is not a valid option name.'% name)
+
