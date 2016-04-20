@@ -234,7 +234,7 @@ class AeroSolver(object):
                 self.name,  name))
 
         # Now we know the option exists, lets check if the type is ok:
-        if type(value) == self.defaultOptions[name][0]:
+        if isinstance(value, self.defaultOptions[name][0]):
             # Just set:
             self.options[name] = [type(value), value]
         else:
