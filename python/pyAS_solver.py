@@ -2,27 +2,8 @@
 """
 pyAS_solver
 
-Holds the Python AeroStructural Analysis Classes (base).
+Holds the Python AeroStructural Analysis Classes (base and inherited).
 
-Copyright (c) 2012 by Dr. Charles A. Mader
-All rights reserved. Not to be used for commercial purposes.
-Revision: 1.0   $Date: 01/06/2012 15:00$
-
-
-Developers:
------------
-- Dr. Charles A. Mader (CAM)
-
-History
--------
-        v. 1.0  - Initial Class Creation (CAM, 2012)
-"""
-
-__version__ = '$Revision: $'
-
-"""
-ToDo:
-        - 
 """
 
 # =============================================================================
@@ -32,201 +13,124 @@ import os, sys
 import pdb
 
 # =============================================================================
-# External Python modules
-# =============================================================================
-#import external
-
-# =============================================================================
 # Extension modules
 # =============================================================================
-
+from pyAero_problem import AeroProblem
 
 # =============================================================================
 # Misc Definitions
 # =============================================================================
 
+class CaseInsensitiveDict(dict):
+    def __setitem__(self, key, value):
+        super(CaseInsensitiveDict, self).__setitem__(key.lower(), value)
+
+    def __getitem__(self, key):
+        return super(CaseInsensitiveDict, self).__getitem__(key.lower())
+
+class Error(Exception):
+    """
+    Format the error message in a box to make it clear this
+    was a expliclty raised exception.
+    """
+    def __init__(self, message):
+        msg = '\n+'+'-'*78+'+'+'\n' + '| ASSolver Error: '
+        i = 17
+        for word in message.split():
+            if len(word) + i + 1 > 78: # Finish line and start new one
+                msg += ' '*(78-i)+'|\n| ' + word + ' '
+                i = 1 + len(word)+1
+            else:
+                msg += word + ' '
+                i += len(word)+1
+        msg += ' '*(78-i) + '|\n' + '+'+'-'*78+'+'+'\n'
+        print(msg)
+        Exception.__init__(self)
 
 
 # =============================================================================
 # AeroSolver Class
 # =============================================================================
+
 class ASSolver(object):
     
     """
-    Abstract Class for Structural Solver Object
+    Abstract Class for Aerodynamic Solver Object
     """
     
-    def __init__(self, name, category=None, def_options=None, informs=None, *args, **kwargs):
+    def __init__(self, name, category={}, def_options={}, informs={}, *args, **kwargs):
         
         """
-        StructSolver Class Initialization
+        AeroSolver Class Initialization
         
-        Documentation last updated:  
+        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
         """
         
         # 
         self.name = name
         self.category = category
-        self.options = {}
-        self.options['defaults'] = def_options
+        self.options = CaseInsensitiveDict()
+        self.defaultOptions = def_options
         self.informs = informs
         
         # Initialize Options
-        def_keys = def_options.keys()
-        for key in def_keys:
-            self.options[key] = def_options[key]
-        #end
-        koptions = kwargs.pop('options',{})
-        kopt_keys = koptions.keys()
-        for key in kopt_keys:
-            self.setOption(key,koptions[key])
-        #end
-        
-        
-    def __solve__(self, *args, **kwargs):
-        
-        """
-        Run Analyzer (Analyzer Specific Routine)
-        
-        Documentation last updated: 
-        """
-        
-        pass
-        
-        
-    def __call__(self,  *args, **kwargs):
-        
-        """
-        Run Analyzer (Calling Routine)
-        
-        Documentation last updated: 
-        """
-        
-        
-        # Checks
-        
-        # Solve Analysis Problem
-        self.__solve__(*args, **kwargs)
-        
-        return 
+        for key in self.defaultOptions:
+            self.setOption(key, self.defaultOptions[key][1])
 
-
-
-    def getCoordinates(self):
-        """
-        Return the set of coordinates for the
-        mesh
-        """
-        
-        pass
-
-
-    def setCoordinates(self,coordinates):
-        """
-        Set the set of coordinates for the
-        mesh
-        """
-        
-        pass
-
-
-
-    def totalDerivative(self,objective):
-        """
-        Return the total derivative of the objective at surface
-        coordinates
-        """
-
-        pass
-
-
-    def getStateSize(self):
-        """
-        Return the number of degrees of freedom (states) that are
-        on this processor
-        """
-
-        pass
-
-
-    def getStates(self):
-        """
-        Return the states on this processor.
-        """
-
-        pass
-
-
-    def setStates(self,states):
-        """ Set the states on this processor."""
-
-        pass
-
-    def getResidual(self):
-        """
-        Return the reisudals on this processor.
-        """
-
-        pass
-
-
-    def getSolution(self):
-        """
-        Retrieve the solution dictionary from the solver
-        """
-        
-        pass
-
+        koptions = kwargs.pop('options', CaseInsensitiveDict())
+        for key in koptions:
+            self.setOption(key, koptions[key])
+      
+                
     def setOption(self, name, value):
+        """
+        Default implementation of setOption()
+
+        Parameters
+        ----------
+        name : str
+           Name of option to set. Not case sensitive
+        value : varries
+           Value to set. Type is checked for consistency. 
         
         """
-        Set Optimizer Option Value (Calling Routine)
-        
-        Keyword arguments:
-        -----------------
-        name -> STRING: Option Name
-        value -> SCALAR or BOOLEAN: Option Value
-        
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        """
-        
-        # 
-        def_options = self.options['defaults']
-        if def_options.has_key(name):
-            if (type(value) == def_options[name][0]):
-                self.options[name] = [type(value),value]
-            else:
-                raise IOError('Incorrect ' + repr(name) + ' value type')
-            #end
+        name = name.lower()
+        try: 
+            self.defaultOptions[name]
+        except KeyError:
+            Error("Option \'%-30s\' is not a valid %s option."%(
+                name, self.name))
+
+        # Now we know the option exists, lets check if the type is ok:
+        if isinstance(value, self.defaultOptions[name][0]):
+            # Just set:
+            self.options[name] = [type(value), value]
         else:
-            raise KeyError('%s is not a valid option name'%(name))
-        #end
-        
-        # 
-    
-        self._on_setOption(name, value)
-        
+            raise Error("Datatype for Option %-35s was not valid \n "
+                        "Expected data type is %-47s \n "
+                        "Received data type is %-47s"% (
+                            name, self.defaultOptions[name][0], type(value)))
+                    
     def getOption(self, name):
-        
         """
-        Get Optimizer Option Value (Calling Routine)
-        
-        Keyword arguments:
-        -----------------
-        name -> STRING: Option Name
-        
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
+        Default implementation of getOption()
+
+        Parameters
+        ----------
+        name : str
+           Name of option to get. Not case sensitive
+
+        Returns
+        -------
+        value : varries
+           Return the curent value of the option.         
         """
-        
-        # 
-        def_options = self.options['defaults']
-        if def_options.has_key(name):
-            return self.options[name][1]
-        else:   
-            raise KeyError('%s is not a valid option name'%(name))
-        #end
-        
-        # 
-        self._on_getOption(name)
-        
-  
+
+        if name.lower() in self.defaultOptions:
+            return self.options[name.lower()][1]
+        else:
+            raise Error('%s is not a valid option name.'% name)
+
+
+
+
