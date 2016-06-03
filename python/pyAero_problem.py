@@ -470,7 +470,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
         
     def addDV(self, key, value=None, lower=None, upper=None, scale=1.0,
-              name=None, offset=0.0, addToPyOpt=True):
+              name=None, offset=0.0, dvOffset=0.0, addToPyOpt=True):
         """
         Add one of the class attributes as an 'aerodynamic' design
         variable. Typical variables are alpha, mach, altitude,
@@ -519,6 +519,10 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             The result is a single design variable driving three
             different mach numbers. 
             
+        dvOffset : float. Default is 0.0
+            This is the offset used to give to pyOptSparse. It can be used
+            to re-center the value about zero. 
+
         addToPyOpt : bool. Default True. 
             Flag specifying if this variable should be added. Normally this 
             is True. However, if there are multiple aeroProblems sharing
@@ -547,7 +551,8 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         if value is None:
             value = getattr(self, key)
          
-        self.DVs[dvName] = aeroDV(key, value, lower, upper, scale, offset, addToPyOpt)
+        self.DVs[dvName] = aeroDV(key, value, lower, upper, scale, offset, 
+                                  dvOffset, addToPyOpt)
         self.DVNames[key] = dvName
 
     def updateInternalDVs(self):
@@ -594,7 +599,8 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             dv = self.DVs[key]
             if dv.addToPyOpt:
                 optProb.addVar(key, 'c', value=dv.value, lower=dv.lower,
-                               upper=dv.upper, scale=dv.scale)
+                               upper=dv.upper, scale=dv.scale, 
+                               offset=dv.dvOffset)
             
     def __getitem__(self, key):
 
@@ -902,11 +908,13 @@ class aeroDV(object):
     A container storing information regarding an 'aerodynamic' variable.
     """
     
-    def __init__(self, key, value, lower, upper, scale, offset, addToPyOpt):
+    def __init__(self, key, value, lower, upper, scale, offset, dvOffset, 
+                 addToPyOpt):
         self.key = key
         self.value = value
         self.lower = lower
         self.upper = upper
         self.scale = scale
         self.offset = offset
+        self.dvOffset = offset
         self.addToPyOpt = addToPyOpt
