@@ -20,7 +20,7 @@ History
 
 import sys, numpy, copy
 import warnings
-
+from pygeo import geo_utils
 
 class Error(Exception):
     """
@@ -75,6 +75,10 @@ class WeightProblem(object):
         self.funcNames = {}
         self.currentDVs = {}
         self.solveFailed = False
+        self.DVGeo = None
+        self.p0 = None
+        self.v1 = None
+        self.v1 = None
 
         # Check for function list:
         self.evalFuncs = set()
@@ -102,6 +106,17 @@ class WeightProblem(object):
         for comp in components:
             comp.setUnitSystem(self.units)
             self.components[comp.name]=comp
+            
+            # If the component has coords, embed the coordinates into DVGeo
+            # with the name provided:
+            if comp.hasCoords:
+                if self.p0 is not None:
+                    comp._generateAreaMesh(self.p0,self.v1,self.v2)
+                else:
+                    raise Error('attempting to add a coordinate based component without\
+                    providing a surface. Please set a surface using setSurface()')
+                if self.DVGeo is not None:
+                    self.DVGeo.addPointSet(comp.coords, comp.name)
 
             for dvName in comp.DVs:
                 key = self.name+'_'+dvName
@@ -116,6 +131,152 @@ class WeightProblem(object):
         '''
         return len(self.components)
 
+    def setSurface(self, surf):
+        """
+        Set the surface this configuratoin will use to perform projections for
+        various components.
+
+        Parameters
+        ----------
+        surf : pyGeo object or list
+
+            This is the surface representation to use for
+            projections. If available, a pyGeo surface object can be
+            used OR a triangulated surface in the form [p0, v1, v2] can
+            be used. This triangulated surface form can be supplied
+            from pySUmb or from pyTrian.
+
+        Examples
+        --------
+        >>> CFDsolver = SUMB(comm=comm, options=aeroOptions)
+        >>> surf = CFDsolver.getTriangulatedMeshSurface()
+        >>> wp.setSurface(surf)
+        >>> # Or using a pyGeo surface object:
+        >>> surf = pyGeo('iges',fileName='wing.igs')
+        >>> wp.setSurface(surf)
+
+        """
+        
+        if type(surf) == list:
+            self.p0 = numpy.array(surf[0])
+            self.v1 = numpy.array(surf[1])
+            self.v2 = numpy.array(surf[2])
+        else:
+            self._generateDiscreteSurface(surf)
+
+    def _generateDiscreteSurface(self, geo):
+        """
+        Take a pygeo surface and create a discrete triangulated
+        surface from it. This is quite dumb code and does not pay any
+        attention to things like how well the triangles approximate
+        the surface or the underlying parametrization of the surface
+        """
+        
+        p0 = []
+        v1 = []
+        v2 = []
+        level = 1
+        for isurf in range(geo.nSurf):
+            surf = geo.surfs[isurf]
+            ku = surf.ku
+            kv = surf.kv
+            tu = surf.tu
+            tv = surf.tv
+            
+            u = geo_utils.fillKnots(tu, ku, level)
+            v = geo_utils.fillKnots(tv, kv, level)
+
+            for i in range(len(u)-1):
+                for j in range(len(v)-1):
+                    P0 = surf(u[i  ], v[j  ])
+                    P1 = surf(u[i+1], v[j  ])
+                    P2 = surf(u[i  ], v[j+1])
+                    P3 = surf(u[i+1], v[j+1])
+
+                    p0.append(P0)
+                    v1.append(P1-P0)
+                    v2.append(P2-P0)
+
+                    p0.append(P3)
+                    v1.append(P2-P3)
+                    v2.append(P1-P3)
+
+        self.p0 = numpy.array(p0)
+        self.v1 = numpy.array(v1)
+        self.v2 = numpy.array(v2)
+
+    def writeSurfaceTecplot(self,fileName):
+        """
+        Write the triangulated surface mesh used in the weight_problem object
+        to a tecplot file for visualization.
+
+        Parameters
+        ----------
+        fileName : str
+            File name for tecplot file. Should have a .dat extension. 
+
+        """
+        f = open(fileName, 'w')
+        f.write("TITLE = \"weight_problem Surface Mesh\"\n")
+        f.write("VARIABLES = \"CoordinateX\" \"CoordinateY\" \"CoordinateZ\"\n")
+        f.write('Zone T=%s\n'%('surf'))
+        f.write('Nodes = %d, Elements = %d ZONETYPE=FETRIANGLE\n'% (
+            len(self.p0)*3, len(self.p0)))
+        f.write('DATAPACKING=POINT\n')
+        for i in range(len(self.p0)):
+            points = []
+            points.append(self.p0[i])
+            points.append(self.p0[i]+self.v1[i])
+            points.append(self.p0[i]+self.v2[i])
+            for i in range(len(points)):
+                f.write('%f %f %f\n'% (points[i][0], points[i][1],points[i][2]))
+
+        for i in range(len(self.p0)):
+            f.write('%d %d %d\n'% (3*i+1, 3*i+2,3*i+3))
+
+        f.close()
+
+    def writeTecplot(self, fileName): 
+        """
+        This function writes a visualization file for the components that have
+        coordinates. All currently added components with coords are written to a 
+        tecplot file. This is useful for publication purposes as well as determine if the
+        constraints are *actually* what the user expects them to be.
+
+        Parameters
+        ----------
+        fileName : str
+            File name for tecplot file. Should have a .dat extension. 
+        """
+        
+        f = open(fileName, 'w')
+        f.write("TITLE = \"Weight_problem Data\"\n")
+        f.write("VARIABLES = \"CoordinateX\" \"CoordinateY\" \"CoordinateZ\"\n")
+
+        for compKey in self.components.keys():
+            comp= self.components[compKey]
+            if comp.hasCoords:
+                comp.writeTecplot(f)
+        f.close()
+
+    def setDVGeo(self, DVGeo):
+        """
+        Set the DVGeometry object that will manipulate this object.
+        Note that pyWeight_problem doesn't **strictly** need a DVGeometry
+        object set, but if optimization is desired it is required.
+
+        Parameters
+        ----------
+        dvGeo : A DVGeometry object.
+            Object responsible for manipulating the constraints that
+            this object is responsible for.
+
+        Examples
+        --------
+        >>> wp.setDVGeo(DVGeo)
+        """
+
+        self.DVGeo = DVGeo
 
     def setDesignVars(self, x):
         """
@@ -130,6 +291,8 @@ class WeightProblem(object):
         
         for compKey in self.components.keys():
             comp= self.components[compKey]
+            if comp.hasCoords and self.DVGeo is not None:
+                comp.coords = self.DVGeo.update(comp.name)
             for key in comp.DVs:
                 dvName = self.name+'_'+key
                 
@@ -410,6 +573,7 @@ class WeightProblem(object):
 
         f.close()
         return
+
             
 
     def __str__(self):
