@@ -198,6 +198,10 @@ class AeroProblem(object):
         Set the z-coordinate location of the center about which moments
         are taken
 
+    momentAxis : iterable object containing floats.
+        Defualt is [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]
+        Set the reference axis for non-x/y/z based moment calculations
+
     R : float
         The gas constant. By defalut we use air. R=287.05
 
@@ -235,7 +239,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         # the class. 
         paras = set(('alpha', 'beta', 'areaRef', 'chordRef', 'spanRef', 
                  'xRef', 'yRef', 'zRef','xRot', 'yRot', 'zRot',
-                 'phat', 'qhat', 'rhat',
+                 'phat', 'qhat', 'rhat', 'momentAxis',
                  'degreePol', 'coefPol', 'degreeFourier', 'omegaFourier',
                  'cosCoefFourier', 'sinCoefFourier',
                  'machRef', 'machGrid'))
@@ -338,7 +342,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
    
         # Specify the set of possible design variables:
         varFuncs = ['alpha', 'beta', 'areaRef', 'chordRef', 'spanRef',
-                    'xRef', 'yRef', 'zRef', 'xRot', 'yRot', 'zRot',
+                    'xRef', 'yRef', 'zRef', 'xRot', 'yRot', 'zRot', 'momentAxis',
                     'phat', 'qhat', 'rhat', 'mach', 'altitude', 'P', 'T',
                     'reynolds','reynoldsLength']
 
