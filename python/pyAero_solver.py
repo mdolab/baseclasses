@@ -125,7 +125,7 @@ class AeroSolver(object):
         self.mesh.setExternalMeshIndices(meshInd)
 
         # Set the surface the user has supplied:
-        conn,faceSizes = self.getSurfaceConnectivity(self.meshFamilies)
+        conn, faceSizes = self.getSurfaceConnectivity(self.meshFamilies)
         pts = self.getSurfaceCoordinates(self.meshFamilies)
         self.mesh.setSurfaceDefinition(pts, conn, faceSizes)
 
