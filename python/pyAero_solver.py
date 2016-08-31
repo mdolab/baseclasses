@@ -174,6 +174,7 @@ class AeroSolver(object):
         # groupName
         pts = self.comm.allgather(self.getSurfaceCoordinates(groupName, **kwargs))
         conn, faceSizes = self.getSurfaceConnectivity(groupName)
+        conn = numpy.array(conn).flatten()
         conn = self.comm.allgather(conn)
         faceSizes = self.comm.allgather(faceSizes)
       
@@ -190,10 +191,9 @@ class AeroSolver(object):
                 # Get the number of nodes on this face
                 faceSize = faceSizes[iProc][iFace]
                 faceNodes = conn[iProc][connCounter:connCounter+faceSize]
-                #print faceSize,faceNodes
-
+                
                 # Start by getting the centerpoint
-                ptSum= [0,0,0]
+                ptSum= [0, 0, 0]
                 for i in xrange(faceSize):
                     #idx = ptCounter+i
                     idx = faceNodes[i]
@@ -216,7 +216,7 @@ class AeroSolver(object):
                         idx0 = faceNodes[0]
                         v2.append(pts[iProc][idx0]-avgPt)
 
-                #Now increment the connectivity
+                # Now increment the connectivity
                 connCounter+=faceSize
 
 
