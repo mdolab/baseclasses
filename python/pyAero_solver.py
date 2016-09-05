@@ -128,8 +128,8 @@ class AeroSolver(object):
         self.mesh.setExternalMeshIndices(meshInd)
 
         # Set the surface the user has supplied:
-        conn, faceSizes = self.getSurfaceConnectivity(self.meshFamilies)
-        pts = self.getSurfaceCoordinates(self.meshFamilies)
+        conn, faceSizes = self.getSurfaceConnectivity(self.meshFamilyGroup)
+        pts = self.getSurfaceCoordinates(self.meshFamilyGroup)
         self.mesh.setSurfaceDefinition(pts, conn, faceSizes)
 
 
@@ -391,9 +391,9 @@ class AeroSolver(object):
         # First get the surface coordinates of the meshFamily in case
         # the groupName is a subset, those values will remain unchanged.
 
-        meshSurfCoords = self.getSurfaceCoordinates(self.meshFamilies)
+        meshSurfCoords = self.getSurfaceCoordinates(self.meshFamilyGroup)
         meshSurfCoords = self.mapVector(coordinates, groupName, 
-                                        self.meshFamilies, meshSurfCoords)
+                                        self.meshFamilyGroup, meshSurfCoords)
 
         self.mesh.setSurfaceCoordinates(meshSurfCoords)
 
@@ -573,6 +573,13 @@ class AeroSolver(object):
                 if self.getOption(key) != self.defaultOptions[key][1]:
                     tmpDict[key] = self.getOption(key)
             pp(tmpDict)
+
+    def printFamilyList(self):
+        """
+        Print a nicely formatted dictionary of the family names
+        """
+        from pprint import pprint
+        pprint(self.families)
 # --------------------------
 # Private Utility functions
 # --------------------------
