@@ -354,7 +354,7 @@ class AeroSolver(object):
                 ptSetName = self.getPointSetName(self.curAP.name)
                 self.setSurfaceCoordinates(
                     self.DVGeo.update(ptSetName, config=self.curAP.name), 
-                    self.designFamilies)
+                    self.designFamilyGroup)
                 self.updateGeometryInfo()
                 return self.getSurfaceCoordinates(groupName)
             else:
