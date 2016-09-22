@@ -144,16 +144,16 @@ class AeroProblem(object):
         Set the yawing rate coefficient
 
     degPol : integer. Default is 0
-        Degree of polynominal for prescribed motion. SUmb only
+        Degree of polynominal for prescribed motion. ADflow only
 
     coefPol : array_like. Default is [0.0]
-        Coefficients of polynominal motion. SUmb only
+        Coefficients of polynominal motion. ADflow only
 
     degFourier : integer. Default is 0
-        Degree of fourrier coefficient for prescribed motion. SUmb only
+        Degree of fourrier coefficient for prescribed motion. ADflow only
 
     omegaFourier : float. Default is 0.0
-        Fundamental circular freqnecy for oscillatory motino (Sumb only)
+        Fundamental circular freqnecy for oscillatory motino (ADflow only)
 
     cosCoefFourier : array_like. Default is [0.0]
         Coefficients for cos terms
@@ -212,8 +212,8 @@ class AeroProblem(object):
         A set of solver specific options that temprorily overide the solver's 
         internal options for this aero problem only. It must contain the name of 
         the solver followed by a dictionary of options for that solver. For example
-        solverOptions ={'sumb':{'vis4':0.018}}. Currently only the only solver
-        supported is 'sumb' and must use the specific key 'sumb'. 
+        solverOptions ={'adflow':{'vis4':0.018}}. Currently only the only solver
+        supported is 'adflow' and must use the specific key 'adflow'. 
 
     Examples
     --------
