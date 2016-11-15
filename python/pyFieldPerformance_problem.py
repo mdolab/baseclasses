@@ -62,6 +62,9 @@ class FieldPerformanceProblem(object):
     ----------
     name : str
         Name of this aerodynamic problem.
+    units : str
+        'english' - input/output in English units: pounds, feet, Rankine etc.
+        'metric' - input/output in metric units: Newtons, meters, Celsius etc.
     funcs : iteratble object containing strings
         The names of the functions the user wants evaluated with this
         aeroProblem.
@@ -93,7 +96,7 @@ class FieldPerformanceProblem(object):
         Static thrust at takeoff (V = 0).
     T_V2 : float
         Thrust for safe climb with OEI (V = 1.2*VS)
-    TOGW : float
+    TOW : float
         Takeoff gross weight
     TSFC_I : float
         Thrust-specific fuel consumption with engine in idle.
@@ -103,30 +106,28 @@ class FieldPerformanceProblem(object):
         Thrust-specific fuel consumption at V = 1.15*VS
     WingHeight: float
         Height of the wing above the ground.
-    englishUnits : bool
-        Flag to use all English units: pounds, feet, Rankine etc.
 
     Examples
     --------
     FP = FieldPerformance('gulfstream')
-    fpp = FieldPerformanceProblem(name='fpp1',TOGW=W,span=b,CLmax=CLmax,
+    fpp = FieldPerformanceProblem(name='fpp1',TOW=W,span=b,CLmax=CLmax,
                                   WingHeight=5.6,runwayFrictionCoef=0.04,Area=S,
                                   CDo=0.015,CDo_LG=0.0177,CDo_HL=0,
                                   T_G=T_G,T_T=T_T,TSFC_G=TSFC,TSFC_T=TSFC,
-                                  altitude=0,englishUnits=True)
-    fpp.addDV('TOGW')
+                                  altitude=0,units='english')
+    fpp.addDV('TOW')
     funcs = {}
     funcsSens = {}
     FP.evalFunctions(fpp, funcs, evalFuncs=['TOFL','TOFT','TOFF'])
     FP.evalFunctionsSens(fpp, funcsSens, evalFuncs=['TOFL','TOFT','TOFF'])
     print funcs, funcsSens
     """
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, units, **kwargs):
         # Always have to have the name
         self.name = name
         # These are the parameters that can be simply set directly in
         # the class.
-        paras = set(('TOGW','span','WingHeight','Area',
+        paras = set(('TOW','span','WingHeight','Area',
                     'runwayFrictionCoef','altitude',
                     'CLmax','CDo','CDo_LG','CDo_HL',
                     'T_G','T_T','T_V2','T_TOS','T_I',
@@ -137,12 +138,13 @@ class FieldPerformanceProblem(object):
             setattr(self, para, None)
 
         # Check if we have english units:
-        self.englishUnits = False
-        if 'englishUnits' in kwargs:
-            self.englishUnits = kwargs['englishUnits']
+        self.units = units.lower()
+        englishUnits = False
+        if self.units == 'english':
+            englishUnits = True
 
         # create an internal instance of the atmosphere to use
-        self.atm = ICAOAtmosphere(englishUnits=self.englishUnits)
+        self.atm = ICAOAtmosphere(englishUnits=englishUnits)
 
         # Set or create a empty dictionary for additional solver
         # options
@@ -169,7 +171,7 @@ class FieldPerformanceProblem(object):
         if 'R' in kwargs:
             self.R = kwargs['R']
         else:
-            if self.englishUnits:
+            if self.units == 'english':
                 self.R = 1716.493
             else:
                 self.R = 287.057
@@ -178,7 +180,7 @@ class FieldPerformanceProblem(object):
         keys = set(kwargs.keys())
 
         # Specify the set of possible design variables:
-        varFuncs = ['TOGW','span','Area','WingHeight','CDo','CDo_LG','CDo_HL',
+        varFuncs = ['TOW','span','Area','WingHeight','CDo','CDo_LG','CDo_HL',
                     'T_G','T_T','T_V2','T_TOS','T_I',
                     'TSFC_G','TSFC_T','TSFC_I','BPR']
 
@@ -253,15 +255,15 @@ class FieldPerformanceProblem(object):
         Examples
         --------
         >>> # Add alpha variable with typical bounds
-        >>> fpp.addDV('TOGW', value=250000, lower=0.0, upper=300000.0, scale=0.1)
+        >>> fpp.addDV('TOW', value=250000, lower=0.0, upper=300000.0, scale=0.1)
         """
 
         # First check if we are allowed to add the DV:
         if key not in self.possibleDVs:
             raise Error("The DV '%s' could not be added. Potential DVs MUST "
                         "be specified when the fieldPerformanceProblem class is created. "
-                        "For example, if you want TOGW as a design variable "
-                        "(...,TOGW=value, ...) must be given. The list of "
+                        "For example, if you want TOW as a design variable "
+                        "(...,TOW=value, ...) must be given. The list of "
                         "possible DVs are: %s."% (key, repr(self.possibleDVs)))
 
         if name is None:
