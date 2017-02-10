@@ -44,7 +44,7 @@ class StructProblem(object):
 
     loadFile : str
         Filename of the (static) external load file. Should be
-        generated from either SUmb or Tripan. 
+        generated from either ADflow or Tripan. 
 
     Examples
     --------
