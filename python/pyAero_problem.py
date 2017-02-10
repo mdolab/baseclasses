@@ -341,15 +341,19 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
    
         # Specify the set of possible design variables:
-        varFuncs = ['alpha', 'beta', 'areaRef', 'chordRef', 'spanRef',
+        self.allVarFuncs = ['alpha', 'beta', 'areaRef', 'chordRef', 'spanRef',
                     'xRef', 'yRef', 'zRef', 'xRot', 'yRot', 'zRot', 'momentAxis',
                     'phat', 'qhat', 'rhat', 'mach', 'altitude', 'P', 'T',
                     'reynolds','reynoldsLength']
 
         self.possibleDVs = set()
-        for var in varFuncs:
+        for var in self.allVarFuncs:
             if getattr(self, var) is not None:
                 self.possibleDVs.add(var)
+
+        BCVarFuncs = ['Pressure', 'PressureStagnation', 'TemperatureStagnation']
+        self.possibleBCDVs = set(BCVarFuncs)
+
 
         # Now determine the possible functions. Any possible design
         # variable CAN also be a function (pass through)
@@ -474,7 +478,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
         
     def addDV(self, key, value=None, lower=None, upper=None, scale=1.0,
-              name=None, offset=0.0, dvOffset=0.0, addToPyOpt=True):
+              name=None, offset=0.0, dvOffset=0.0, addToPyOpt=True, family=None):
         """
         Add one of the class attributes as an 'aerodynamic' design
         variable. Typical variables are alpha, mach, altitude,
@@ -539,15 +543,20 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         >>> ap.addDV('alpha', value=2.5, lower=0.0, upper=10.0, scale=0.1)
         """
 
+        if (key not in self.allVarFuncs) and (key not in self.possibleBCDVs): 
+            raise ValueError('%s is not a valid design variable'%key)
+
         # First check if we are allowed to add the DV:
-        if key not in self.possibleDVs:
+        elif (key not in self.possibleDVs) and (key in self.allVarFuncs):
             raise Error("The DV '%s' could not be added. Potential DVs MUST "
                         "be specified when the aeroProblem class is created. "
                         "For example, if you want alpha as a design variable "
                         "(...,alpha=value, ...) must be given. The list of "
                         "possible DVs are: %s."% (key, repr(self.possibleDVs)))
 
-        if name is None:
+        if name is None and family is not None:
+            dvName = '%s_%s_%s'%(key, family, self.name)
+        elif name is None:
             dvName = key + '_%s'% self.name
         else:
             dvName = name
@@ -556,7 +565,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             value = getattr(self, key)
          
         self.DVs[dvName] = aeroDV(key, value, lower, upper, scale, offset, 
-                                  dvOffset, addToPyOpt)
+                                  dvOffset, addToPyOpt, family)
         self.DVNames[key] = dvName
 
     def updateInternalDVs(self):
@@ -582,7 +591,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
         for key in self.DVNames:
             dvName = self.DVNames[key]
-            if dvName in x:
+            if dvName in x: 
                 setattr(self, key, x[dvName] + self.DVs[dvName].offset)
                 try: # To set in the DV as well if the DV exists:
                     self.DVs[dvName].value = x[dvName]
@@ -688,6 +697,14 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                 raise Error("One of the functions in 'evalFunctionsSens' was "
                             "not valid. The valid list of functions is: %s."% (
                                 repr(self.possibleFunctions)))
+
+    def _set_aeroDV_val(self, key, value): 
+        try: 
+            dvName = self.DVNames[key]
+            self.DVs[dvName].value = value
+        except KeyError: 
+            pass
+
     @property
     def mach(self):
         return self.__dict__['mach']
@@ -695,6 +712,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     @mach.setter
     def mach(self, value):
         self._setStates({'mach':value})
+        self._set_aeroDV_val('mach', value)
 
     @property
     def T(self):
@@ -703,6 +721,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     @T.setter
     def T(self, value):
         self._setStates({'T':value})
+        self._set_aeroDV_val('T', value)
 
     @property
     def P(self):
@@ -711,6 +730,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     @P.setter
     def P(self, value):
         self._setStates({'P':value})      
+        self._set_aeroDV_val('P', value)
 
     @property
     def rho(self):
@@ -719,7 +739,8 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     @rho.setter
     def rho(self, value):
         self._setStates({'rho':value})  
-        
+        self._set_aeroDV_val('rho', value)
+
     @property
     def re(self):
         return self.__dict__['re']
@@ -727,6 +748,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     @re.setter
     def re(self, value):
         self._setStates({'re':value})  
+        self._set_aeroDV_val('re', value)
 
     @property
     def reynolds(self):
@@ -735,6 +757,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     @reynolds.setter
     def reynolds(self, value):
         self._setStates({'reynolds':value})  
+        self._set_aeroDV_val('reynolds', value)
 
     @property
     def reynoldsLength(self):
@@ -743,6 +766,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     @reynoldsLength.setter
     def reynoldsLength(self, value):
         self._setStates({'reynoldsLength':value})  
+        self._set_aeroDV_val('reynoldsLength', value)
 
     @property
     def altitude(self):
@@ -751,6 +775,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     @altitude.setter
     def altitude(self, value):
         self._setStates({'altitude':value})  
+        self._set_aeroDV_val('altitude', value)
  
     # def _update(self):
     #     """
@@ -913,7 +938,7 @@ class aeroDV(object):
     """
     
     def __init__(self, key, value, lower, upper, scale, offset, dvOffset, 
-                 addToPyOpt):
+                 addToPyOpt, family):
         self.key = key
         self.value = value
         self.lower = lower
@@ -922,3 +947,4 @@ class aeroDV(object):
         self.offset = offset
         self.dvOffset = offset
         self.addToPyOpt = addToPyOpt
+        self.family = family
