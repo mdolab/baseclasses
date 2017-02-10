@@ -330,6 +330,9 @@ class AeroSolver(object):
 
             indices.extend(self.families[fam])         
 
+        # It is very important that the list of families is sorted
+        # becuase in fortran we always use a binary search to check if
+        # a famID is in the list. 
         self.families[groupName] = sorted(numpy.unique(indices))
 
     def getSurfaceCoordinates(self,group_name):
@@ -549,7 +552,7 @@ class AeroSolver(object):
         options to the stdout on the root processor"""
         if self.comm.rank == 0:
             print('+---------------------------------------+')
-            print('|          All %s Options:            |'%self.name)
+            print('|          All %s Options:          |'%self.name)
             print('+---------------------------------------+')
             # Need to assemble a temporary dictionary
             tmpDict = {}
@@ -565,7 +568,7 @@ class AeroSolver(object):
         processor"""
         if self.comm.rank == 0:
             print('+---------------------------------------+')
-            print('|      All Modified %s Options:       |'%self.name)
+            print('|      All Modified %s Options:     |'%self.name)
             print('+---------------------------------------+')
             # Need to assemble a temporary dictionary
             tmpDict = {}
