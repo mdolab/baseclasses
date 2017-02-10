@@ -144,11 +144,11 @@ class WeightProblem(object):
             projections. If available, a pyGeo surface object can be
             used OR a triangulated surface in the form [p0, v1, v2] can
             be used. This triangulated surface form can be supplied
-            from pySUmb or from pyTrian.
+            from pyADflow or from pyTrian.
 
         Examples
         --------
-        >>> CFDsolver = SUMB(comm=comm, options=aeroOptions)
+        >>> CFDsolver = ADFLOW(comm=comm, options=aeroOptions)
         >>> surf = CFDsolver.getTriangulatedMeshSurface()
         >>> wp.setSurface(surf)
         >>> # Or using a pyGeo surface object:
