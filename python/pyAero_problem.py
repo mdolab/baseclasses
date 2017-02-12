@@ -370,8 +370,10 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
         # Storage of DVs
         self.DVs = {}
-        self.DVNames = {}
 
+        # Storage of BC varible values
+        # vars are keyed by (bcVarName, Family)
+        self.bcVarData = {}
 
     def _setStates(self,inputDict):
         '''
@@ -475,8 +477,13 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                         'in for pyAero_problem.py for information on how '
                         'to correctly specify the aerodynamic state')
         
+    def setBCVar(self, varName, value, familyName):
+        """
+        set the value of a BC variable on a specific variable
+        """
 
-        
+        self.bcVarData[varName, familyName] = value
+
     def addDV(self, key, value=None, lower=None, upper=None, scale=1.0,
               name=None, offset=0.0, dvOffset=0.0, addToPyOpt=True, family=None):
         """
@@ -553,20 +560,31 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                         "For example, if you want alpha as a design variable "
                         "(...,alpha=value, ...) must be given. The list of "
                         "possible DVs are: %s."% (key, repr(self.possibleDVs)))
+        if key in self.possibleBCDVs:
+            if family is None:
+                raise Error("The family must be given for BC design variables")
 
-        if name is None and family is not None:
-            dvName = '%s_%s_%s'%(key, family, self.name)
-        elif name is None:
-            dvName = key + '_%s'% self.name
+            if name is None:
+                dvName = '%s_%s_%s'%(key, family, self.name)
+            else:
+                dvName = name
+                
+            if value is None:
+                if (key, family) not in self.bcVarData:
+                    raise Error("The value must be given or set using the setBCVar routine")
+                value = self.bcVarData[key, family]
         else:
-            dvName = name
+            if name is None:
+                dvName = key + '_%s'% self.name
+            else:
+                dvName = name
 
-        if value is None:
-            value = getattr(self, key)
-         
+            if value is None:
+                value = getattr(self, key)
+            family = None
+
         self.DVs[dvName] = aeroDV(key, value, lower, upper, scale, offset, 
                                   dvOffset, addToPyOpt, family)
-        self.DVNames[key] = dvName
 
     def updateInternalDVs(self):
         """
@@ -575,8 +593,9 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         CLsolve is done before the optimization and that value needs
         to be used."""
         
-        for key in self.DVNames:
-            self.DVs[self.DVNames[key]].value = getattr(self, key)
+        for dvName in self.DVs:
+            if self.DVs[dvName].family is None:
+                self.DVs[dvName].value = getattr(self, self.DVs[dvName].key)
 
     def setDesignVars(self, x):
         """
@@ -589,15 +608,18 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             design variable names this object needs
             """
 
-        for key in self.DVNames:
-            dvName = self.DVNames[key]
+        for dvName in self.DVs:
             if dvName in x: 
-                setattr(self, key, x[dvName] + self.DVs[dvName].offset)
+                key = self.DVs[dvName].key
+                family = self.DVs[dvName].family
+                if family is None:
+                    setattr(self, key, x[dvName] + self.DVs[dvName].offset)
+
                 try: # To set in the DV as well if the DV exists:
                     self.DVs[dvName].value = x[dvName]
                 except:
                     pass # DV doesn't exist
-
+    
     def addVariablesPyOpt(self, optProb):
         """
         Add the current set of variables to the optProb object.
@@ -608,8 +630,8 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             Optimization problem definition to which variables are added
             """
 
-        for key in self.DVs:
-            dv = self.DVs[key]
+        for dvNamey in self.DVs:
+            dv = self.DVs[dvName]
             if dv.addToPyOpt:
                 optProb.addVar(key, 'c', value=dv.value, lower=dv.lower,
                                upper=dv.upper, scale=dv.scale, 
@@ -699,11 +721,11 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                                 repr(self.possibleFunctions)))
 
     def _set_aeroDV_val(self, key, value): 
-        try: 
-            dvName = self.DVNames[key]
-            self.DVs[dvName].value = value
-        except KeyError: 
-            pass
+        # Find the DV matching this value. This is inefficient, but
+        # there are not generally *that* many aero DVs
+        for dvName in self.DVs:
+            if self.DVs[dvName].key.lower() == key.lower():
+                self.DVs[dvName].value
 
     @property
     def mach(self):
@@ -924,10 +946,13 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         """
         rDict = {}
         h = 1e-40j; hr = 1e-40
-        for key in self.DVNames:
-            setattr(self, key, getattr(self, key) + h)
-            rDict[self.DVNames[key]] = numpy.imag(self.__dict__[func])/hr
-            setattr(self, key, numpy.real(getattr(self, key)))
+        for dvName in self.DVs:
+            key = self.DVs[dvName].key
+            family = self.DVs[dvName].family
+            if family is None:
+                setattr(self, key, getattr(self, key) + h)
+                rDict[key] = numpy.imag(self.__dict__[func])/hr
+                setattr(self, key, numpy.real(getattr(self, key)))
 
         return rDict
     
