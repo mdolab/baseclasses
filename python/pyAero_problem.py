@@ -630,10 +630,10 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             Optimization problem definition to which variables are added
             """
 
-        for dvNamey in self.DVs:
+        for dvName in self.DVs:
             dv = self.DVs[dvName]
             if dv.addToPyOpt:
-                optProb.addVar(key, 'c', value=dv.value, lower=dv.lower,
+                optProb.addVar(dv.key, 'c', value=dv.value, lower=dv.lower,
                                upper=dv.upper, scale=dv.scale, 
                                offset=dv.dvOffset)
             
