@@ -612,8 +612,11 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             if dvName in x: 
                 key = self.DVs[dvName].key
                 family = self.DVs[dvName].family
+                value = x[dvName] + self.DVs[dvName].offset
                 if family is None:
-                    setattr(self, key, x[dvName] + self.DVs[dvName].offset)
+                    setattr(self, key, value)
+                else:
+                    self.bcVarData[key, family] = value
 
                 try: # To set in the DV as well if the DV exists:
                     self.DVs[dvName].value = x[dvName]
