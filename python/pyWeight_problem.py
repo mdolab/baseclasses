@@ -75,6 +75,7 @@ class WeightProblem(object):
         self.funcNames = {}
         self.currentDVs = {}
         self.solveFailed = False
+        self.constraintsAdded=False
         self.DVGeo = None
         self.p0 = None
         self.v1 = None
@@ -342,6 +343,8 @@ class WeightProblem(object):
                     optProb.addVar(dvName, 'c', value=dv.value, lower=dv.lower,
                                    upper=dv.upper, scale=dv.scale)
 
+   
+
     def getVarNames(self):
         '''
         Get the variable names associate with this weight problem
@@ -365,6 +368,10 @@ class WeightProblem(object):
         """
         Add the linear constraints for each of the fuel cases.
 
+        Also add non-linear constraints that all of the fuel cases have a total
+        TOW less than MTOW
+
+
         Parameters
         ----------
         optProb : pyOpt_optimization class
@@ -373,7 +380,14 @@ class WeightProblem(object):
         constraints = []
         for case in self.fuelcases:
             constraints.append(case.addLinearConstraint(optProb=optProb,prefix=self.name))
+        self.constraintsAdded=True
+        for case in self.fuelcases:
+            conName = self.name + '_'+case+'_MTOW' 
+            optProb.addCon(conName, upper=0.0)#, wrt=[]) figure out the wrt...
+            evalFuncs.add(conName)
+
         return constraints
+
 
     def addFuelCases(self, cases):
         '''
@@ -743,6 +757,35 @@ class FuelCase(object):
         
         if optProb and args: # might be none, if you just want the constraint args for OpenMDAO
             optProb.addCon(args[0], **args[1])
+        return args
+
+    def addLinearMTOWConstraint(self,optProb=None,prefix=None):
+        mtowReserveDV = False
+        mtowFuelDV = False
+        for key in self.DVNames:
+            if key.lower()=='mtowfuelfraction':
+                mtowFuelDV = True
+
+            if key.lower()=='mtowreservefraction':
+                mtowReserveDV = True
+
+        conName = prefix+'_'+self.name+'_mtowFuelcase'
+        var1Name = prefix+'_'+self.name+'_mtowFuelFraction'
+        var2Name = prefix+'_'+self.name+'_mtowReserveFraction'
+        args = ()
+        if mtowReserveDV and mtowFuelDV:
+            args = (conName, {'lower':0,'upper':1,'scale':1,
+                              'linear':True,'wrt':[var1Name,var2Name],'jac':{var1Name:[[1]], var2Name:[[1]]}})
+        elif mtowReserveDV:
+            args = (conName,{'lower':0,'upper':1-self.fuelFraction,'scale':1,
+                    'linear':True,'wrt':[var2Name],'jac':{var2Name:[[1]]}})
+        elif mtowFuelDV:
+            args = (conName, {'lower':0,'upper':1-self.reserveFraction,'scale':1,
+                    'linear':True,'wrt':[var1Name],'jac':{var1Name:[[1]]}})
+        
+        if optProb and args: # might be none, if you just want the constraint args for OpenMDAO
+            optProb.addCon(args[0], **args[1])
+
         return args
 
 

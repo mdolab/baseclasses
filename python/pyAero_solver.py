@@ -360,7 +360,11 @@ class AeroSolver(object):
             else:
                 # otherwise, the initial mesh is the undeflected mesh, so
                 # return that
-                return self.coords0
+
+                coords = self.mapVector(self.coords0, self.allFamilies, 
+                                        groupName)
+
+                return coords
 
 
     def setSurfaceCoordinates(self, coordinates, groupName=None):
