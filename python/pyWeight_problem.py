@@ -1,3 +1,4 @@
+from __future__ import print_function
 '''
 pyWeight_problem
 
@@ -298,7 +299,6 @@ class WeightProblem(object):
                 dvName = self.name+'_'+key
                 
                 if dvName in x:
-                    #print key,x[dvName]
                     xTmp = {key:x[dvName]}
                     comp.setDesignVars(xTmp)
                     self.currentDVs[dvName]=x[dvName]
@@ -308,13 +308,10 @@ class WeightProblem(object):
                 dvName = self.name+'_'+key
                 
                 if dvName in x:
-                    #print key,x[dvName]
                     xTmp = {key:x[dvName]}
                     case.setDesignVars(xTmp)
                     self.currentDVs[dvName]=x[dvName]
              
-        #print 'currentDVs',self.currentDVs
-
     def addVariablesPyOpt(self, optProb):
         """
         Add the current set of variables to the optProb object.
@@ -595,18 +592,10 @@ class WeightProblem(object):
         loop over the components and call the owned print function
         '''
         for key in self.components.keys():
-            print key
-            print self.components[key]
-        # end
+            print(key)
+            print(self.components[key])
         
         return ' '
-
-
-        # self.printComponentData()
-        # return 'Print statement for WeightAndBalance not implemented'
-
-
-
 
 class FuelCase(object):
     '''

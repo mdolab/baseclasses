@@ -1,3 +1,4 @@
+from __future__ import print_function
 '''
 pyMission_solver
 
@@ -114,7 +115,7 @@ class MissionSolver(object):
                 raise IOError('Incorrect ' + repr(name) + ' value type', type(value))
             #end
         else:
-            print '%s is not a valid option name'%(name)
+            print('%s is not a valid option name'%(name))
             raise IOError('Not a valid option name')
         #end
                
@@ -148,7 +149,7 @@ class MissionSolver(object):
 #==============================================================================
 if __name__ == '__main__':
     
-    print 'Testing MissionSolver instantiation...'
+    print('Testing MissionSolver instantiation...')
     
     # Test Optimizer
     azr = MissionSolver('Test')

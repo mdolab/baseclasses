@@ -1,3 +1,4 @@
+from __future__ import print_function
 """
 ICAOAtmosphere.py
 
@@ -82,7 +83,7 @@ class ICAOAtmosphere(object):
 
         # Determine if we need to do smoothing or not:
         smooth = False
-        for index in xrange(len(H_break)):
+        for index in range(len(H_break)):
             if (numpy.real(H) > H_break[index] - dH_smooth and
                 numpy.real(H) < H_break[index] + dH_smooth):
                 smooth = True
@@ -143,12 +144,12 @@ class ICAOAtmosphere(object):
 # Analysis Test
 #==============================================================================
 if __name__ == '__main__':
-    print 'Testing ...'
+    print('Testing ...')
     
     Atm = ICAOAtmosphere()
 
-    print Atm(11000.001)
+    print(Atm(11000.001))
     R = 287.870
     P,T = Atm(457.2)
     rho = P/(R*T)
-    print P,T,rho
+    print(P,T,rho)
