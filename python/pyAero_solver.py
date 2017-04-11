@@ -36,7 +36,7 @@ from pprint import pprint as pp
 # =============================================================================
 # Extension modules
 # =============================================================================
-from pyAero_problem import AeroProblem
+from .pyAero_problem import AeroProblem
 
 # =============================================================================
 # Misc Definitions
