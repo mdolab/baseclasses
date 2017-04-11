@@ -1,3 +1,4 @@
+from __future__ import print_function
 '''
 pyMission_problem
 
@@ -22,7 +23,7 @@ History
 import sys, numpy, copy
 import warnings
 
-from ICAOAtmosphere import ICAOAtmosphere 
+from .ICAOAtmosphere import ICAOAtmosphere 
 
 
 class Error(Exception):
@@ -363,7 +364,6 @@ class MissionProfile(object):
         segParameters = numpy.zeros(4*nSeg, dtype='D')
         for i in xrange(nSeg):
             seg = self.segments[i]
-            #print seg.initMach, seg.initAlt, seg.finalMach, seg.finalAlt
             segParameters[4*i  ] = seg.initMach
             segParameters[4*i+1] = seg.initAlt
             segParameters[4*i+2] = seg.finalMach
@@ -389,7 +389,6 @@ class MissionProfile(object):
             seg = self.segments[i]
             if seg.propagateInputs == False:
                 # Segment is a fuel fraction segment nothing needs to be done
-                #print getattr(seg, 'phase')
                 pass
             else:
                 if not self.firstSegSet:
@@ -438,7 +437,6 @@ class MissionProfile(object):
                     # end
                     if not TASi is None:
                         if not TASi==refTAS:
-                            print 'TAS', TASi, refTAS, seg.phase
                             raise Error('%s: Specified initTAS \
                                           inconsistent with\
                                           previous finalTAS: %f, %f \
@@ -888,7 +886,6 @@ class MissionSegment(object):
 
         # Given M, CAS, or TAS, calculate the other two speeds
         if alt == None:
-            print 'Alt = None:', self.phase, CAS, TAS, mach, alt
             sys.exit(0)
         a = self._getSoundSpeed(alt)
         if CASTag in self.segInputs:
@@ -926,18 +923,6 @@ class MissionSegment(object):
 
         return P,T,rho
 
-    # def _printSegStates(self):
-    #     '''
-    #     Print the initial and final states for this segment
-    #     '''
-    #     print '------------'
-    #     print 'Segment : %s'%(self.phase)
-    #     print 'Init: CAS: %s, TAS: %s, M: %s, h: %s'%(self.initCAS, self.initTAS, self.initMach,
-    #                                        self.initAlt)
-    #     print 'Final: CAS: %s, TAS: %s, M: %s, h: %s'%(self.finalCAS, self.finalTAS, self.finalMach,
-    #                                        self.finalAlt)
-    #     print '------------'
-
     def _solveMachCASIntercept(self, CAS, mach, initAlt=3048.):
         # TAS: True Air speed
         # CAS: Calibrated air speed
@@ -954,7 +939,6 @@ class MissionSegment(object):
             TAS = self._CAS2TAS(CAS,alt)
             M = TAS/a
             res = M - mach
-            #print 'At %.2fm, %.1fCAS = M%.3f' % (alt, CAS, M)
             a = self._getSoundSpeed(alt+dAlt)
             TAS = self._CAS2TAS(CAS,alt+dAlt)
             M2 = TAS/a

@@ -1,3 +1,4 @@
+from __future__ import print_function
 #!/usr/local/bin/python
 '''
 pyBasic_solver
@@ -59,7 +60,7 @@ class BasicSolver(object):
             self.options[key] = def_options[key]
         #end
         koptions = kwargs.pop('options',{})
-        print 'basicsolver options',koptions
+        print('basicsolver options',koptions)
         kopt_keys = koptions.keys()
         for key in kopt_keys:
             self.setOption(key,koptions[key])
@@ -149,7 +150,7 @@ class BasicSolver(object):
 #==============================================================================
 if __name__ == '__main__':
     
-    print 'Testing ...'
+    print('Testing ...')
     
     # Test Optimizer
     azr = BasicSolver('Test')
