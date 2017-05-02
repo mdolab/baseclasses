@@ -351,9 +351,8 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             if getattr(self, var) is not None:
                 self.possibleDVs.add(var)
 
-        BCVarFuncs = ['Pressure', 'PressureStagnation', 'TemperatureStagnation']
+        BCVarFuncs = ['Pressure', 'PressureStagnation', 'TemperatureStagnation', 'Thrust']
         self.possibleBCDVs = set(BCVarFuncs)
-
 
         # Now determine the possible functions. Any possible design
         # variable CAN also be a function (pass through)
