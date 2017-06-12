@@ -1,8 +1,10 @@
 from .python.pyAero_problem import AeroProblem
+from .python.pyTransi_problem import TransiProblem
 from .python.pyStruct_problem import StructProblem
 from .python.pyAeroStruct_problem import AeroStructProblem
 
 from .python.pyAero_solver import AeroSolver
+from .python.pyTransi_solver import TransiSolver
 from .python.pyAS_solver import ASSolver
 
 from .python.pyBasic_solver import BasicSolver
