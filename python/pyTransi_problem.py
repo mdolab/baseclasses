@@ -52,7 +52,7 @@ class TransiProblem(object):
         # These are the parameters that can be simply set directly in
         # the class. 
         paras = set(('mach',   'T',  'reynolds', 'chordRef',
-                                   'phi_le', 'phi_te','nspan','ispan','nupdown', 'icomp','iadflowcp','ncritts', 'ncritcf','uponly','circlike'))
+                                   'phi_le', 'phi_te','nspan','ispan', 'icomp','iadflowcp','ncritts', 'ncritcf','uponly','circlike','ipart'))
 
         # By default everything is None
         #print(kwargs)
@@ -69,7 +69,7 @@ class TransiProblem(object):
 
         # these are the possible input values
         possibleInputStates = set(['mach',   'T',  'reynolds', 'chordRef',
-                                   'phi_le', 'phi_te', 'nspan','ispan','nupdown','icomp','iadflowcp','ncritts', 'ncritcf','uponly','circlike'])
+                                   'phi_le', 'phi_te', 'nspan','ispan', 'icomp','iadflowcp','ncritts', 'ncritcf','uponly','circlike','ipart'])
 
         # turn the kwargs into a set
         keys = set(kwargs.keys())
@@ -85,11 +85,11 @@ class TransiProblem(object):
 
         # full list of states in the class
         self.fullState = set(['mach',   'T',  'reynolds', 'chordRef',
-                                   'phi_le', 'phi_te', 'nspan','ispan','nupdown','icomp','iadflowcp','ncritts', 'ncritcf','uponly','circlike'])
+                                   'phi_le', 'phi_te', 'nspan','ispan', 'icomp','iadflowcp','ncritts', 'ncritcf','uponly','circlike','ipart'])
 
         # now call the routine to setup the states
         self._setStates(self.inputs)
-        print(self.phi_le)
+        #print(self.phi_le)
 
    
 
@@ -122,7 +122,7 @@ class TransiProblem(object):
         # now we know our inputs are valid. update self.Input and update states
         for key in inputDict:
             self.inputs[key]=inputDict[key]
-        if set(('mach', 'T', 'reynolds', 'chordRef', 'phi_le', 'phi_te', 'nspan','ispan','nupdown','icomp','iadflowcp','ncritts', 'ncritcf','uponly','circlike')) == inKeys:
+        if set(('mach', 'T', 'reynolds', 'chordRef', 'phi_le', 'phi_te', 'nspan','ispan', 'icomp','iadflowcp','ncritts', 'ncritcf','uponly','circlike','ipart')) == inKeys:
             self.__dict__['mach'] = self.inputs['mach']
             self.__dict__['T'] = self.inputs['T']
             self.__dict__['reynolds'] = self.inputs['reynolds']
@@ -131,16 +131,16 @@ class TransiProblem(object):
             self.__dict__['phi_te'] = self.inputs['phi_te']
             self.__dict__['nspan'] = self.inputs['nspan']
             self.__dict__['ispan'] = self.inputs['ispan']
-            self.__dict__['nupdown'] = self.inputs['nupdown']
             self.__dict__['icomp'] = self.inputs['icomp']
             self.__dict__['iadflowcp'] = self.inputs['iadflowcp']
             self.__dict__['ncritts'] = self.inputs['ncritts']
             self.__dict__['ncritcf'] = self.inputs['ncritcf']
             self.__dict__['uponly'] = self.inputs['uponly']
             self.__dict__['circlike'] = self.inputs['circlike']
+            self.__dict__['ipart'] = self.inputs['ipart']
 
         else:
-            raise Error('There shold be 8 parameters giiven')
+            raise Error('There shold be 14 parameters giiven')
 
         
 
