@@ -51,8 +51,8 @@ class TransiProblem(object):
         self.name = name
         # These are the parameters that can be simply set directly in
         # the class. 
-        paras = set(('mach',   'T',  'reynolds', 'chordRef',
-                                   'phi_le', 'phi_te','nspan','ispan', 'icomp','iadflowcp','ncritts', 'ncritcf','uponly','circlike','ipart'))
+        paras = set(('mach', 'reynolds',  'T', 
+                                   'nCritTS', 'nCritCF','spanDirection','sectionData','partName'))
 
         # By default everything is None
         #print(kwargs)
@@ -68,8 +68,8 @@ class TransiProblem(object):
 
 
         # these are the possible input values
-        possibleInputStates = set(['mach',   'T',  'reynolds', 'chordRef',
-                                   'phi_le', 'phi_te', 'nspan','ispan', 'icomp','iadflowcp','ncritts', 'ncritcf','uponly','circlike','ipart'])
+        possibleInputStates = set(['mach', 'reynolds',  'T', 
+                                   'nCritTS', 'nCritCF','spanDirection','sectionData','partName'])
 
         # turn the kwargs into a set
         keys = set(kwargs.keys())
@@ -84,8 +84,8 @@ class TransiProblem(object):
         #print(kwargs.keys(),'self.name')
 
         # full list of states in the class
-        self.fullState = set(['mach',   'T',  'reynolds', 'chordRef',
-                                   'phi_le', 'phi_te', 'nspan','ispan', 'icomp','iadflowcp','ncritts', 'ncritcf','uponly','circlike','ipart'])
+        self.fullState = set(['mach', 'reynolds',  'T', 
+                                   'nCritTS', 'nCritCF','spanDirection','sectionData','partName'])
 
         # now call the routine to setup the states
         self._setStates(self.inputs)
@@ -122,22 +122,15 @@ class TransiProblem(object):
         # now we know our inputs are valid. update self.Input and update states
         for key in inputDict:
             self.inputs[key]=inputDict[key]
-        if set(('mach', 'T', 'reynolds', 'chordRef', 'phi_le', 'phi_te', 'nspan','ispan', 'icomp','iadflowcp','ncritts', 'ncritcf','uponly','circlike','ipart')) == inKeys:
+        if set(('mach', 'reynolds',  'T', 'nCritTS', 'nCritCF','spanDirection','sectionData','partName')) == inKeys:
             self.__dict__['mach'] = self.inputs['mach']
-            self.__dict__['T'] = self.inputs['T']
             self.__dict__['reynolds'] = self.inputs['reynolds']
-            self.__dict__['chordRef'] = self.inputs['chordRef']
-            self.__dict__['phi_le'] = self.inputs['phi_le']
-            self.__dict__['phi_te'] = self.inputs['phi_te']
-            self.__dict__['nspan'] = self.inputs['nspan']
-            self.__dict__['ispan'] = self.inputs['ispan']
-            self.__dict__['icomp'] = self.inputs['icomp']
-            self.__dict__['iadflowcp'] = self.inputs['iadflowcp']
-            self.__dict__['ncritts'] = self.inputs['ncritts']
-            self.__dict__['ncritcf'] = self.inputs['ncritcf']
-            self.__dict__['uponly'] = self.inputs['uponly']
-            self.__dict__['circlike'] = self.inputs['circlike']
-            self.__dict__['ipart'] = self.inputs['ipart']
+            self.__dict__['T'] = self.inputs['T']
+            self.__dict__['nCritTS'] = self.inputs['nCritTS']
+            self.__dict__['nCritCF'] = self.inputs['nCritCF']
+            self.__dict__['spanDirection'] = self.inputs['spanDirection']
+            self.__dict__['sectionData'] = self.inputs['sectionData']
+            self.__dict__['partName'] = self.inputs['partName']
 
         else:
             raise Error('There shold be 14 parameters giiven')

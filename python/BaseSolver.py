@@ -1,42 +1,37 @@
+from __future__ import print_function
 #!/usr/local/bin/python
-"""
-pyAero_solver
+'''
+BaseSolver
 
-Holds the Python Aerodynamic Analysis Classes (base).
+Holds a basic Python Analysis Classes (base and inherited).
 
-Copyright (c) 2012 by Charles A. Mader and Gaetan K.W. Kenway
+Copyright (c) 2017 by Dr. Charles A. Mader
 All rights reserved. Not to be used for commercial purposes.
-Revision: 2.0   $Date: 24/08/2016 21:00$
+Revision: 1.0   $Date: 01/06/2017 15:00$
 
 
 Developers:
 -----------
-- Ruben E. Perez (RP)
-- Dr. Charles A. Mader (CM)
-- Dr. Gaetan K.W. Kenway (GK)
+- Dr. Charles A. Mader (CAM)
 
 History
 -------
-    v. 1.0    - Initial Class Creation (RP, 2008)
-    v. 2.0    - Major addition of functionality to the base class (CM,2016)
-"""
+    v. 1.0    - Initial Class Creation (CAM, 2013)
+    v. 2.0    - Major update to options implementation (CAM,2017)
+'''
+
+__version__ = '$Revision: $'
+
+'''
+ToDo:
+    - 
+'''
 
 # =============================================================================
 # Standard Python modules
 # =============================================================================
 import os, sys
-import pdb
-import numpy
 from pprint import pprint as pp
-# =============================================================================
-# External Python modules
-# =============================================================================
-#import external
-
-# =============================================================================
-# Extension modules
-# =============================================================================
-from pyTransi_problem import TransiProblem
 
 # =============================================================================
 # Misc Definitions
@@ -58,7 +53,7 @@ class Error(Exception):
     was a expliclty raised exception.
     """
     def __init__(self, message):
-        msg = '\n+'+'-'*78+'+'+'\n' + '| TransiSolver Error: '
+        msg = '\n+'+'-'*78+'+'+'\n' + '| BaseSolver Error: '
         i = 19
         for word in message.split():
             if len(word) + i + 1 > 78: # Finish line and start new one
@@ -73,54 +68,52 @@ class Error(Exception):
 
 
 # =============================================================================
-# AeroSolver Class
+# BaseSolver Class
 # =============================================================================
-
-class TransiSolver(object):
+class BaseSolver(object):
     
-    """
-    Abstract Class for Tranisition Solver Object
-    """
+    '''
+    Abstract Class for a basic Solver Object
+    '''
     
-    def __init__(self, name, category={}, def_options={}, informs={}, *args, **kwargs):
+    def __init__(self, name, category={}, def_options={}, **kwargs):
         
-        """
-        AeroSolver Class Initialization
+        '''
+        StructSolver Class Initialization
         
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
-        """
+        Documentation last updated:  
+        '''
         
         # 
         self.name = name
         self.category = category
         self.options = CaseInsensitiveDict()
         self.defaultOptions = def_options
-        self.informs = informs
         self.solverCreated = False
-        self.families = CaseInsensitiveDict()
-        #print(self.defaultOptions)
-        #print(self.options)
-        #print **kwargs
+        self.imOptions = {}
+        
         # Initialize Options
-
         for key in self.defaultOptions:
-            print(key)
             self.setOption(key, self.defaultOptions[key][1])
 
         koptions = kwargs.pop('options', CaseInsensitiveDict())
-        #print(koptions)
-        #print koptions
-        #print self.options
         for key in koptions:
-            #print (koptions[key])
             self.setOption(key, koptions[key])
-            #print self.setOption
+
         self.solverCreated = True
-        self._updateGeomInfo = False
-        #print self.options
-        #print 'defaultOptions'
-        #print self.defaultOptions
+       
+    def __call__(self,  *args, **kwargs):
         
+        '''
+        Run Analyzer (Calling Routine)
+        
+        Documentation last updated: 
+        '''
+        
+        
+        # Checks
+        pass
+
     def setOption(self, name, value):
         """
         Default implementation of setOption()
@@ -142,9 +135,9 @@ class TransiSolver(object):
 
         # Make sure we are not trying to change an immutable option if
         # we are not allowed to.
-        #if self.solverCreated and name in self.imOptions:
-        #    raise Error("Option '%-35s' cannot be modified after the solver "
-        #                "is created."%name)
+        if self.solverCreated and name in self.imOptions:
+            raise Error("Option '%-35s' cannot be modified after the solver "
+                        "is created."%name)
 
         # Now we know the option exists, lets check if the type is ok:
         if isinstance(value, self.defaultOptions[name][0]):
@@ -155,7 +148,7 @@ class TransiSolver(object):
                         "Expected data type is %-47s \n "
                         "Received data type is %-47s"% (
                             name, self.defaultOptions[name][0], type(value)))
-                    
+                
     def getOption(self, name):
         """
         Default implementation of getOption()
@@ -183,7 +176,7 @@ class TransiSolver(object):
         options to the stdout on the root processor"""
         if self.comm.rank == 0:
             print('+---------------------------------------+')
-            print('|          All %s Options:            |'%self.name)
+            print('|          All %s Options:          |'%self.name)
             print('+---------------------------------------+')
             # Need to assemble a temporary dictionary
             tmpDict = {}
@@ -199,7 +192,7 @@ class TransiSolver(object):
         processor"""
         if self.comm.rank == 0:
             print('+---------------------------------------+')
-            print('|      All Modified %s Options:       |'%self.name)
+            print('|      All Modified %s Options:     |'%self.name)
             print('+---------------------------------------+')
             # Need to assemble a temporary dictionary
             tmpDict = {}
@@ -208,6 +201,14 @@ class TransiSolver(object):
                     tmpDict[key] = self.getOption(key)
             pp(tmpDict)
 
+#==============================================================================
+# Optimizer Test
+#==============================================================================
+if __name__ == '__main__':
+    
+    print('Testing ...')
+    
+    # Test Optimizer
+    azr = BaseSolver('Test')
+    dir(azr)
 
-
-        
