@@ -4,7 +4,6 @@ from .python.pyStruct_problem import StructProblem
 from .python.pyAeroStruct_problem import AeroStructProblem
 
 from .python.pyAero_solver import AeroSolver
-
 from .python.BaseSolver import BaseSolver
 
 from .python.pyMission_problem import MissionProblem

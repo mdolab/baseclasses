@@ -11,4 +11,5 @@ A listing of all modules in ``baseClasses`` is given below.
    pyAero_problem
    pyStruct_problem
    pyAeroStruct_problem
+   BaseSolver
    pyAero_solver
