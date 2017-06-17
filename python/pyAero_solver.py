@@ -19,6 +19,7 @@ History
 -------
     v. 1.0    - Initial Class Creation (RP, 2008)
     v. 2.0    - Major addition of functionality to the base class (CM,2016)
+    v. 2.1    - Shifted the inherited object to be BaseSolver (CM,2017)
 """
 
 # =============================================================================
@@ -27,7 +28,7 @@ History
 import os, sys
 import pdb
 import numpy
-from pprint import pprint as pp
+
 # =============================================================================
 # External Python modules
 # =============================================================================
@@ -37,6 +38,7 @@ from pprint import pprint as pp
 # Extension modules
 # =============================================================================
 from .pyAero_problem import AeroProblem
+from .BaseSolver import BaseSolver
 
 # =============================================================================
 # Misc Definitions
@@ -76,13 +78,13 @@ class Error(Exception):
 # AeroSolver Class
 # =============================================================================
 
-class AeroSolver(object):
+class AeroSolver(BaseSolver):
     
     """
     Abstract Class for Aerodynamic Solver Object
     """
     
-    def __init__(self, name, category={}, def_options={}, informs={}, *args, **kwargs):
+    def __init__(self, name, category={}, def_options={}, informs={}, options={}, **kwargs):
         
         """
         AeroSolver Class Initialization
@@ -90,24 +92,11 @@ class AeroSolver(object):
         Documentation last updated:  May. 21, 2008 - Ruben E. Perez
         """
         
-        # 
-        self.name = name
-        self.category = category
-        self.options = CaseInsensitiveDict()
-        self.defaultOptions = def_options
-        self.informs = informs
-        self.solverCreated = False
         self.families = CaseInsensitiveDict()
 
-        # Initialize Options
-        for key in self.defaultOptions:
-            self.setOption(key, self.defaultOptions[key][1])
+        # Setup option info
+        BaseSolver.__init__(self,name, category=category,def_options=def_options, options=options,**kwargs)
 
-        koptions = kwargs.pop('options', CaseInsensitiveDict())
-        for key in koptions:
-            self.setOption(key, koptions[key])
-
-        self.solverCreated = True
         self._updateGeomInfo = False
 
     def setMesh(self, mesh):
@@ -493,92 +482,6 @@ class AeroSolver(object):
         """
         pass
             
-    def setOption(self, name, value):
-        """
-        Default implementation of setOption()
-
-        Parameters
-        ----------
-        name : str
-           Name of option to set. Not case sensitive
-        value : varries
-           Value to set. Type is checked for consistency. 
-        
-        """
-        name = name.lower()
-        try: 
-            self.defaultOptions[name]
-        except KeyError:
-            Error("Option \'%-30s\' is not a valid %s option."%(
-                name,  self.name))
-
-        # Make sure we are not trying to change an immutable option if
-        # we are not allowed to.
-        if self.solverCreated and name in self.imOptions:
-            raise Error("Option '%-35s' cannot be modified after the solver "
-                        "is created."%name)
-
-        # Now we know the option exists, lets check if the type is ok:
-        if isinstance(value, self.defaultOptions[name][0]):
-            # Just set:
-            self.options[name] = [type(value), value]
-        else:
-            raise Error("Datatype for Option %-35s was not valid \n "
-                        "Expected data type is %-47s \n "
-                        "Received data type is %-47s"% (
-                            name, self.defaultOptions[name][0], type(value)))
-                    
-    def getOption(self, name):
-        """
-        Default implementation of getOption()
-
-        Parameters
-        ----------
-        name : str
-           Name of option to get. Not case sensitive
-
-        Returns
-        -------
-        value : varries
-           Return the curent value of the option.         
-        """
-
-        if name.lower() in self.defaultOptions:
-            return self.options[name.lower()][1]
-        else:
-            raise Error('%s is not a valid option name.'% name)
-
-    def printCurrentOptions(self):
-
-        """
-        Prints a nicely formatted dictionary of all the current solver
-        options to the stdout on the root processor"""
-        if self.comm.rank == 0:
-            print('+---------------------------------------+')
-            print('|          All %s Options:          |'%self.name)
-            print('+---------------------------------------+')
-            # Need to assemble a temporary dictionary
-            tmpDict = {}
-            for key in self.options:
-                tmpDict[key] = self.getOption(key)
-            pp(tmpDict)
-
-    def printModifiedOptions(self):
-
-        """
-        Prints a nicely formatted dictionary of all the current solver
-        options that have been modified from the defaults to the root
-        processor"""
-        if self.comm.rank == 0:
-            print('+---------------------------------------+')
-            print('|      All Modified %s Options:     |'%self.name)
-            print('+---------------------------------------+')
-            # Need to assemble a temporary dictionary
-            tmpDict = {}
-            for key in self.options:
-                if self.getOption(key) != self.defaultOptions[key][1]:
-                    tmpDict[key] = self.getOption(key)
-            pp(tmpDict)
 
     def printFamilyList(self):
         """
