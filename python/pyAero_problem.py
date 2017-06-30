@@ -484,7 +484,8 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         self.bcVarData[varName, familyName] = value
 
     def addDV(self, key, value=None, lower=None, upper=None, scale=1.0,
-              name=None, offset=0.0, dvOffset=0.0, addToPyOpt=True, family=None):
+              name=None, offset=0.0, dvOffset=0.0, addToPyOpt=True, family=None, 
+              units=None):
         """
         Add one of the class attributes as an 'aerodynamic' design
         variable. Typical variables are alpha, mach, altitude,
@@ -543,6 +544,10 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             the same variable, only one needs to add the variables to pyOpt
             and the others can set this to False. 
 
+        units : str or None. Default None
+            physical units of the variable
+
+
         Examples
         --------
         >>> # Add alpha variable with typical bounds
@@ -583,7 +588,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             family = None
 
         self.DVs[dvName] = aeroDV(key, value, lower, upper, scale, offset, 
-                                  dvOffset, addToPyOpt, family)
+                                  dvOffset, addToPyOpt, family, units)
 
     def updateInternalDVs(self):
         """
@@ -965,7 +970,7 @@ class aeroDV(object):
     """
     
     def __init__(self, key, value, lower, upper, scale, offset, dvOffset, 
-                 addToPyOpt, family):
+                 addToPyOpt, family, units):
         self.key = key
         self.value = value
         self.lower = lower
@@ -975,3 +980,4 @@ class aeroDV(object):
         self.dvOffset = offset
         self.addToPyOpt = addToPyOpt
         self.family = family
+        self.units = units
