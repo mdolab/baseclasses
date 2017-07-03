@@ -642,7 +642,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             if dv.addToPyOpt:
                 optProb.addVar(dvName, 'c', value=dv.value, lower=dv.lower,
                                upper=dv.upper, scale=dv.scale, 
-                               offset=dv.dvOffset)
+                               offset=dv.dvOffset, units=dv.units)
             
     def __getitem__(self, key):
 
