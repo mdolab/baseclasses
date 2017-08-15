@@ -34,15 +34,15 @@ class Error(Exception):
         msg += ' '*(78-i) + '|\n' + '+'+'-'*78+'+'+'\n'
         print(msg)
         Exception.__init__(self)
-        
+
 class EngineProblem(object):
     """
-    The main purpose of this class is to represent the all relevant 
-    information for a engine anlysis using the EngineModel class. 
+    The main purpose of this class is to represent the all relevant
+    information for a engine anlysis using the EngineModel class.
 
     It contains an instance of an aeroProblem that defines the necessary
-    aerodynamic conditions. 
-    
+    aerodynamic conditions.
+
     Parameters
     ----------
     name : str
@@ -53,13 +53,14 @@ class EngineProblem(object):
         engineProblem.
 """
 
-    def __init__(self, name, AP, throttle=1.0, **kwargs):
+    def __init__(self, name, AP, throttle=1.0, ISA=0.0, **kwargs):
         # Always have to have the name
         self.name = name
         self.AP = AP
         self.throttle = throttle
+        self.ISA = ISA
         # When a solver calls its evalFunctions() it must write the
-        # unique name it gives to funcNames. 
+        # unique name it gives to funcNames.
         self.funcNames = {}
         self.evalFuncs = set()
 
@@ -70,13 +71,15 @@ class EngineProblem(object):
         self.DVs = {}
         self.DVNames = {}
         self.possibleDVs = set(['throttle'])
-        
+
+        self._addAeroProblemDVs()
+
     def addDV(self, key, value=None, lower=None, upper=None, scale=1.0,
               name=None):
         """
         Add a DV to the engineProblem. An error will be given if the
-              requested DV is not allowed to be added 
-      
+              requested DV is not allowed to be added
+
         Parameters
         ----------
         key : str
@@ -100,7 +103,7 @@ class EngineProblem(object):
             only used when the user wishes to have multiple
             engineProblems to explictly use the same design variable.
         """
-        
+
         # First check if we are allowed to add the DV:
         if key not in self.possibleDVs:
             raise Error("The DV '%s' could not be added. The list of "
@@ -113,7 +116,7 @@ class EngineProblem(object):
 
         if value is None:
             value = getattr(self, key)
-         
+
         self.DVs[dvName] = EngineDV(key, value, lower, upper, scale)
         self.DVNames[key] = dvName
 
@@ -137,7 +140,7 @@ class EngineProblem(object):
                 except:
                     pass
         self.AP.setDesignVars(x)
-        
+
     def addVariablesPyOpt(self, optProb):
         """
         Add the current set of variables to the optProb object.
@@ -153,7 +156,20 @@ class EngineProblem(object):
             optProb.addVar(key, 'c', value=dv.value, lower=dv.lower,
                            upper=dv.upper, scale=dv.scale)
         self.AP.addVariablesPyOpt(optProb)
-        
+
+    def _addAeroProblemDVs(self):
+        """
+        Internal function to make AP design variables visible to the engine model.
+        """
+        for dvName in self.AP.DVs.keys():
+            dv = self.AP.DVs[dvName]
+            if dv.key == 'altitude':
+                self.DVNames['altitude'] = dvName
+            elif dv.key == 'mach':
+                self.DVNames['mach'] = dvName
+            elif dv.key == 'V':
+                self.DVNames['tas'] = dvName
+
     def __getitem__(self, key):
 
         return self.funcNames[key]
@@ -163,19 +179,19 @@ class EngineProblem(object):
         consistency
         """
         self.AP.evalFunctions(funcs, evalFuncs, ignoreMissing)
-    
+
     def evalFunctionsSens(self, funcsSens, evalFuncs, ignoreMissing=True):
         """
         No functions in the enginProblem itself, but evaluate the AP for
         consistency
         """
         self.AP.evalFunctionsSens(funcsSens, evalFuncs, ignoreMissing)
-    
+
 class EngineDV(object):
     """
     A container storing information regarding an 'engine' variable.
     """
-    
+
     def __init__(self, key, value, lower, upper, scale):
         self.key = key
         self.value = value
