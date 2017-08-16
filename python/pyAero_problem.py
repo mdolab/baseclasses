@@ -526,9 +526,9 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             change the center one, and have the other two slave, we
             would do this::
 
-              >>> ap1.addDV('mach',...,name='centerMach', offet=-0.01)
-              >>> ap2.addDV('mach',...,name='centerMach', offet= 0.00)
-              >>> ap3.addDV('mach',...,name='centerMach', offet=+0.01)
+              >>> ap1.addDV('mach',...,name='centerMach', offset=-0.01)
+              >>> ap2.addDV('mach',...,name='centerMach', offset= 0.00)
+              >>> ap3.addDV('mach',...,name='centerMach', offset=+0.01)
 
             The result is a single design variable driving three
             different mach numbers.
