@@ -1,20 +1,24 @@
 from __future__ import print_function
+
 """
 pyEngine_problem
 
 Developers:
 -----------
 - Dr. Gaetan K. W. Kenway (GKWK)
+- Nicolas Bons (NB)
 
 History
 -------
     v. 0.1    - Complete overall of AeroProblem (GKWK, 2014)
+    v. 0.2    - Now inherits from AeroProblem (NB, 2017)
 """
 
 # =============================================================================
 # Imports
 # =============================================================================
 import numpy
+from baseclasses import AeroProblem
 
 class Error(Exception):
     """
@@ -35,166 +39,38 @@ class Error(Exception):
         print(msg)
         Exception.__init__(self)
 
-class EngineProblem(object):
+class EngineProblem(AeroProblem):
     """
-    The main purpose of this class is to represent the all relevant
-    information for a engine anlysis using the EngineModel class.
-
-    It contains an instance of an aeroProblem that defines the necessary
-    aerodynamic conditions.
+    The EngineProblem class inherits from the AeroProblem class so that
+    aerodynamic solvers (AeroSolver) and engine models (EngineModelSMT) can
+    reference the same flight condition without needing to define redundant
+    information. The EngineProblem layer simply adds a few possible design
+    variables and handles some stuff with derivatives.
 
     Parameters
     ----------
     name : str
         Name of this Engine problem.
 
-    funcs : iteratble object containing strings
+    evalFuncs : iterable object containing strings
         The names of the functions the user wants evaluated for this
         engineProblem.
+
+    throttle : float
+        Initial value for throttle variable
+
+    ISA : float
+        Initial value for ISA temperature variable
 """
 
-    def __init__(self, name, AP, throttle=1.0, ISA=0.0, **kwargs):
-        # Always have to have the name
-        self.name = name
-        self.AP = AP
+    def __init__(self, name, throttle=1.0, ISA=0.0, **kwargs):
+        # Initialize AeroProblem
+        AeroProblem.__init__(self, name, **kwargs)
+
+        # Set initial throttle or ISA
         self.throttle = throttle
         self.ISA = ISA
-        # When a solver calls its evalFunctions() it must write the
-        # unique name it gives to funcNames.
-        self.funcNames = {}
-        self.evalFuncs = set()
 
-        if 'evalFuncs' in kwargs:
-            self.evalFuncs = set(kwargs['evalFuncs'])
-
-        # Storage of DVs
-        self.DVs = {}
-        self.DVNames = {}
-        self.possibleDVs = set(['throttle'])
-
-        self._addAeroProblemDVs()
-
-    def addDV(self, key, value=None, lower=None, upper=None, scale=1.0,
-              name=None):
-        """
-        Add a DV to the engineProblem. An error will be given if the
-              requested DV is not allowed to be added
-
-        Parameters
-        ----------
-        key : str
-            Name of variable to add. See above for possible ones
-
-        value : float. Default is None
-            Initial value for variable. If not given, current value
-            of the attribute will be used.
-
-        lower : float. Default is None
-            Optimization lower bound. Default is unbonded.
-
-        upper : float. Default is None
-            Optimization upper bound. Default is unbounded.
-
-        scale : float. Default is 1.0
-            Set scaling parameter for the optimization to use.
-
-        name : str. Default is None
-            Overwrite the name of this variable. This is typically
-            only used when the user wishes to have multiple
-            engineProblems to explictly use the same design variable.
-        """
-
-        # First check if we are allowed to add the DV:
-        if key not in self.possibleDVs:
-            raise Error("The DV '%s' could not be added. The list of "
-                        "possible DVs are: %s."% (key, repr(self.possibleDVs)))
-
-        if name is None:
-            dvName = key + '_%s'% self.name
-        else:
-            dvName = name
-
-        if value is None:
-            value = getattr(self, key)
-
-        self.DVs[dvName] = EngineDV(key, value, lower, upper, scale)
-        self.DVNames[key] = dvName
-
-    def setDesignVars(self, x):
-        """
-        Set the variables in the x-dict for this object.
-
-        Parameters
-        ----------
-        x : dict
-            Dictionary of variables which may or may not contain the
-            design variable names this object needs
-            """
-
-        for key in self.DVNames:
-            dvName = self.DVNames[key]
-            if dvName in x:
-                setattr(self, key, x[dvName])
-                try: # To set in the DV as well if the DV exists:
-                    self.DVs[dvName].value = x[dvName]
-                except:
-                    pass
-        self.AP.setDesignVars(x)
-
-    def addVariablesPyOpt(self, optProb):
-        """
-        Add the current set of variables to the optProb object.
-
-        Parameters
-        ----------
-        optProb : pyOpt_optimization class
-            Optimization problem definition to which variables are added
-            """
-
-        for key in self.DVs:
-            dv = self.DVs[key]
-            optProb.addVar(key, 'c', value=dv.value, lower=dv.lower,
-                           upper=dv.upper, scale=dv.scale)
-        self.AP.addVariablesPyOpt(optProb)
-
-    def _addAeroProblemDVs(self):
-        """
-        Internal function to make AP design variables visible to the engine model.
-        """
-        for dvName in self.AP.DVs.keys():
-            dv = self.AP.DVs[dvName]
-            if dv.key == 'altitude':
-                self.DVNames['altitude'] = dvName
-            elif dv.key == 'mach':
-                self.DVNames['mach'] = dvName
-            elif dv.key == 'V':
-                self.DVNames['tas'] = dvName
-
-    def __getitem__(self, key):
-
-        return self.funcNames[key]
-
-    def evalFunctions(self, funcs, evalFuncs, ignoreMissing=False):
-        """No functions in the engineProblem itself, but evaluate the AP for
-        consistency
-        """
-        self.AP.evalFunctions(funcs, evalFuncs, ignoreMissing)
-
-    def evalFunctionsSens(self, funcsSens, evalFuncs, ignoreMissing=True):
-        """
-        No functions in the enginProblem itself, but evaluate the AP for
-        consistency
-        """
-        self.AP.evalFunctionsSens(funcsSens, evalFuncs, ignoreMissing)
-
-class EngineDV(object):
-    """
-    A container storing information regarding an 'engine' variable.
-    """
-
-    def __init__(self, key, value, lower, upper, scale):
-        self.key = key
-        self.value = value
-        self.lower = lower
-        self.upper = upper
-        self.scale = scale
+        # Update AeroProblem variable sets with possible engine variables
+        self.allVarFuncs += ['throttle', 'ISA']
+        self.possibleDVs.update(['throttle', 'ISA'])
