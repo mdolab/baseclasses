@@ -173,17 +173,17 @@ class AeroSolver(BaseSolver):
         v2 = []
 
         # loop over the faces
-        for iProc in xrange(len(faceSizes)):
+        for iProc in range(len(faceSizes)):
 
             connCounter=0
-            for iFace in xrange(len(faceSizes[iProc])):
+            for iFace in range(len(faceSizes[iProc])):
                 # Get the number of nodes on this face
                 faceSize = faceSizes[iProc][iFace]
                 faceNodes = conn[iProc][connCounter:connCounter+faceSize]
                 
                 # Start by getting the centerpoint
                 ptSum= [0, 0, 0]
-                for i in xrange(faceSize):
+                for i in range(faceSize):
                     #idx = ptCounter+i
                     idx = faceNodes[i]
                     ptSum+=pts[iProc][idx]
@@ -193,7 +193,7 @@ class AeroSolver(BaseSolver):
                 # Now go around the face and add a triangle for each adjacent pair
                 # of points. This assumes an ordered connectivity from the
                 # meshwarping
-                for i in xrange(faceSize):
+                for i in range(faceSize):
                     idx = faceNodes[i]
                     p0.append(avgPt)
                     v1.append(pts[iProc][idx]-avgPt)
