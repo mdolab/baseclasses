@@ -16,7 +16,7 @@ History
 # =============================================================================
 import numpy
 import warnings
-from ICAOAtmosphere import ICAOAtmosphere 
+from .ICAOAtmosphere import ICAOAtmosphere 
 
 class CaseInsensitiveDict(dict):
     def __setitem__(self, key, value):
