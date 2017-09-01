@@ -86,11 +86,15 @@ class FieldPerformanceProblem(object):
         Friction coefficient between tires and ground, accounting for braking.
     span : float
         Total wingspan
-    T_I : float
-        Idle thrust for approach and landing.
-    T_G : float
+    T_VA : float
+        Idle thrust during approach.
+    T_VF : float
+        Idle thrust during flare before landing.
+    T_VTD : float
+        Idle thrust at touchdown.
+    T_VG : float
         The thrust available at 0.7*VLOF on the ground.
-    T_T : float
+    T_VT : float
         Thrust available during transition (at V = 1.15*VS).
     T_TOS : float
         Static thrust at takeoff (V = 0).
@@ -98,11 +102,15 @@ class FieldPerformanceProblem(object):
         Thrust for safe climb with OEI (V = 1.2*VS)
     TOW : float
         Takeoff gross weight
-    TSFC_I : float
-        Thrust-specific fuel consumption with engine in idle.
-    TSFC_G : float
+    TSFC_VA : float
+        Thrust-specific fuel consumption with engine in idle during approach.
+    TSFC_VF : float
+        Thrust-specific fuel consumption with engine in idle during flare.
+    TSFC_VTD : float
+        Thrust-specific fuel consumption with engine in idle at touchdown.
+    TSFC_VG : float
         Thrust-specific fuel consumption at 0.7*VLOF on the ground.
-    TSFC_T : float
+    TSFC_VT : float
         Thrust-specific fuel consumption at V = 1.15*VS
     WingHeight: float
         Height of the wing above the ground.
@@ -113,7 +121,7 @@ class FieldPerformanceProblem(object):
     fpp = FieldPerformanceProblem(name='fpp1',TOW=W,span=b,CLmax=CLmax,
                                   WingHeight=5.6,runwayFrictionCoef=0.04,Area=S,
                                   CDo=0.015,CDo_LG=0.0177,CDo_HL=0,
-                                  T_G=T_G,T_T=T_T,TSFC_G=TSFC,TSFC_T=TSFC,
+                                  T_VG=T_VG,T_VT=T_VT,TSFC_VG=TSFC,TSFC_VT=TSFC,
                                   altitude=0,units='english')
     fpp.addDV('TOW')
     funcs = {}
@@ -130,8 +138,8 @@ class FieldPerformanceProblem(object):
         paras = set(('TOW','span','WingHeight','Area',
                     'runwayFrictionCoef','altitude',
                     'CLmax','CDo','CDo_LG','CDo_HL',
-                    'T_G','T_T','T_V2','T_TOS','T_I',
-                    'TSFC_G','TSFC_T','TSFC_I','BPR'))
+                    'T_VG','T_VT','T_V2','T_TOS','T_VA','T_VF','T_VTD',
+                    'TSFC_VG','TSFC_VT','TSFC_VA','TSFC_VF','TSFC_VTD','BPR'))
 
         # By default everything is None
         for para in paras:
@@ -181,8 +189,8 @@ class FieldPerformanceProblem(object):
 
         # Specify the set of possible design variables:
         varFuncs = ['TOW','span','Area','WingHeight','CDo','CDo_LG','CDo_HL',
-                    'T_G','T_T','T_V2','T_TOS','T_I',
-                    'TSFC_G','TSFC_T','TSFC_I','BPR']
+                    'T_VG','T_VT','T_V2','T_TOS','T_VA','T_VF','T_VTD',
+                    'TSFC_VG','TSFC_VT','TSFC_VA','TSFC_VF','TSFC_VTD','BPR']
 
         self.possibleDVs = set()
         for var in varFuncs:
