@@ -303,7 +303,7 @@ class AeroSolver(BaseSolver):
 
         # python 3.6 compatibility requires that we force things into a binary string 
         #       representation for the dictioanry key because the stuff coming out of f2py is binary-strings
-        if sys.version_info > (3,): 
+        if sys.version_info >= (3,6): 
             if isinstance(groupName, str): 
                 groupName = bytes(groupName, encoding='utf-8')
             
@@ -517,7 +517,7 @@ class AeroSolver(BaseSolver):
 
         # python 3.6 compatibility requires that we force things into a binary string 
         #       representation for the dictioanry key because the stuff coming out of f2py is binary-strings
-        if sys.version_info > (3,): 
+        if sys.version_info >= (3,6): 
             groupName = bytes(groupName.lower(), encoding='utf-8')
         else: 
             groupName = groupName.lower()
