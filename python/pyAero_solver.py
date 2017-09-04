@@ -327,11 +327,7 @@ class AeroSolver(BaseSolver):
         indices = []
         for fam in families:
             fam_str = fam.lower()
-            print('foobar', groupName, fam_str)
 
-            # if sys.version_info > (3,): 
-            #     print('foobar', fam_str, type(fam_str))
-            #     fam_str = bytes(fam_str, encoding='utf-8')
             if fam.lower() not in self.families:
                 raise Error("The specified family '%s' for group '%s', does "
                             "not exist in the cgns file or has "
