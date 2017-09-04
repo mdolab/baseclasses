@@ -28,6 +28,7 @@ History
 import os, sys
 import pdb
 import numpy
+import binascii
 
 # =============================================================================
 # External Python modules
@@ -300,6 +301,23 @@ class AeroSolver(BaseSolver):
             List of string. Family names to combine into the family group
         """
 
+
+        # python 3.6 compatibility requires that we force things into a binary string 
+        #       representation for the dictioanry key because the stuff coming out of f2py is binary-strings
+        if sys.version_info > (3,): 
+            if isinstance(groupName, str): 
+                groupName = bytes(groupName, encoding='utf-8')
+            
+            # have to check here, because depending on how its called might or might not be binary already
+            b_families = []
+            for fam in families: 
+                if isinstance(fam, str): 
+                    b_families.append(bytes(fam, encoding='utf-8'))
+                else: 
+                    b_families.append(fam)
+            families = b_families
+            
+
         # Do some error checking
         if groupName in self.families:
             raise Error("The specified groupName '%s' already exists in the "
@@ -307,9 +325,14 @@ class AeroSolver(BaseSolver):
 
         # We can actually allow for nested groups. That is, an entry
         # in families may already be a group added in a previous call. 
-
         indices = []
         for fam in families:
+            fam_str = fam.lower()
+            print('foobar', groupName, fam_str)
+
+            # if sys.version_info > (3,): 
+            #     print('foobar', fam_str, type(fam_str))
+            #     fam_str = bytes(fam_str, encoding='utf-8')
             if fam.lower() not in self.families:
                 raise Error("The specified family '%s' for group '%s', does "
                             "not exist in the cgns file or has "
@@ -323,7 +346,7 @@ class AeroSolver(BaseSolver):
         # becuase in fortran we always use a binary search to check if
         # a famID is in the list. 
         self.families[groupName] = sorted(numpy.unique(indices))
-
+      
     def getSurfaceCoordinates(self,group_name):
         """
         Return the set of surface coordinates cooresponding to a
@@ -499,7 +522,14 @@ class AeroSolver(BaseSolver):
         if groupName is None:
             groupName = self.allFamilies
 
-        if groupName.lower() not in self.families:
+        # python 3.6 compatibility requires that we force things into a binary string 
+        #       representation for the dictioanry key because the stuff coming out of f2py is binary-strings
+        if sys.version_info > (3,): 
+            groupName = bytes(groupName.lower(), encoding='utf-8')
+        else: 
+            groupName = groupName.lower()
+
+        if groupName not in self.families:
             raise Error("'%s' is not a family in the CGNS file or has not been added"
                         " as a combination of families"%groupName)
 
