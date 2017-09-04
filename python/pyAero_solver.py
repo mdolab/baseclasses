@@ -28,7 +28,6 @@ History
 import os, sys
 import pdb
 import numpy
-import binascii
 
 # =============================================================================
 # External Python modules
