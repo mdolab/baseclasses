@@ -326,8 +326,6 @@ class AeroSolver(BaseSolver):
         # in families may already be a group added in a previous call. 
         indices = []
         for fam in families:
-            fam_str = fam.lower()
-
             if fam.lower() not in self.families:
                 raise Error("The specified family '%s' for group '%s', does "
                             "not exist in the cgns file or has "
