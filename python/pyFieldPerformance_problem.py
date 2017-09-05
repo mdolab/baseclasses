@@ -74,11 +74,11 @@ class FieldPerformanceProblem(object):
         Reference area of the wing.
     BPR : float
         bypass ratio of the engine
-    CDo : float
+    CD0 : float
         Zero-lift drag coefficient of airplane.
-    CDo_LG : float
+    CD0_LG : float
         Zero-lift drag increment due to landing gear extended.
-    CDo_HL : float
+    CD0_HL : float
         Zero-lift drag increment due to flap deflection.
     CLmax : float
         Maximum lift coefficient of the airplane in high-lift configuration.
@@ -86,22 +86,26 @@ class FieldPerformanceProblem(object):
         Friction coefficient between tires and ground, accounting for braking.
     span : float
         Total wingspan
+
+    ** Note ** Thrust and weight should be specified in terms of force.
     T_VA : float
-        Idle thrust during approach.
+        Idle thrust during approach. <force>
     T_VF : float
-        Idle thrust during flare before landing.
+        Idle thrust during flare before landing. <force>
     T_VTD : float
-        Idle thrust at touchdown.
+        Idle thrust at touchdown. <force>
     T_VG : float
-        The thrust available at 0.7*VLOF on the ground.
+        The thrust available at 0.7*VLOF on the ground. <force>
     T_VT : float
-        Thrust available during transition (at V = 1.15*VS).
+        Thrust available during transition (at V = 1.15*VS). <force>
     T_TOS : float
-        Static thrust at takeoff (V = 0).
+        Static thrust at takeoff (V = 0). <force>
     T_V2 : float
-        Thrust for safe climb with OEI (V = 1.2*VS)
+        Thrust for safe climb with OEI (V = 1.2*VS). <force>
     TOW : float
-        Takeoff gross weight
+        Takeoff gross weight. <force>
+
+    ** Note ** TSFC should be specified in terms of mass / time / force.
     TSFC_VA : float
         Thrust-specific fuel consumption with engine in idle during approach.
     TSFC_VF : float
@@ -120,7 +124,7 @@ class FieldPerformanceProblem(object):
     FP = FieldPerformance('gulfstream')
     fpp = FieldPerformanceProblem(name='fpp1',TOW=W,span=b,CLmax=CLmax,
                                   WingHeight=5.6,runwayFrictionCoef=0.04,Area=S,
-                                  CDo=0.015,CDo_LG=0.0177,CDo_HL=0,
+                                  CD0=0.015,CD0_LG=0.0177,CD0_HL=0,
                                   T_VG=T_VG,T_VT=T_VT,TSFC_VG=TSFC,TSFC_VT=TSFC,
                                   altitude=0,units='english')
     fpp.addDV('TOW')
@@ -137,7 +141,7 @@ class FieldPerformanceProblem(object):
         # the class.
         paras = set(('TOW','span','WingHeight','Area',
                     'runwayFrictionCoef','altitude',
-                    'CLmax','CDo','CDo_LG','CDo_HL',
+                    'CLmax','CD0','CD0_LG','CD0_HL',
                     'T_VG','T_VT','T_V2','T_TOS','T_VA','T_VF','T_VTD',
                     'TSFC_VG','TSFC_VT','TSFC_VA','TSFC_VF','TSFC_VTD','BPR'))
 
@@ -188,8 +192,8 @@ class FieldPerformanceProblem(object):
         keys = set(kwargs.keys())
 
         # Specify the set of possible design variables:
-        varFuncs = ['TOW','span','Area','WingHeight','CDo','CDo_LG','CDo_HL',
-                    'T_VG','T_VT','T_V2','T_TOS','T_VA','T_VF','T_VTD',
+        varFuncs = ['TOW','span','Area','WingHeight','CD0','CD0_LG','CD0_HL',
+                    'CLmax','T_VG','T_VT','T_V2','T_TOS','T_VA','T_VF','T_VTD',
                     'TSFC_VG','TSFC_VT','TSFC_VA','TSFC_VF','TSFC_VTD','BPR']
 
         self.possibleDVs = set()
