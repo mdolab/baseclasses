@@ -39,6 +39,7 @@ import numpy
 # =============================================================================
 from .pyAero_problem import AeroProblem
 from .BaseSolver import BaseSolver
+from .py3Util import getPy3BString, getPy3BStringList
 
 # =============================================================================
 # Misc Definitions
@@ -301,20 +302,8 @@ class AeroSolver(BaseSolver):
         """
 
 
-        # python 3.6 compatibility requires that we force things into a binary string 
-        #       representation for the dictioanry key because the stuff coming out of f2py is binary-strings
-        if sys.version_info >= (3,6): 
-            if isinstance(groupName, str): 
-                groupName = bytes(groupName, encoding='utf-8')
-            
-            # have to check here, because depending on how its called might or might not be binary already
-            b_families = []
-            for fam in families: 
-                if isinstance(fam, str): 
-                    b_families.append(bytes(fam, encoding='utf-8'))
-                else: 
-                    b_families.append(fam)
-            families = b_families
+        groupName = getPy3BString(groupName)
+        families = getPy3BStringList(families)
             
 
         # Do some error checking
@@ -515,12 +504,7 @@ class AeroSolver(BaseSolver):
         if groupName is None:
             groupName = self.allFamilies
 
-        # python 3.6 compatibility requires that we force things into a binary string 
-        #       representation for the dictioanry key because the stuff coming out of f2py is binary-strings
-        if sys.version_info >= (3,6): 
-            groupName = bytes(groupName.lower(), encoding='utf-8')
-        else: 
-            groupName = groupName.lower()
+        groupName = getPy3BString(groupName)
 
         if groupName not in self.families:
             raise Error("'%s' is not a family in the CGNS file or has not been added"
