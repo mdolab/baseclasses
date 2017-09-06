@@ -18,4 +18,4 @@ from .python.pyEngine_problem import EngineProblem
 
 from .python.pyFieldPerformance_problem import FieldPerformanceProblem
 
-from .python.py3Util import getPy3BString, getPy3BStringList
+from .python.py3Util import getPy3SafeString
