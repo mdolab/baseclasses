@@ -39,7 +39,7 @@ import numpy
 # =============================================================================
 from .pyAero_problem import AeroProblem
 from .BaseSolver import BaseSolver
-from .py3Util import getPy3BString, getPy3BStringList
+from .py3Util import getPy3SafeString
 
 # =============================================================================
 # Misc Definitions
@@ -300,12 +300,7 @@ class AeroSolver(BaseSolver):
         families : list
             List of string. Family names to combine into the family group
         """
-
-
-        groupName = getPy3BString(groupName)
-        families = getPy3BStringList(families)
             
-
         # Do some error checking
         if groupName in self.families:
             raise Error("The specified groupName '%s' already exists in the "
@@ -503,8 +498,6 @@ class AeroSolver(BaseSolver):
         
         if groupName is None:
             groupName = self.allFamilies
-
-        groupName = getPy3BString(groupName)
 
         if groupName not in self.families:
             raise Error("'%s' is not a family in the CGNS file or has not been added"
