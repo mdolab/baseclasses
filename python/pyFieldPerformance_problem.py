@@ -304,7 +304,7 @@ class FieldPerformanceProblem(object):
         for key in self.DVNames:
             dvName = self.DVNames[key]
             if dvName in x:
-                setattr(self, key, x[dvName] + self.DVs[dvName].offset)
+                setattr(self, key, x[dvName] + self.DVs[dvName].dvOffset)
                 try: # To set in the DV as well if the DV exists:
                     self.DVs[dvName].value = x[dvName]
                 except:
