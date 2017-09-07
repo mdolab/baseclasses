@@ -17,3 +17,5 @@ from .python.ICAOAtmosphere import ICAOAtmosphere
 from .python.pyEngine_problem import EngineProblem
 
 from .python.pyFieldPerformance_problem import FieldPerformanceProblem
+
+from .python.py3Util import getPy3SafeString
