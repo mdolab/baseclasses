@@ -39,6 +39,7 @@ import numpy
 # =============================================================================
 from .pyAero_problem import AeroProblem
 from .BaseSolver import BaseSolver
+from .py3Util import getPy3SafeString
 
 # =============================================================================
 # Misc Definitions
@@ -299,7 +300,7 @@ class AeroSolver(BaseSolver):
         families : list
             List of string. Family names to combine into the family group
         """
-
+            
         # Do some error checking
         if groupName in self.families:
             raise Error("The specified groupName '%s' already exists in the "
@@ -307,7 +308,6 @@ class AeroSolver(BaseSolver):
 
         # We can actually allow for nested groups. That is, an entry
         # in families may already be a group added in a previous call. 
-
         indices = []
         for fam in families:
             if fam.lower() not in self.families:
@@ -323,7 +323,7 @@ class AeroSolver(BaseSolver):
         # becuase in fortran we always use a binary search to check if
         # a famID is in the list. 
         self.families[groupName] = sorted(numpy.unique(indices))
-
+      
     def getSurfaceCoordinates(self,group_name):
         """
         Return the set of surface coordinates cooresponding to a
@@ -499,7 +499,7 @@ class AeroSolver(BaseSolver):
         if groupName is None:
             groupName = self.allFamilies
 
-        if groupName.lower() not in self.families:
+        if groupName not in self.families:
             raise Error("'%s' is not a family in the CGNS file or has not been added"
                         " as a combination of families"%groupName)
 
