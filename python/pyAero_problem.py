@@ -958,7 +958,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             family = self.DVs[dvName].family
             if family is None:
                 setattr(self, key, getattr(self, key) + h)
-                rDict[key] = numpy.imag(self.__dict__[func])/hr
+                rDict[dvName] = numpy.imag(self.__dict__[func])/hr
                 setattr(self, key, numpy.real(getattr(self, key)))
 
         return rDict
