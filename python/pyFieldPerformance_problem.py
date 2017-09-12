@@ -82,6 +82,8 @@ class FieldPerformanceProblem(object):
         Zero-lift drag increment due to flap deflection.
     CLmax : float
         Maximum lift coefficient of the airplane in high-lift configuration.
+    e : float
+        Span efficiency
     runwayFrictionCoef : float
         Friction coefficient between tires and ground, accounting for braking.
     span : float
@@ -141,7 +143,7 @@ class FieldPerformanceProblem(object):
         # the class.
         paras = set(('TOW','span','WingHeight','Area',
                     'runwayFrictionCoef','altitude',
-                    'CLmax','CD0','CD0_LG','CD0_HL',
+                    'CLmax','CD0','CD0_LG','CD0_HL', 'e',
                     'T_VG','T_VT','T_V2','T_TOS','T_VA','T_VF','T_VTD',
                     'TSFC_VG','TSFC_VT','TSFC_VA','TSFC_VF','TSFC_VTD','BPR'))
 
@@ -192,7 +194,7 @@ class FieldPerformanceProblem(object):
         keys = set(kwargs.keys())
 
         # Specify the set of possible design variables:
-        varFuncs = ['TOW','span','Area','WingHeight','CD0','CD0_LG','CD0_HL',
+        varFuncs = ['TOW','span','Area','WingHeight','CD0','CD0_LG','CD0_HL','e',
                     'CLmax','T_VG','T_VT','T_V2','T_TOS','T_VA','T_VF','T_VTD',
                     'TSFC_VG','TSFC_VT','TSFC_VA','TSFC_VF','TSFC_VTD','BPR']
 
