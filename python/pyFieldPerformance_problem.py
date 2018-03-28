@@ -18,6 +18,7 @@ History
 import numpy
 import warnings
 from .ICAOAtmosphere import ICAOAtmosphere
+from .FluidProperties import FluidProperties
 
 class CaseInsensitiveDict(dict):
     def __setitem__(self, key, value):
@@ -157,9 +158,6 @@ class FieldPerformanceProblem(object):
         if self.units == 'english':
             englishUnits = True
 
-        # create an internal instance of the atmosphere to use
-        self.atm = ICAOAtmosphere(englishUnits=englishUnits)
-
         # Set or create a empty dictionary for additional solver
         # options
         self.solverOptions = CaseInsensitiveDict({})
@@ -180,15 +178,6 @@ class FieldPerformanceProblem(object):
             warnings.warn("funcs should **not** be an argument. Use 'evalFuncs'"
                           "instead.")
             self.evalFuncs = set(kwargs['funcs'])
-
-        # Check if 'R' is given....if not we assume air
-        if 'R' in kwargs:
-            self.R = kwargs['R']
-        else:
-            if self.units == 'english':
-                self.R = 1716.493
-            else:
-                self.R = 287.057
 
         # turn the kwargs into a set
         keys = set(kwargs.keys())
@@ -215,14 +204,20 @@ class FieldPerformanceProblem(object):
         self.DVs = {}
         self.DVNames = {}
 
+        # create an internal instance of the atmosphere to use
+        self.atm = ICAOAtmosphere(englishUnits=englishUnits)
+
+        # Check if 'R' is given....if not we assume air
+        fluidprops = FluidProperties(**kwargs)
+
         # compute the densities for this problem
         # Sea level
         P, T = self.atm(0.0)
-        self.rho_SL = P/(self.R*T)
+        self.rho_SL = P/(fluidprops.R*T)
 
-        #actual altitude
+        # Actual altitude
         P, T = self.atm(self.altitude)
-        self.rho = P/(self.R*T)
+        self.rho = P/(fluidprops.R*T)
 
 
     def addDV(self, key, value=None, lower=None, upper=None, scale=1.0,
