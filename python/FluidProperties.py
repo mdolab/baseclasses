@@ -116,5 +116,3 @@ class FluidProperties(object):
 
         if self.englishUnits:
             self.mu /= 47.9
-
-        print('Computing mu')
