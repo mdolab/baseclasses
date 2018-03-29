@@ -13,6 +13,7 @@ from .python.pyMission_problem import MissionSegment
 from .python.pyWeight_problem import WeightProblem
 from .python.pyWeight_problem import FuelCase
 
+from .python.FluidProperties import FluidProperties
 from .python.ICAOAtmosphere import ICAOAtmosphere
 from .python.pyEngine_problem import EngineProblem
 
