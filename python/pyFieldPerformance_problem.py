@@ -104,7 +104,9 @@ class FieldPerformanceProblem(object):
     T_TOS : float
         Static thrust at takeoff (V = 0). <force>
     T_V2 : float
-        Thrust for safe climb with OEI (V = 1.2*VS). <force>
+        Thrust at takeoff safety speed, all engines operating (V = 1.2*VS). <force>
+    T_OEI : float
+        Thrust at takeoff safety speed, one engine operating (V = 1.2*VS). <force>
     TOW : float
         Takeoff gross weight. <force>
 
@@ -145,7 +147,7 @@ class FieldPerformanceProblem(object):
         paras = set(('TOW','span','WingHeight','Area',
                     'runwayFrictionCoef','altitude',
                     'CLmax','CD0','CD0_LG','CD0_HL', 'e',
-                    'T_VG','T_VT','T_V2','T_TOS','T_VA','T_VF','T_VTD',
+                    'T_VG','T_VT','T_V2','T_TOS','T_OEI','T_VA','T_VF','T_VTD',
                     'TSFC_VG','TSFC_VT','TSFC_VA','TSFC_VF','TSFC_VTD','BPR'))
 
         # By default everything is None
@@ -184,8 +186,8 @@ class FieldPerformanceProblem(object):
 
         # Specify the set of possible design variables:
         varFuncs = ['TOW','span','Area','WingHeight','CD0','CD0_LG','CD0_HL','e',
-                    'CLmax','T_VG','T_VT','T_V2','T_TOS','T_VA','T_VF','T_VTD',
-                    'TSFC_VG','TSFC_VT','TSFC_VA','TSFC_VF','TSFC_VTD','BPR']
+                'CLmax','T_VG','T_VT','T_V2','T_TOS','T_OEI','T_VA','T_VF','T_VTD',
+                'TSFC_VG','TSFC_VT','TSFC_VA','TSFC_VF','TSFC_VTD','BPR']
 
         self.possibleDVs = set()
         for var in varFuncs:
@@ -208,7 +210,7 @@ class FieldPerformanceProblem(object):
         self.atm = ICAOAtmosphere(englishUnits=englishUnits)
 
         # Check if 'R' is given....if not we assume air
-        fluidprops = FluidProperties(**kwargs)
+        fluidprops = FluidProperties(englishUnits=englishUnits, **kwargs)
 
         # compute the densities for this problem
         # Sea level
