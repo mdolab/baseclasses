@@ -17,6 +17,7 @@ History
 import numpy
 import warnings
 from .ICAOAtmosphere import ICAOAtmosphere
+from .FluidProperties import FluidProperties
 
 class CaseInsensitiveDict(dict):
     def __setitem__(self, key, value):
@@ -44,7 +45,7 @@ class Error(Exception):
         print(msg)
         Exception.__init__(self)
 
-class AeroProblem(object):
+class AeroProblem(FluidProperties):
     """
     The main purpose of this class is to represent all relevant
     information for a single aerodynamic analysis. This will
@@ -233,8 +234,13 @@ xRef=0.0, zRef=0.0, alpha=3.06)
 areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                          """
     def __init__(self, name, **kwargs):
+
+        # Set basic fluid properties
+        FluidProperties.__init__(self, **kwargs)
+
         # Always have to have the name
         self.name = name
+
         # These are the parameters that can be simply set directly in
         # the class.
         paras = set(('alpha', 'beta', 'areaRef', 'chordRef', 'spanRef',
@@ -248,15 +254,11 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         for para in paras:
             setattr(self, para, None)
 
-        # Check if we have english units:
-        self.englishUnits = False
-        if 'englishUnits' in kwargs:
-            self.englishUnits = kwargs['englishUnits']
-
         # create an internal instance of the atmosphere to use
-        self.atm = ICAOAtmosphere(englishUnits=self.englishUnits)
+        if 'altitude' in kwargs:
+            self.atm = ICAOAtmosphere(englishUnits=self.englishUnits)
 
-        # Set or create a empty dictionary for additional solver
+        # Set or create an empty dictionary for additional solver
         # options
         self.solverOptions = CaseInsensitiveDict({})
         if 'solverOptions' in kwargs:
@@ -276,48 +278,6 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             warnings.warn("funcs should **not** be an argument. Use 'evalFuncs'"
                           "instead.")
             self.evalFuncs = set(kwargs['funcs'])
-
-        # Check if 'R' is given....if not we assume air
-        if 'R' in kwargs:
-            self.R = kwargs['R']
-        else:
-            if self.englishUnits:
-                self.R = 1716.493 #FIX THIS
-            else:
-                self.R = 287.870
-
-        # Check if 'gamma' is given....if not we assume air
-        if 'gamma' in kwargs:
-            self.gamma = kwargs['gamma']
-        else:
-            self.gamma = 1.4
-
-        # Check if 'Pr' is given....if not we assume air
-        if 'Pr' in kwargs:
-            self.Pr = kwargs['Pr']
-        else:
-            self.Pr = 0.72
-
-        # Check if constants to sutherlands law should be changed....if not we assume air
-        if 'SSuthDim' in kwargs or 'muSuthDim' in kwargs or 'TSuthDim' in kwargs:
-            if not all(name in kwargs for name in ('muSuthDim','muSuthDim','TSuthDim')):
-                warnings.warn("One or more constant for Sutherlands law might be missing!\
-                Make sure to provide all three!")
-
-        if 'SSuthDim' in kwargs:
-            self.SSuthDim = kwargs['SSuthDim']
-        else:
-            self.SSuthDim = 110.55
-
-        if 'muSuthDim' in kwargs:
-            self.muSuthDim = kwargs['muSuthDim']
-        else:
-            self.muSuthDim = 1.716e-5
-
-        if 'TSuthDim' in kwargs:
-            self.TSuthDim = kwargs['TSuthDim']
-        else:
-            self.TSuthDim = 273.15
 
         # these are the possible input values
         possibleInputStates = set(['mach', 'V', 'P', 'T', 'rho', 'altitude', 'reynolds',
@@ -484,7 +444,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         self.bcVarData[varName, familyName] = value
 
     def addDV(self, key, value=None, lower=None, upper=None, scale=1.0,
-              name=None, offset=0.0, dvOffset=0.0, addToPyOpt=True, family=None, 
+              name=None, offset=0.0, dvOffset=0.0, addToPyOpt=True, family=None,
               units=None):
         """
         Add one of the class attributes as an 'aerodynamic' design
@@ -857,16 +817,8 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         # calculate the speed of sound
         self.a = numpy.sqrt(self.gamma*self.R*self.T)
 
-        # calculate the dynamic viscosity
-        if self.englishUnits:
-            mu = (self.muSuthDim * (
-                (self.TSuthDim + self.SSuthDim) / (self.T/1.8 + self.SSuthDim)) *
-                  (((self.T/1.8)/self.TSuthDim)**1.5))
-            self.mu = mu / 47.9
-        else:
-            self.mu = (self.muSuthDim * (
-                (self.TSuthDim + self.SSuthDim) / (self.T + self.SSuthDim)) *
-                       ((self.T/self.TSuthDim)**1.5))
+        # Update the dynamic viscosity based on T using Sutherland's Law
+        self.updateViscosity(self.T)
 
         # calculate Velocity
         if self.V is None:
@@ -892,16 +844,8 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         # calculate the speed of sound
         self.a = numpy.sqrt(self.gamma*self.R*self.T)
 
-        # calculate the dynamic viscosity
-        if self.englishUnits:
-            mu = (self.muSuthDim * (
-                (self.TSuthDim + self.SSuthDim) / (self.T/1.8 + self.SSuthDim)) *
-                  (((self.T/1.8)/self.TSuthDim)**1.5))
-            self.mu = mu / 47.9
-        else:
-            self.mu = (self.muSuthDim * (
-                (self.TSuthDim + self.SSuthDim) / (self.T + self.SSuthDim)) *
-                       ((self.T/self.TSuthDim)**1.5))
+        # Update the dynamic viscosity based on T using Sutherland's Law
+        self.updateViscosity(self.T)
 
         # calculate Velocity
         self.V = self.mach * self.a
@@ -922,16 +866,8 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         # calculate the speed of sound
         self.a = numpy.sqrt(self.gamma*self.R*self.T)
 
-        # calculate the dynamic viscosity
-        if self.englishUnits:
-            mu = (self.muSuthDim * (
-                (self.TSuthDim + self.SSuthDim) / (self.T/1.8 + self.SSuthDim)) *
-                  (((self.T/1.8)/self.TSuthDim)**1.5))
-            self.mu = mu / 47.9
-        else:
-            self.mu = (self.muSuthDim * (
-                (self.TSuthDim + self.SSuthDim) / (self.T + self.SSuthDim)) *
-                       ((self.T/self.TSuthDim)**1.5))
+        # Update the dynamic viscosity based on T using Sutherland's Law
+        self.updateViscosity(self.T)
 
         # calculate kinematic viscosity
         self.nu = self.mu / self.rho
