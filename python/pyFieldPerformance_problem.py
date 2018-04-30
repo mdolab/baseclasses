@@ -18,6 +18,7 @@ History
 import numpy
 import warnings
 from .ICAOAtmosphere import ICAOAtmosphere
+from .FluidProperties import FluidProperties
 
 class CaseInsensitiveDict(dict):
     def __setitem__(self, key, value):
@@ -103,7 +104,9 @@ class FieldPerformanceProblem(object):
     T_TOS : float
         Static thrust at takeoff (V = 0). <force>
     T_V2 : float
-        Thrust for safe climb with OEI (V = 1.2*VS). <force>
+        Thrust at takeoff safety speed, all engines operating (V = 1.2*VS). <force>
+    T_OEI : float
+        Thrust at takeoff safety speed, one engine operating (V = 1.2*VS). <force>
     TOW : float
         Takeoff gross weight. <force>
 
@@ -144,7 +147,7 @@ class FieldPerformanceProblem(object):
         paras = set(('TOW','span','WingHeight','Area',
                     'runwayFrictionCoef','altitude',
                     'CLmax','CD0','CD0_LG','CD0_HL', 'e',
-                    'T_VG','T_VT','T_V2','T_TOS','T_VA','T_VF','T_VTD',
+                    'T_VG','T_VT','T_V2','T_TOS','T_OEI','T_VA','T_VF','T_VTD',
                     'TSFC_VG','TSFC_VT','TSFC_VA','TSFC_VF','TSFC_VTD','BPR'))
 
         # By default everything is None
@@ -156,9 +159,6 @@ class FieldPerformanceProblem(object):
         englishUnits = False
         if self.units == 'english':
             englishUnits = True
-
-        # create an internal instance of the atmosphere to use
-        self.atm = ICAOAtmosphere(englishUnits=englishUnits)
 
         # Set or create a empty dictionary for additional solver
         # options
@@ -181,22 +181,13 @@ class FieldPerformanceProblem(object):
                           "instead.")
             self.evalFuncs = set(kwargs['funcs'])
 
-        # Check if 'R' is given....if not we assume air
-        if 'R' in kwargs:
-            self.R = kwargs['R']
-        else:
-            if self.units == 'english':
-                self.R = 1716.493
-            else:
-                self.R = 287.057
-
         # turn the kwargs into a set
         keys = set(kwargs.keys())
 
         # Specify the set of possible design variables:
         varFuncs = ['TOW','span','Area','WingHeight','CD0','CD0_LG','CD0_HL','e',
-                    'CLmax','T_VG','T_VT','T_V2','T_TOS','T_VA','T_VF','T_VTD',
-                    'TSFC_VG','TSFC_VT','TSFC_VA','TSFC_VF','TSFC_VTD','BPR']
+                'CLmax','T_VG','T_VT','T_V2','T_TOS','T_OEI','T_VA','T_VF','T_VTD',
+                'TSFC_VG','TSFC_VT','TSFC_VA','TSFC_VF','TSFC_VTD','BPR']
 
         self.possibleDVs = set()
         for var in varFuncs:
@@ -215,14 +206,20 @@ class FieldPerformanceProblem(object):
         self.DVs = {}
         self.DVNames = {}
 
+        # create an internal instance of the atmosphere to use
+        self.atm = ICAOAtmosphere(englishUnits=englishUnits)
+
+        # Check if 'R' is given....if not we assume air
+        fluidprops = FluidProperties(englishUnits=englishUnits, **kwargs)
+
         # compute the densities for this problem
         # Sea level
         P, T = self.atm(0.0)
-        self.rho_SL = P/(self.R*T)
+        self.rho_SL = P/(fluidprops.R*T)
 
-        #actual altitude
+        # Actual altitude
         P, T = self.atm(self.altitude)
-        self.rho = P/(self.R*T)
+        self.rho = P/(fluidprops.R*T)
 
 
     def addDV(self, key, value=None, lower=None, upper=None, scale=1.0,
