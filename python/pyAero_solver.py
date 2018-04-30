@@ -259,7 +259,8 @@ class AeroSolver(BaseSolver):
 
         In other words, if any one problem fails, the funcs['fail']
         entry will be True. This information can then be used
-        directly in the pyOptSparse.
+        directly in multiPointSparse. For direct interface with pyOptSparse
+        the fail flag needs to be returned separately from the funcs.
 
         Parameters
         ----------
@@ -280,6 +281,39 @@ class AeroSolver(BaseSolver):
         else:
             funcs['fail'] = failFlag
 
+    def checkAdjointFailure(self, aeroProblem, funcsSens):
+        """Take in a an aeroProblem and check for adjoint failure, Then append the
+        fail flag in funcsSens. Information regarding whether or not the
+        last analysis with the aeroProblem was sucessful is
+        included. This information is included as "funcsSens['fail']". If
+        the 'fail' entry already exits in the dictionary the following
+        operation is performed:
+
+        funcsSens['fail'] = funcsSens['fail'] or <did this problem fail>
+
+        In other words, if any one problem fails, the funcsSens['fail']
+        entry will be True. This information can then be used
+        directly in multiPointSparse. For direct interface with pyOptSparse
+        the fail flag needs to be returned separately from the funcs.
+        
+        Parameters
+        ----------
+        aeroProblem : pyAero_problem class
+            The aerodynamic problem to to get the solution for
+
+        funcsSens : dict
+            Dictionary into which the functions are saved.
+
+        """
+        self.setAeroProblem(aeroProblem)
+        # We also add the fail flag into the funcs dictionary. If fail
+        # is already there, we just logically 'or' what was
+        # there. Otherwise we add a new entry.
+        failFlag = self.curAP.adjointFailed
+        if 'fail' in funcsSens:
+            funcsSens['fail'] = funcsSens['fail'] or failFlag
+        else:
+            funcsSens['fail'] = failFlag
         
     def resetFlow(self):
         """
