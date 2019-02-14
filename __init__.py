@@ -19,4 +19,6 @@ from .python.pyEngine_problem import EngineProblem
 
 from .python.pyFieldPerformance_problem import FieldPerformanceProblem
 
+from .python.pyLG_problem import LGProblem
+
 from .python.py3Util import getPy3SafeString
