@@ -315,6 +315,7 @@ class MissionProfile(object):
         for i in xrange(len(segments)):
             seg = segments[i]
             seg.setUnitSystem(self.englishUnits)
+            seg.setDefaults(self.englishUnits)
             segID = i + nSeg_Before
 
             # Loop over the DVs in the segment, if any
@@ -539,7 +540,8 @@ class MissionSegment(object):
         paras = set(('initMach','initAlt','initCAS','initTAS',
                      'finalMach','finalAlt','finalCAS','finalTAS',
                      'fuelFraction','rangeFraction','segTime','engType',
-                     'throttle','nIntervals'))
+                     'throttle','nIntervals','residualclimbrate','descentrate',
+                     'climbtdratio', 'descenttdratio'))
 
         # By default everything is None
         for para in paras:
@@ -604,6 +606,27 @@ class MissionSegment(object):
         fluidProps = FluidProperties(englishUnits=englishUnits)
         self.R = fluidProps.R
         self.gamma = fluidProps.gamma
+
+    def setDefaults(self, englishUnits):
+        # Set default climb/descent rates and td ratios
+        if self.residualclimbrate is None:
+            if englishUnits:
+                self.residualclimbrate = 300.0 / 60.0
+            else:
+                self.residualclimbrate = 300.0 / 60.0 * 0.3048
+
+        if self.descentrate is None:
+            if englishUnits:
+                self.descentrate = -2000.0 / 60.0
+            else:
+                self.descentrate = -2000.0 / 60.0 * 0.3048
+
+        if self.climbtdratio is None:
+            self.climbtdratio = 1.1
+
+        if self.descenttdratio is None:
+            self.descenttdratio = 0.5
+
 
     def determineInputs(self):
         '''
@@ -1068,9 +1091,10 @@ class MissionSegment(object):
             self.engType = 'None'
         engTypeID = engTypeDict[getattr(self,'engType')]
 
-        module.setmissionsegmentdata(idx,segIdx, h1, h2, M1, M2,
-                                     deltaTime,fuelFraction,throttle,rangeFraction,
-                                     segTypeID,engTypeID,self.nIntervals)
+        module.setmissionsegmentdata(idx, segIdx, h1, h2, M1, M2, deltaTime,
+            fuelFraction, throttle, rangeFraction, segTypeID, engTypeID,
+            self.nIntervals, self.residualclimbrate, self.descentrate,
+            self.climbtdratio, self.descenttdratio)
 
     def addDV(self, paramKey, lower=-1e20, upper=1e20, scale=1.0, name=None):
         """
