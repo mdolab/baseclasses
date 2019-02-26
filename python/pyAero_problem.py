@@ -204,10 +204,11 @@ class AeroProblem(FluidProperties):
         Set the reference axis for non-x/y/z based moment calculations
 
     R : float
-        The gas constant. By defalut we use air. R=287.05
+        The gas constant. By default we use air (287.055 J / kg / K).
 
-    englishUnits : bool
-        Flag to use all English units: pounds, feet, Rankine etc.
+    englishUnits : bool. Default is False.
+        Flag to use all English units: pounds, feet, Rankine etc. If false, SI
+        units are used.
 
     solverOptions : dict
         A set of solver specific options that temprorily overide the solver's

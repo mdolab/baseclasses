@@ -50,8 +50,9 @@ class MissionProblem(object):
     '''
     Mission Problem Object:
 
-    This Mission Problem Object should contain all of the information required
-    to analyze a single mission.
+    This mission problem object should contain all of the information required
+    to analyze a single mission. A mission problem is made of profiles. All
+    profiles in a given mission problem must use consistent units.
 
     Parameters
     ----------
@@ -74,7 +75,6 @@ class MissionProblem(object):
         self.missionSegments = []
         self.funcNames = {}
         self.currentDVs = {}
-        self.hasProfileDVs = False
         self.solveFailed = False
 
         # Check for function list:
@@ -83,6 +83,7 @@ class MissionProblem(object):
             self.evalFuncs = set(kwargs['evalFuncs'])
 
         self.segCounter = 1
+        self.solutionCounter = 0
 
         self.states = None
 
@@ -102,6 +103,12 @@ class MissionProblem(object):
 
         # Add the profiles to missionProfiles and segments to missionSegments
         for prof in profiles:
+            # Check for consistent units
+            if len(self.missionProfiles) == 0:
+                self.englishUnits = prof.englishUnits
+            elif prof.englishUnits != self.englishUnits:
+                raise Error('Units are not consistent across all profiles.')
+
             self.missionProfiles.append(prof)
             for seg in prof.segments:
                 self.segCounter += 1
@@ -129,9 +136,18 @@ class MissionProblem(object):
                 pyOptProb.addVar(dvName, 'c', scale=dv.scale,
                                  value=dv.value, lower=dv.lower, upper=dv.upper)
                 self.currentDVs[dvName] = dv.value
-                self.hasProfileDVs = True
 
         return pyOptProb
+
+    def checkForProfileDVs(self):
+        '''
+        Check if design variables have been added to this mission.
+        '''
+        for profile in self.missionProfiles:
+            if profile.dvList:
+                return True
+
+        return False
 
     def setDesignVars(self, missionDVs):
         '''
@@ -143,9 +159,10 @@ class MissionProblem(object):
             Dictionary of variables which may or may not contain the
             design variable names this object needs
         '''
-
         # Update the set of design variable values being used
-        self.currentDVs.update(missionDVs)
+        for dv in self.currentDVs:
+            if dv in missionDVs:
+                self.currentDVs[dv] = missionDVs[dv]
 
         for profile in self.missionProfiles:
             profile.setDesignVars(missionDVs)
@@ -231,6 +248,16 @@ class MissionProblem(object):
 
         return self.missionSegments
 
+    def setUnits(self, module):
+        '''
+        Set the units and the gravity constant for this mission.
+        '''
+        module.mission_parameters.englishUnits = self.englishUnits
+        if self.englishUnits:
+            module.mission_parameters.g = 32.2 #ft/s/s
+        else:
+            module.mission_parameters.g = 9.80665 #ft/s/s
+
     def __str__(self):
         '''
         Return a string representation of the profiles within this mission
@@ -256,13 +283,13 @@ class MissionProfile(object):
 
     '''
 
-    def __init__(self, name, units='SI'):
+    def __init__(self, name, englishUnits=False):
         '''
         Initialize the mission profile
         '''
 
         self.name = name
-        self.units = units
+        self.englishUnits = englishUnits
 
         self.segments = []
         self.dvList = {}
@@ -289,12 +316,23 @@ class MissionProfile(object):
         # Loop over each *new* segment in search for DVs
         for i in xrange(len(segments)):
             seg = segments[i]
-            seg.setUnitSystem(self.units)
+            seg.setUnitSystem(self.englishUnits)
+            seg.setDefaults(self.englishUnits)
             segID = i + nSeg_Before
 
             # Loop over the DVs in the segment, if any
             for dvName in seg.dvList:
-                dvNameGlobal = self.name + '_' + dvName
+                dvObj = seg.dvList[dvName]
+                if dvObj.userDef:
+                    # Variable name should remain unchanged
+                    if dvName in self.dvList:
+                        raise Error('User-defined design variable name ' +
+                                    '{} has already been added'.format(dvName) +
+                                    ' to this profile.')
+                    dvNameGlobal = dvName
+                else:
+                    # Prepend profile name and segment ID
+                    dvNameGlobal = '{}_seg{}_{}'.format(self.name, segID, dvName)
                 # Save a reference of the DV object and set its segment ID
                 self.dvList[dvNameGlobal] = seg.dvList[dvName]
                 self.dvList[dvNameGlobal].setSegmentID(segID)
@@ -329,7 +367,6 @@ class MissionProfile(object):
                 dvType = dvObj.type       # String: 'Mach', 'Alt', 'TAS', 'CAS'
                 segID = dvObj.segID
                 isInitVal = dvObj.isInitVal
-
                 # Update the segment for which the DV object belongs to
                 seg = self.segments[segID]
                 updatePrev, updateNext = seg.setParameters(dvVal, dvType, isInitVal)
@@ -355,8 +392,8 @@ class MissionProfile(object):
 
     def getSegmentParameters(self):
         '''
-        Get the 8 segment parameters from each of the segment it owns
-        Order is [h1, M1, CAS1, TAS1, h2, M2, CAS2, TAS2]
+        Get the 4 segment parameters from each of the segment it owns
+        Order is [M1, h1, M2, h2]
         '''
 
         nSeg = len(self.segments)
@@ -491,15 +528,9 @@ class MissionSegment(object):
 
     Parameters:
     -----------
-
     phase : str
         Segment type selector valid options include
 
-    R : float
-        The gas constant. By defalut we use air. R=287.05
-
-    englishUnits : bool
-        Flag to use all English units: pounds, feet, Rankine etc.
     '''
 
     def __init__(self, phase, **kwargs):
@@ -510,11 +541,16 @@ class MissionSegment(object):
         # These are the parameters that can be simply set directly in the class.
         paras = set(('initMach','initAlt','initCAS','initTAS',
                      'finalMach','finalAlt','finalCAS','finalTAS',
-                     'fuelFraction','rangeFraction','segTime','engType','throttle'))
+                     'fuelFraction','rangeFraction','segTime','engType',
+                     'throttle','nIntervals','residualclimbrate','descentrate',
+                     'climbtdratio', 'descenttdratio'))
 
         # By default everything is None
         for para in paras:
             setattr(self, para, None)
+
+        # Set default number of intervals
+        self.nIntervals = 4
 
         # Any matching key from kwargs that is in 'paras'
         for key in kwargs:
@@ -567,18 +603,32 @@ class MissionSegment(object):
 
         return
 
-    def setUnitSystem(self, units='SI'):
-
-        units = units.lower()
-        if units == 'si' or units == 'metric':
-            self.atm = ICAOAtmosphere(englishUnits=False)
-            fluidProps = FluidProperties(englishUnits=False)
-        elif units == 'imperial' or units == 'english':
-            self.atm = ICAOAtmosphere(englishUnits=True)
-            fluidProps = FluidProperties(englishUnits=False)
-
+    def setUnitSystem(self, englishUnits):
+        self.atm = ICAOAtmosphere(englishUnits=englishUnits)
+        fluidProps = FluidProperties(englishUnits=englishUnits)
         self.R = fluidProps.R
         self.gamma = fluidProps.gamma
+
+    def setDefaults(self, englishUnits):
+        # Set default climb/descent rates and td ratios
+        if self.residualclimbrate is None:
+            if englishUnits:
+                self.residualclimbrate = 300.0 / 60.0
+            else:
+                self.residualclimbrate = 300.0 / 60.0 * 0.3048
+
+        if self.descentrate is None:
+            if englishUnits:
+                self.descentrate = -2000.0 / 60.0
+            else:
+                self.descentrate = -2000.0 / 60.0 * 0.3048
+
+        if self.climbtdratio is None:
+            self.climbtdratio = 1.1
+
+        if self.descenttdratio is None:
+            self.descenttdratio = 0.5
+
 
     def determineInputs(self):
         '''
@@ -994,7 +1044,7 @@ class MissionSegment(object):
 
         return TAS
 
-    def setMissionData(self, module, segTypeDict, engTypeDict, idx, nIntervals,segIdx):
+    def setMissionData(self, module, segTypeDict, engTypeDict, idx, segIdx):
         '''
         set the data for the current segment in the fortran module
         '''
@@ -1043,11 +1093,12 @@ class MissionSegment(object):
             self.engType = 'None'
         engTypeID = engTypeDict[getattr(self,'engType')]
 
-        module.setmissionsegmentdata(idx,segIdx, h1, h2, M1, M2,
-                                     deltaTime,fuelFraction,throttle,rangeFraction,
-                                     segTypeID,engTypeID,nIntervals)
+        module.setmissionsegmentdata(idx, segIdx, h1, h2, M1, M2, deltaTime,
+            fuelFraction, throttle, rangeFraction, segTypeID, engTypeID,
+            self.nIntervals, self.residualclimbrate, self.descentrate,
+            self.climbtdratio, self.descenttdratio)
 
-    def addDV(self, dvName, paramKey, lower=-1e20, upper=1e20, scale=1.0):
+    def addDV(self, paramKey, lower=-1e20, upper=1e20, scale=1.0, name=None):
         """
         Add one of the class attributes as a mission design
         variable. Typical variables are mach or velocity and altitude
@@ -1092,14 +1143,16 @@ class MissionSegment(object):
             raise Error('The DV \'%s\' could not be added. Potential DVs MUST\
             be specified when the missionSegment class is created. \
             For example, if you want initMach as a design variable \
-            (...,alpha=value, ...) must\
+            (...,initMach=value, ...) must\
             be given. The list of possible DVs are: %s.'% (
                             paramKey, repr(self.possibleDVs)))
 
-        # if name is None:
-        #     dvName = key + '_%s'% self.phase
-        # else:
-        #     dvName = name
+        if name is None:
+            dvName = paramKey
+            userDef = False
+        else:
+            dvName = name
+            userDef = True
 
         value = getattr(self, paramKey)
         # Remove 'init' or 'final' from paramKey and set to dvType
@@ -1109,7 +1162,8 @@ class MissionSegment(object):
         elif 'final' in paramKey:
             isInitVal = False
 
-        self.dvList[dvName] = SegmentDV(dvType, isInitVal, value, lower, upper, scale)
+        self.dvList[dvName] = SegmentDV(dvType, isInitVal, value, lower, upper,
+            scale, userDef)
 
     def setParameters(self, value, paramType, isInitVal):
         '''
@@ -1188,7 +1242,8 @@ class SegmentDV(object):
     A container storing information regarding a mission profile variable.
     """
 
-    def __init__(self, dvType, isInitVal, value, lower, upper, scale=1.0):
+    def __init__(self, dvType, isInitVal, value, lower, upper, scale=1.0,
+            userDef=False):
 
         self.type = dvType           # String: 'Mach', 'Alt', 'TAS', 'CAS'
         self.isInitVal = isInitVal   # Boolean:
@@ -1196,6 +1251,7 @@ class SegmentDV(object):
         self.lower = lower
         self.upper = upper
         self.scale = scale
+        self.userDef = userDef
 
         self.segID = -1              # The segment ID this DV obj was initalized
         # self.offset = offset
