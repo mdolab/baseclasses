@@ -160,7 +160,9 @@ class MissionProblem(object):
             design variable names this object needs
         '''
         # Update the set of design variable values being used
-        self.currentDVs.update(missionDVs)
+        for dv in self.currentDVs:
+            if dv in missionDVs:
+                self.currentDVs[dv] = missionDVs[dv]
 
         for profile in self.missionProfiles:
             profile.setDesignVars(missionDVs)
