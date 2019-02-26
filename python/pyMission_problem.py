@@ -144,7 +144,6 @@ class MissionProblem(object):
             Dictionary of variables which may or may not contain the
             design variable names this object needs
         '''
-
         # Update the set of design variable values being used
         self.currentDVs.update(missionDVs)
 
@@ -295,7 +294,17 @@ class MissionProfile(object):
 
             # Loop over the DVs in the segment, if any
             for dvName in seg.dvList:
-                dvNameGlobal = self.name + '_' + dvName
+                dvObj = seg.dvList[dvName]
+                if dvObj.userDef:
+                    # Variable name should remain unchanged
+                    if dvName in self.dvList:
+                        raise Error('User-defined design variable name ' +
+                                    '{} has already been added'.format(dvName) +
+                                    ' to this profile.')
+                    dvNameGlobal = dvName
+                else:
+                    # Prepend profile name and segment ID
+                    dvNameGlobal = '{}_seg{}_dvName'.format(self.name, segID, dvName)
                 # Save a reference of the DV object and set its segment ID
                 self.dvList[dvNameGlobal] = seg.dvList[dvName]
                 self.dvList[dvNameGlobal].setSegmentID(segID)
@@ -330,7 +339,6 @@ class MissionProfile(object):
                 dvType = dvObj.type       # String: 'Mach', 'Alt', 'TAS', 'CAS'
                 segID = dvObj.segID
                 isInitVal = dvObj.isInitVal
-
                 # Update the segment for which the DV object belongs to
                 seg = self.segments[segID]
                 updatePrev, updateNext = seg.setParameters(dvVal, dvType, isInitVal)
@@ -1046,7 +1054,7 @@ class MissionSegment(object):
                                      deltaTime,fuelFraction,throttle,rangeFraction,
                                      segTypeID,engTypeID,self.nIntervals)
 
-    def addDV(self, dvName, paramKey, lower=-1e20, upper=1e20, scale=1.0):
+    def addDV(self, paramKey, lower=-1e20, upper=1e20, scale=1.0, name=None):
         """
         Add one of the class attributes as a mission design
         variable. Typical variables are mach or velocity and altitude
@@ -1091,14 +1099,16 @@ class MissionSegment(object):
             raise Error('The DV \'%s\' could not be added. Potential DVs MUST\
             be specified when the missionSegment class is created. \
             For example, if you want initMach as a design variable \
-            (...,alpha=value, ...) must\
+            (...,initMach=value, ...) must\
             be given. The list of possible DVs are: %s.'% (
                             paramKey, repr(self.possibleDVs)))
 
-        # if name is None:
-        #     dvName = key + '_%s'% self.phase
-        # else:
-        #     dvName = name
+        if name is None:
+            dvName = paramKey
+            userDef = False
+        else:
+            dvName = name
+            userDef = True
 
         value = getattr(self, paramKey)
         # Remove 'init' or 'final' from paramKey and set to dvType
@@ -1108,7 +1118,8 @@ class MissionSegment(object):
         elif 'final' in paramKey:
             isInitVal = False
 
-        self.dvList[dvName] = SegmentDV(dvType, isInitVal, value, lower, upper, scale)
+        self.dvList[dvName] = SegmentDV(dvType, isInitVal, value, lower, upper,
+            scale, userDef)
 
     def setParameters(self, value, paramType, isInitVal):
         '''
@@ -1187,7 +1198,8 @@ class SegmentDV(object):
     A container storing information regarding a mission profile variable.
     """
 
-    def __init__(self, dvType, isInitVal, value, lower, upper, scale=1.0):
+    def __init__(self, dvType, isInitVal, value, lower, upper, scale=1.0,
+            userDef=False):
 
         self.type = dvType           # String: 'Mach', 'Alt', 'TAS', 'CAS'
         self.isInitVal = isInitVal   # Boolean:
@@ -1195,6 +1207,7 @@ class SegmentDV(object):
         self.lower = lower
         self.upper = upper
         self.scale = scale
+        self.userDef = userDef
 
         self.segID = -1              # The segment ID this DV obj was initalized
         # self.offset = offset
