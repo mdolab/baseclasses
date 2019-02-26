@@ -72,5 +72,7 @@ class EngineProblem(AeroProblem):
         self.ISA = ISA
 
         # Update AeroProblem variable sets with possible engine variables
-        self.allVarFuncs += ['throttle', 'ISA']
-        self.possibleDVs.update(['throttle', 'ISA'])
+        newVars = ['throttle', 'ISA']
+        self.allVarFuncs += newVars
+        self.possibleDVs.update(newVars)
+        self.possibleFunctions.update(newVars)
