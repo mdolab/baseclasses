@@ -50,8 +50,9 @@ class MissionProblem(object):
     '''
     Mission Problem Object:
 
-    This Mission Problem Object should contain all of the information required
-    to analyze a single mission.
+    This mission problem object should contain all of the information required
+    to analyze a single mission. A mission problem is made of profiles. All
+    profiles in a given mission problem must use consistent units.
 
     Parameters
     ----------
@@ -74,7 +75,6 @@ class MissionProblem(object):
         self.missionSegments = []
         self.funcNames = {}
         self.currentDVs = {}
-        self.hasProfileDVs = False
         self.solveFailed = False
 
         # Check for function list:
@@ -103,6 +103,12 @@ class MissionProblem(object):
 
         # Add the profiles to missionProfiles and segments to missionSegments
         for prof in profiles:
+            # Check for consistent units
+            if len(self.missionProfiles) == 0:
+                self.englishUnits = prof.englishUnits
+            elif prof.englishUnits != self.englishUnits:
+                raise Error('Units are not consistent across all profiles.')
+
             self.missionProfiles.append(prof)
             for seg in prof.segments:
                 self.segCounter += 1
@@ -130,9 +136,18 @@ class MissionProblem(object):
                 pyOptProb.addVar(dvName, 'c', scale=dv.scale,
                                  value=dv.value, lower=dv.lower, upper=dv.upper)
                 self.currentDVs[dvName] = dv.value
-                self.hasProfileDVs = True
 
         return pyOptProb
+
+    def checkForProfileDVs(self):
+        '''
+        Check if design variables have been added to this mission.
+        '''
+        for profile in self.missionProfiles:
+            if profile.dvList:
+                return True
+
+        return False
 
     def setDesignVars(self, missionDVs):
         '''
@@ -231,6 +246,16 @@ class MissionProblem(object):
 
         return self.missionSegments
 
+    def setUnits(self, module):
+        '''
+        Set the units and the gravity constant for this mission.
+        '''
+        module.mission_parameters.englishUnits = self.englishUnits
+        if self.englishUnits:
+            module.mission_parameters.g = 32.2 #ft/s/s
+        else:
+            module.mission_parameters.g = 9.80665 #ft/s/s
+
     def __str__(self):
         '''
         Return a string representation of the profiles within this mission
@@ -256,13 +281,13 @@ class MissionProfile(object):
 
     '''
 
-    def __init__(self, name, units='SI'):
+    def __init__(self, name, englishUnits=False):
         '''
         Initialize the mission profile
         '''
 
         self.name = name
-        self.units = units
+        self.englishUnits = englishUnits
 
         self.segments = []
         self.dvList = {}
@@ -289,7 +314,7 @@ class MissionProfile(object):
         # Loop over each *new* segment in search for DVs
         for i in xrange(len(segments)):
             seg = segments[i]
-            seg.setUnitSystem(self.units)
+            seg.setUnitSystem(self.englishUnits)
             segID = i + nSeg_Before
 
             # Loop over the DVs in the segment, if any
@@ -304,7 +329,7 @@ class MissionProfile(object):
                     dvNameGlobal = dvName
                 else:
                     # Prepend profile name and segment ID
-                    dvNameGlobal = '{}_seg{}_dvName'.format(self.name, segID, dvName)
+                    dvNameGlobal = '{}_seg{}_{}'.format(self.name, segID, dvName)
                 # Save a reference of the DV object and set its segment ID
                 self.dvList[dvNameGlobal] = seg.dvList[dvName]
                 self.dvList[dvNameGlobal].setSegmentID(segID)
@@ -364,8 +389,8 @@ class MissionProfile(object):
 
     def getSegmentParameters(self):
         '''
-        Get the 8 segment parameters from each of the segment it owns
-        Order is [h1, M1, CAS1, TAS1, h2, M2, CAS2, TAS2]
+        Get the 4 segment parameters from each of the segment it owns
+        Order is [M1, h1, M2, h2]
         '''
 
         nSeg = len(self.segments)
@@ -574,16 +599,9 @@ class MissionSegment(object):
 
         return
 
-    def setUnitSystem(self, units='SI'):
-
-        units = units.lower()
-        if units == 'si' or units == 'metric':
-            self.atm = ICAOAtmosphere(englishUnits=False)
-            fluidProps = FluidProperties(englishUnits=False)
-        elif units == 'imperial' or units == 'english':
-            self.atm = ICAOAtmosphere(englishUnits=True)
-            fluidProps = FluidProperties(englishUnits=True)
-
+    def setUnitSystem(self, englishUnits):
+        self.atm = ICAOAtmosphere(englishUnits=englishUnits)
+        fluidProps = FluidProperties(englishUnits=englishUnits)
         self.R = fluidProps.R
         self.gamma = fluidProps.gamma
 
