@@ -491,15 +491,9 @@ class MissionSegment(object):
 
     Parameters:
     -----------
-
     phase : str
         Segment type selector valid options include
 
-    R : float
-        The gas constant. By defalut we use air. R=287.05
-
-    englishUnits : bool
-        Flag to use all English units: pounds, feet, Rankine etc.
     '''
 
     def __init__(self, phase, **kwargs):
@@ -510,11 +504,15 @@ class MissionSegment(object):
         # These are the parameters that can be simply set directly in the class.
         paras = set(('initMach','initAlt','initCAS','initTAS',
                      'finalMach','finalAlt','finalCAS','finalTAS',
-                     'fuelFraction','rangeFraction','segTime','engType','throttle'))
+                     'fuelFraction','rangeFraction','segTime','engType',
+                     'throttle','nIntervals'))
 
         # By default everything is None
         for para in paras:
             setattr(self, para, None)
+
+        # Set default number of intervals
+        self.nIntervals = 4
 
         # Any matching key from kwargs that is in 'paras'
         for key in kwargs:
@@ -575,7 +573,7 @@ class MissionSegment(object):
             fluidProps = FluidProperties(englishUnits=False)
         elif units == 'imperial' or units == 'english':
             self.atm = ICAOAtmosphere(englishUnits=True)
-            fluidProps = FluidProperties(englishUnits=False)
+            fluidProps = FluidProperties(englishUnits=True)
 
         self.R = fluidProps.R
         self.gamma = fluidProps.gamma
@@ -994,7 +992,7 @@ class MissionSegment(object):
 
         return TAS
 
-    def setMissionData(self, module, segTypeDict, engTypeDict, idx, nIntervals,segIdx):
+    def setMissionData(self, module, segTypeDict, engTypeDict, idx, segIdx):
         '''
         set the data for the current segment in the fortran module
         '''
@@ -1045,7 +1043,7 @@ class MissionSegment(object):
 
         module.setmissionsegmentdata(idx,segIdx, h1, h2, M1, M2,
                                      deltaTime,fuelFraction,throttle,rangeFraction,
-                                     segTypeID,engTypeID,nIntervals)
+                                     segTypeID,engTypeID,self.nIntervals)
 
     def addDV(self, dvName, paramKey, lower=-1e20, upper=1e20, scale=1.0):
         """
