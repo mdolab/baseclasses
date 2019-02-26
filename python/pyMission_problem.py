@@ -83,6 +83,7 @@ class MissionProblem(object):
             self.evalFuncs = set(kwargs['evalFuncs'])
 
         self.segCounter = 1
+        self.solutionCounter = 0
 
         self.states = None
 
