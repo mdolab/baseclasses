@@ -127,6 +127,20 @@ class LGProblem(object):
 
         return f_stat,f_dyn,g_load
 
+    def getLoadFactor(self):
+        '''
+        return the load factor for this load case
+        '''
+        f_stat,f_dyn,g_load =self._computeLGForces()
+        if self.loadCaseType.lower()=='braking':
+            loadFactor = 1.0
+        elif self.loadCaseType.lower()=='landing':
+            loadFactor = g_load
+        else:
+             print('Unrecognized loadCaseType:',self.loadCaseType) 
+
+
+        return loadFactor
 
     def getLoadCaseArrays(self):
 
