@@ -1,4 +1,5 @@
-# baseClasses, common definitions for aerodynamic, structural and aerostructural solvers, as well as classes defining standard ways of describing aerodynamic, structural and aerostructural problems for use in those classes.
+# baseClasses
+common definitions for aerodynamic, structural and aerostructural solvers, as well as classes defining standard ways of describing aerodynamic, structural and aerostructural problems for use in those classes.
 ______________________________________________________________________________
 
    Copyright (c) 2014 University of Michigan
