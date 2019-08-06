@@ -265,7 +265,7 @@ class MissionProblem(object):
 
         segCount = 1
         string = 'MISSION PROBLEM: %s \n'%self.name
-        for i in xrange(len(self.missionProfiles)):
+        for i in range(len(self.missionProfiles)):
             # profTag = 'P%02d'%i
             string += self.missionProfiles[i].__str__(segCount)
             segCount += len(self.missionProfiles[i].segments)
@@ -314,7 +314,7 @@ class MissionProfile(object):
         self.segments.extend(segments)
 
         # Loop over each *new* segment in search for DVs
-        for i in xrange(len(segments)):
+        for i in range(len(segments)):
             seg = segments[i]
             seg.setUnitSystem(self.englishUnits)
             seg.setDefaults(self.englishUnits)
@@ -399,7 +399,7 @@ class MissionProfile(object):
         nSeg = len(self.segments)
 
         segParameters = numpy.zeros(4*nSeg, dtype='D')
-        for i in xrange(nSeg):
+        for i in range(nSeg):
             seg = self.segments[i]
             segParameters[4*i  ] = seg.initMach
             segParameters[4*i+1] = seg.initAlt
@@ -513,7 +513,7 @@ class MissionProfile(object):
         '''
 
         string = 'MISSION PROFILE: %s \n'%self.name
-        for i in xrange(len(self.segments)):
+        for i in range(len(self.segments)):
             # segTag = '%sS%02d'%(idTag,i)
             string += self.segments[i].__str__(segStartNum+i)
 
