@@ -22,3 +22,4 @@ from .python.pyFieldPerformance_problem import FieldPerformanceProblem
 from .python.pyLG_problem import LGProblem
 
 from .python.py3Util import getPy3SafeString
+from .python.BaseRegTest import BaseRegTest
