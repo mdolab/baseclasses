@@ -2,12 +2,17 @@ from __future__ import print_function
 from mpi4py import MPI
 import pickle
 import numpy
+import os
 
 class BaseRegTest(object):
 
     def __init__(self, ref_file, train=False, comm=None):
         self.ref_file = ref_file
         self.train = train
+        if not self.train:
+            # We need to check here that the reference file exists, otherwise
+            # it will hang when it tries to open it on the root proc.
+            assert(os.path.isfile(self.ref_file))
 
         if comm is not None:
             self.comm = comm
@@ -15,7 +20,6 @@ class BaseRegTest(object):
             self.comm = MPI.COMM_WORLD
 
         self.rank = self.comm.rank
-
         if self.rank == 0:
             self.counter = 0
 
