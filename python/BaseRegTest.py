@@ -71,7 +71,7 @@ class BaseRegTest(object):
         """Add value(values) from parallel process in sorted order"""
         values = self.comm.gather(values)
         if self.rank == 0:
-            for i in xrange(len(values)):
+            for i in range(len(values)):
                 print ('Value(s) on processor: %d'%i)
                 self._add_values(values[i], rel_tol, abs_tol)
 
