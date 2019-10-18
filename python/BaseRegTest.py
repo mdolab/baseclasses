@@ -45,7 +45,7 @@ class BaseRegTest(object):
             # with open(self.ref_file, 'wb') as file_handle:
             #     pickle.dump(self.db, file_handle)
             with open(self.ref_file, 'w') as file_handle:
-                file_handle.writelines('%20.13e\n' % val for val in self.db)
+                file_handle.writelines('%23.16e\n' % val for val in self.db)
 
     # *****************
     # Public functions
@@ -120,10 +120,13 @@ class BaseRegTest(object):
     def _add_dict(self, d, rel_tol, abs_tol, msg):
         """Add all values in a dictionary in sorted key order"""
         for key in sorted(d.keys()):
-            print ('Dictionary Key: %s'%key)
-            if isinstance(d[key],dict):
-                self._add_dict(d[key], rel_tol, abs_tol)
-            elif type(d[key]) == bool:
-                self._add_value(int(d[key]), rel_tol, abs_tol, msg)
+            if msg is None:
+                key_msg = key
             else:
-                self._add_values(d[key], rel_tol, abs_tol, msg)
+                key_msg = msg+': '+key
+            if isinstance(d[key],dict):
+                self._add_dict(d[key], rel_tol, abs_tol,key_msg)
+            elif type(d[key]) == bool:
+                self._add_value(int(d[key]), rel_tol, abs_tol, key_msg)
+            else:
+                self._add_values(d[key], rel_tol, abs_tol, key_msg)                
