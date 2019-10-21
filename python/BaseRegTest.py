@@ -6,7 +6,7 @@ import os
 
 class BaseRegTest(object):
 
-    def __init__(self, ref_file, train=False, comm=None):
+    def __init__(self, ref_file, train=False, comm=None, check_arch=False):
         self.ref_file = ref_file
         self.train = train
         if not self.train:
@@ -33,6 +33,12 @@ class BaseRegTest(object):
         else:
             self.counter = None
             self.db = None
+        # dictionary of real/complex PETSc arch names
+        self.arch = {'real':None,'complex':None}
+        # If we specify the test type, verify that the $PETSC_ARCH contains 'real' or 'complex',
+        # and sets the self.arch flag appropriately
+        if check_arch:
+            self.checkPETScArch()
 
     def __enter__(self):
         return self
@@ -46,6 +52,26 @@ class BaseRegTest(object):
             #     pickle.dump(self.db, file_handle)
             with open(self.ref_file, 'w') as file_handle:
                 file_handle.writelines('%23.16e\n' % val for val in self.db)
+    
+    def checkPETScArch(self):
+        # Determine real/complex petsc arches: take the one when the script is
+        # called to be the real:
+        self.arch['real'] = os.environ.get("PETSC_ARCH")
+        pdir = os.environ.get("PETSC_DIR")
+        # Directories in the root of the petsc directory
+        dirs = [o for o in os.listdir(pdir) if os.path.isdir(pdir+'/'+o)]
+        # See if any one has 'complex' in it...basically we want to see if
+        # an architecture has 'complex' in it which means it is (most
+        # likely) a complex build
+        carch = []
+        for d in dirs:
+            if 'complex' in d.lower():
+                carch.append(d)
+        if len(carch) > 0:
+            # take the first one if there are multiple
+            self.arch['complex'] = carch[0]
+        else:
+            self.arch['complex'] = None
 
     # *****************
     # Public functions
@@ -103,13 +129,11 @@ class BaseRegTest(object):
         self.counter += 1
 
     def _check_value(self, actual, reference, rel_tol, abs_tol, msg):
-
         if msg is None:
             msg = "N/A"
         msg = "Failed value for: {}".format(msg)
         numpy.testing.assert_allclose(actual, reference, rtol=rel_tol, atol=abs_tol, err_msg=msg)
         
-
     def _add_values(self, values, rel_tol, abs_tol, msg):
         '''Add values in special value format'''
         values = numpy.atleast_1d(values)
@@ -129,4 +153,4 @@ class BaseRegTest(object):
             elif type(d[key]) == bool:
                 self._add_value(int(d[key]), rel_tol, abs_tol, key_msg)
             else:
-                self._add_values(d[key], rel_tol, abs_tol, key_msg)                
+                self._add_values(d[key], rel_tol, abs_tol, key_msg)
