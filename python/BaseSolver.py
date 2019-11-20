@@ -1,4 +1,7 @@
 from __future__ import print_function
+import sys
+import os
+from pprint import pprint as pp
 #!/usr/local/bin/python
 '''
 BaseSolver
@@ -22,20 +25,15 @@ History
 
 __version__ = '$Revision: $'
 
-'''
-ToDo:
-    - 
-'''
 
 # =============================================================================
 # Standard Python modules
 # =============================================================================
-import os, sys
-from pprint import pprint as pp
 
 # =============================================================================
 # Misc Definitions
 # =============================================================================
+
 
 class CaseInsensitiveDict(dict):
     def __setitem__(self, key, value):
@@ -47,16 +45,18 @@ class CaseInsensitiveDict(dict):
     def __contains__(self, key):
         return super(CaseInsensitiveDict, self).__contains__(key.lower())
 
+
 class Error(Exception):
     """
     Format the error message in a box to make it clear this
-    was a expliclty raised exception.
+    was a explicitly raised exception.
     """
+
     def __init__(self, message):
         msg = '\n+'+'-'*78+'+'+'\n' + '| BaseSolver Error: '
         i = 19
         for word in message.split():
-            if len(word) + i + 1 > 78: # Finish line and start new one
+            if len(word) + i + 1 > 78:  # Finish line and start new one
                 msg += ' '*(78-i)+'|\n| ' + word + ' '
                 i = 1 + len(word)+1
             else:
@@ -71,27 +71,26 @@ class Error(Exception):
 # BaseSolver Class
 # =============================================================================
 class BaseSolver(object):
-    
+
     '''
     Abstract Class for a basic Solver Object
     '''
-    
+
     def __init__(self, name, category={}, def_options={}, **kwargs):
-        
         '''
-        StructSolver Class Initialization
-        
-        Documentation last updated:  
+        Solver Class Initialization
+
+        Documentation last updated:
         '''
-        
-        # 
+
+        #
         self.name = name
         self.category = category
         self.options = CaseInsensitiveDict()
         self.defaultOptions = def_options
         self.solverCreated = False
         self.imOptions = {}
-        
+
         # Initialize Options
         for key in self.defaultOptions:
             self.setOption(key, self.defaultOptions[key][1])
@@ -101,16 +100,14 @@ class BaseSolver(object):
             self.setOption(key, koptions[key])
 
         self.solverCreated = True
-       
+
     def __call__(self,  *args, **kwargs):
-        
         '''
         Run Analyzer (Calling Routine)
-        
-        Documentation last updated: 
+
+        Documentation last updated:
         '''
-        
-        
+
         # Checks
         pass
 
@@ -122,22 +119,22 @@ class BaseSolver(object):
         ----------
         name : str
            Name of option to set. Not case sensitive
-        value : varries
-           Value to set. Type is checked for consistency. 
-        
+        value : varies
+           Value to set. Type is checked for consistency.
+
         """
         name = name.lower()
-        try: 
+        try:
             self.defaultOptions[name]
         except KeyError:
-            Error("Option \'%-30s\' is not a valid %s option."%(
+            Error("Option \'%-30s\' is not a valid %s option." % (
                 name,  self.name))
 
         # Make sure we are not trying to change an immutable option if
         # we are not allowed to.
         if self.solverCreated and name in self.imOptions:
             raise Error("Option '%-35s' cannot be modified after the solver "
-                        "is created."%name)
+                        "is created." % name)
 
         # Now we know the option exists, lets check if the type is ok:
         if isinstance(value, self.defaultOptions[name][0]):
@@ -146,9 +143,9 @@ class BaseSolver(object):
         else:
             raise Error("Datatype for Option %-35s was not valid \n "
                         "Expected data type is %-47s \n "
-                        "Received data type is %-47s"% (
+                        "Received data type is %-47s" % (
                             name, self.defaultOptions[name][0], type(value)))
-                
+
     def getOption(self, name):
         """
         Default implementation of getOption()
@@ -160,23 +157,22 @@ class BaseSolver(object):
 
         Returns
         -------
-        value : varries
-           Return the curent value of the option.         
+        value : varies
+           Return the current value of the option.
         """
 
         if name.lower() in self.defaultOptions:
             return self.options[name.lower()][1]
         else:
-            raise Error('%s is not a valid option name.'% name)
+            raise Error('%s is not a valid option name.' % name)
 
     def printCurrentOptions(self):
-
         """
         Prints a nicely formatted dictionary of all the current solver
         options to the stdout on the root processor"""
         if self.comm.rank == 0:
             print('+---------------------------------------+')
-            print('|          All %s Options:          |'%self.name)
+            print('|          All %s Options:          |' % self.name)
             print('+---------------------------------------+')
             # Need to assemble a temporary dictionary
             tmpDict = {}
@@ -185,14 +181,13 @@ class BaseSolver(object):
             pp(tmpDict)
 
     def printModifiedOptions(self):
-
         """
         Prints a nicely formatted dictionary of all the current solver
         options that have been modified from the defaults to the root
         processor"""
         if self.comm.rank == 0:
             print('+---------------------------------------+')
-            print('|      All Modified %s Options:     |'%self.name)
+            print('|      All Modified %s Options:     |' % self.name)
             print('+---------------------------------------+')
             # Need to assemble a temporary dictionary
             tmpDict = {}
@@ -201,14 +196,14 @@ class BaseSolver(object):
                     tmpDict[key] = self.getOption(key)
             pp(tmpDict)
 
-#==============================================================================
+
+# ==============================================================================
 # Optimizer Test
-#==============================================================================
+# ==============================================================================
 if __name__ == '__main__':
-    
+
     print('Testing ...')
-    
+
     # Test Optimizer
     azr = BaseSolver('Test')
     dir(azr)
-
