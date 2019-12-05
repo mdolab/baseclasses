@@ -101,7 +101,21 @@ class LGProblem(object):
         else:
             print('Unrecognized weightCondition:',self.weightCondition)
 
+        if self.loadCaseType.lower()=='braking':
+            self.nCondition = 2
+            self.nameList = ['Braked rolling','Reversed Braking']
+        elif self.loadCaseType.lower()=='landing':
+            self.nCondition = 7
+            self.nameList = ['Drag and side load','Drag and side load','Drag and side load',
+                             'Side load','Side load','High drag and spring-back',
+                             'High drag and spring-back']
+
+        else:
+             print('Unrecognized loadCaseType:',self.loadCaseType) 
+
         self.name+='_'+self.loadCaseType+'_'+self.weightCondition
+
+        self.nameList = None
         
         # Check for function list:
         self.evalFuncs = set()
@@ -149,42 +163,48 @@ class LGProblem(object):
         f_stat,f_dyn,f_sb,g_load =self._computeLGForces()
         
         if self.loadCaseType.lower()=='braking':
-            nCondition = 2
+
             if self.weightCondition.lower()=='mlw':
-                fVert = numpy.zeros(nCondition)
+                fVert = numpy.zeros(self.nCondition)
                 fVert[0] = 1.2 * f_stat
                 fVert[1] = 1.2 * f_stat
 
-                fDrag = numpy.zeros(nCondition)
+                fDrag = numpy.zeros(self.nCondition)
                 fDrag[0] = 0.96 * f_stat
                 fDrag[1] = -0.66 * f_stat
 
-                fSide = numpy.zeros(nCondition)
+                fSide = numpy.zeros(self.nCondition)
 
-                closure = numpy.zeros(nCondition)
+                closure = numpy.zeros(self.nCondition)
                 closure[0] = 0.75*self.shockDef
                 closure[1] = 0.75*self.shockDef
 
+                gload = numpy.zeros(self.nCondition)
+                gload[:] = g_load
+
             elif self.weightCondition.lower()=='mtow':
-                fVert = numpy.zeros(nCondition)
+                fVert = numpy.zeros(self.nCondition)
                 fVert[0] = 1.0 * f_stat
                 fVert[1] = 1.0 * f_stat
 
-                fDrag = numpy.zeros(nCondition)
+                fDrag = numpy.zeros(self.nCondition)
                 fDrag[0] = 0.8 * f_stat
                 fDrag[1] = -0.55 * f_stat
 
-                fSide = numpy.zeros(nCondition)
+                fSide = numpy.zeros(self.nCondition)
                 
-                closure = numpy.zeros(nCondition)
+                closure = numpy.zeros(self.nCondition)
                 closure[0] = 0.75*self.shockDef
                 closure[1] = 0.75*self.shockDef
+
+                gload = numpy.zeros(self.nCondition)
+                gload[:] = g_load
+
             else:
                 print('Unrecognized weightCondition:',self.weightCondition)
                 
         elif self.loadCaseType.lower()=='landing':
-            nCondition = 7
-            fVert = numpy.zeros(nCondition)
+            fVert = numpy.zeros(self.nCondition)
             fVert[0] = f_dyn
             fVert[1] = 0.75 * f_dyn
             fVert[2] = 0.75 * f_dyn
@@ -193,7 +213,7 @@ class LGProblem(object):
             fVert[5] = 0.8 * f_sb
             fVert[6] = 0.8 * f_sb
             
-            fDrag = numpy.zeros(nCondition)
+            fDrag = numpy.zeros(self.nCondition)
             fDrag[0] = 0.25 * f_dyn
             fDrag[1] = 0.4 * f_dyn
             fDrag[2] = 0.4 * f_dyn
@@ -203,7 +223,7 @@ class LGProblem(object):
             fDrag[6] = -0.64 * f_sb
                                             
             # sign convention here is that negative is inboard facing
-            fSide = numpy.zeros(nCondition)
+            fSide = numpy.zeros(self.nCondition)
             fSide[0] = 0
             fSide[1] = -0.25 * f_dyn
             fSide[2] =  0.25 * f_dyn
@@ -212,7 +232,7 @@ class LGProblem(object):
             fSide[5] =  0.0
             fSide[6] =  0.0
 
-            closure = numpy.zeros(nCondition)
+            closure = numpy.zeros(self.nCondition)
             closure[0] = 0.5*self.shockDef
             closure[1] = 0.25*self.shockDef
             closure[2] = 0.25*self.shockDef
@@ -220,6 +240,9 @@ class LGProblem(object):
             closure[4] = 0.5*self.shockDef
             closure[5] = 0.15*self.shockDef
             closure[6] = 0.15*self.shockDef
+
+            gload = numpy.zeros(self.nCondition)
+            gload[:] = g_load
             
         else:
              print('Unrecognized loadCaseType:',self.loadCaseType)
@@ -227,6 +250,31 @@ class LGProblem(object):
 
         closure = self.shockDef-closure
 
-        return fVert,fDrag,fSide,closure
+        return fVert,fDrag,fSide,closure,gload
+
+    def writeLoadData(self,fileName):
+        '''
+        write a table based on the weight condition
+        '''
+
+        f_stat,f_dyn,f_sb,g_load =self._computeLGForces()
+
+        caseType = self.weightCondition.upper()
+        f = open(fileName,'w')
+        f.write("\\begin{tabular}{lr}\n")
+        f.write("\\toprule\n")
+        f.write("Parameter & Value \\\\\n")
+        f.write(" \\midrule\n")
+        f.write(" %s $F_\\text{stat}$ (N) &$ %10.0f$ \\\\\n"%(caseType,f_stat))
+        f.write(" %s $F_\\text{dyn}$ (N) &$ %10.0f$\\\\\n"%(caseType,f_dyn))
+        f.write(" %s Load Factor & %6.3f\\\\\n"%(caseType,g_load))
+        f.write("\\bottomrule\n")
+        f.write("\\end{tabular}\n")
+
+        f.close()
+
+ 
+
+        
              
 #create a dump loads table function
