@@ -284,6 +284,9 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                           "instead.")
             self.evalFuncs = set(kwargs['funcs'])
 
+        # we cast the set to a sorted list, so that each proc can loop over in the same order
+        self.evalFuncs = sorted(list(self.evalFuncs))
+
         # these are the possible input values
         possibleInputStates = set(['mach', 'V', 'P', 'T', 'rho', 'altitude', 'reynolds',
                                    'reynoldsLength'])
