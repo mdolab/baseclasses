@@ -318,8 +318,16 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             if getattr(self, var) is not None:
                 self.possibleDVs.add(var)
 
-        BCVarFuncs = [ 'Pressure', 'PressureStagnation','Temperature', 'TemperatureStagnation', 'Thrust']
+        BCVarFuncs = \
+        ['Temperature', 'Pressure', 'Density', \
+         'TemperatureStagnation', 'PressureStagnation',  'DensityStagnation', \
+         'VelocityX', 'VelocityY', 'VelocityZ',  'VelocityR', 'VelocityTheta', \
+         'VelocityUnitVectorX', 'VelocityUnitVectorY', 'VelocityUnitVectorZ', 'VelocityUnitVectorR', 'VelocityUnitVectorTheta', \
+         'VelocityAngleX', 'VelocityAngleY', 'VelocityAngleZ']
         self.possibleBCDVs = set(BCVarFuncs)
+
+        actuatorFuncs = ['Thrust', 'Torque']
+        self.possibleActuatorDVs = set(actuatorFuncs)
 
         # Now determine the possible functions. Any possible design
         # variable CAN also be a function (pass through)
@@ -339,7 +347,8 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
         # Storage of BC varible values
         # vars are keyed by (bcVarName, Family)
-        self.bcVarData = {}
+        self.BCData = {}
+        self.actuatorData = {}
 
     def _setStates(self, inputDict):
         '''
@@ -443,16 +452,29 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                         'in for pyAero_problem.py for information on how '
                         'to correctly specify the aerodynamic state')
 
-    def setBCVar(self, varName, value, familyName):
+    def setBCVar(self, varName, value, groupName):
         """
         set the value of a BC variable on a specific variable
         """
+        if not groupName in self.BCData.keys():
+            self.BCData[groupName] = {}
 
-        self.bcVarData[varName, familyName] = value
-        print('update bc', value)
+        self.BCData[groupName][varName] = value
+
+    def getBCData(self):
+        return self.BCData
+
+    def setActuatorVar(self, varName, value, groupName):
+        if not groupName in self.BCData.keys():
+            self.actuatorData[groupName] = {}
+
+        self.actuatorData[groupName][varName] = value
+
+    def getActuatorData(self):
+        return self.actuatorData
 
     def addDV(self, key, value=None, lower=None, upper=None, scale=1.0,
-              name=None, offset=0.0, dvOffset=0.0, addToPyOpt=True, family=None,
+              name=None, offset=0.0, dvOffset=0.0, addToPyOpt=True, familyGroup=None,
               units=None):
         """
         Add one of the class attributes as an 'aerodynamic' design
@@ -522,7 +544,8 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         >>> ap.addDV('alpha', value=2.5, lower=0.0, upper=10.0, scale=0.1)
         """
 
-        if (key not in self.allVarFuncs) and (key not in self.possibleBCDVs):
+        if (key not in self.allVarFuncs) and (key not in self.possibleBCDVs) and \
+            (key not in self.possibleActuatorDVs):
             raise ValueError('%s is not a valid design variable' % key)
 
         # First check if we are allowed to add the DV:
@@ -532,19 +555,71 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                         "For example, if you want alpha as a design variable "
                         "(...,alpha=value, ...) must be given. The list of "
                         "possible DVs are: %s." % (key, repr(self.possibleDVs)))
-        if key in self.possibleBCDVs:
-            if family is None:
-                raise Error("The family must be given for BC design variables")
+
+
+        if key in self.possibleBCDVs or self.possibleActuatorDVs:
+            if familyGroup is None:
+                raise Error("The familyGroup must be given for BC or actuator\
+                             design variables")
 
             if name is None:
-                dvName = '%s_%s_%s' % (key, family, self.name)
+                dvName = '%s_%s_%s' % (key, familyGroup, self.name)
             else:
                 dvName = name
 
             if value is None:
-                if (key, family) not in self.bcVarData:
-                    raise Error("The value must be given or set using the setBCVar routine")
-                value = self.bcVarData[key, family]
+                if key in self.possibleBCDVs:
+                    try:
+                        value = self.BCData[familyGroup][key]
+                    except KeyError :
+                        raise Error("The value must be given or set using the setBCVar routine")
+                else: 
+                    try:
+                        value = self.actuatorData[familyGroup][key]
+                    except KeyError :
+                        raise Error("The value must be given or set using the setActuatorVar routine")
+
+            # the value of the BCData[familyGroup][key] maybe a dictionary of data for each patch
+            # to accomadate this we will add a variable for each entry in the dictionary
+            if isinstance(value, dict) and  key in self.possibleBCDVs:
+                
+                # use a little bit o recursion 
+                for dict_key in value:
+                    dict_key_name = str(dict_key).replace(" ", "")
+                    dict_dvName = '%s_%s' % (dvName , dict_key_name)
+
+                    if isinstance(lower, dict):
+                        lower_val = lower[dict_key]
+                    else:
+                        lower_val = lower    
+                    if isinstance(upper, dict):
+                        upper_val = upper[dict_key]
+                    else:
+                        upper_val = upper    
+                    if isinstance(scale, dict):
+                        scale_val = scale[dict_key]
+                    else:
+                        scale_val = scale    
+                    if isinstance(offset, dict):
+                        offset_val = offset[dict_key]
+                    else:
+                        offset_val = offset    
+                    if isinstance(dvOffset, dict):
+                        dvOffset_val = dvOffset[dict_key]
+                    else:
+                        dvOffset_val = dvOffset    
+
+
+                    # self.addDV(key, , lower_val, upper_val, scale_val, dvName, 
+                    #      offset_val, dvOffset_val, addToPyOpt, familyGroup,
+                    #     units)
+
+                    self.DVs[dict_dvName] = aeroDV(key, value[dict_key], lower_val, upper_val, scale_val, offset_val,
+                                            dvOffset_val, addToPyOpt, familyGroup, units)                
+                    self.DVs[dict_dvName].dict_key = dict_key
+                
+                return
+
         else:
             if name is None:
                 dvName = key + '_%s' % self.name
@@ -553,10 +628,10 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
             if value is None:
                 value = getattr(self, key)
-            family = None
+            familyGroup = None
 
         self.DVs[dvName] = aeroDV(key, value, lower, upper, scale, offset,
-                                  dvOffset, addToPyOpt, family, units)
+                                dvOffset, addToPyOpt, familyGroup, units)
 
     def updateInternalDVs(self):
         """
@@ -585,15 +660,25 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                 key = self.DVs[dvName].key
                 family = self.DVs[dvName].family
                 value = x[dvName] + self.DVs[dvName].offset
-                if family is None:
-                    setattr(self, key, value)
-                else:
-                    self.bcVarData[key, family] = value
+                if key in self.possibleBCDVs:
 
-                try:  # To set in the DV as well if the DV exists:
-                    self.DVs[dvName].value = x[dvName]
-                except:
-                    pass  # DV doesn't exist
+                    if hasattr(self.DVs[dvName], 'dict_key'):
+                        dict_key = self.DVs[dvName].dict_key
+                        self.BCData[family][key][dict_key] = value
+                    else:
+                        self.BCData[family][key] = value
+                elif key in self.possibleActuatorDVs:
+                    self.actuatorData[family][key] = value               
+                else:
+                    setattr(self, key, value)
+
+                self.DVs[dvName].value = x[dvName]
+                # try:  # To set in the DV as well if the DV exists:
+                # except:
+                #     # DV doesn't exist
+                #     warnings.warn("Design variable, {}, not present in self.DVs,\
+                #                    but was give".format(dvName))
+
 
     def addVariablesPyOpt(self, optProb):
         """
