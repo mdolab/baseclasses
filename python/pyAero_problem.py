@@ -556,8 +556,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                         "(...,alpha=value, ...) must be given. The list of "
                         "possible DVs are: %s." % (key, repr(self.possibleDVs)))
 
-
-        if key in self.possibleBCDVs or self.possibleActuatorDVs:
+        if key in self.possibleBCDVs or key in self.possibleActuatorDVs:
             if familyGroup is None:
                 raise Error("The familyGroup must be given for BC or actuator\
                              design variables")
