@@ -465,7 +465,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         return self.BCData
 
     def setActuatorVar(self, varName, value, groupName):
-        if not groupName in self.BCData.keys():
+        if not groupName in self.actuatorData.keys():
             self.actuatorData[groupName] = {}
 
         self.actuatorData[groupName][varName] = value
