@@ -12,7 +12,6 @@ History
 # ======================================================================
 # Imports
 # ======================================================================
-from __future__ import print_function
 import numpy
 from . pyAero_problem import AeroProblem
 from . pyStruct_problem import StructProblem

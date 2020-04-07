@@ -9,7 +9,6 @@ Developers:
 # =============================================================================
 # Imports
 # =============================================================================
-from __future__ import print_function
 import numpy
 import warnings
 class Error(Exception):
