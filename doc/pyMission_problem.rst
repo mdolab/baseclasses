@@ -3,7 +3,7 @@
 pyMission_problem
 --------------
 
-.. currentmodule:: baseclasses.python.pyMission_problem
+.. currentmodule:: python.pyMission_problem
 
 .. autoclass:: MissionProblem
     :members:
