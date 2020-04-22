@@ -3,7 +3,7 @@
 pyWeight_problem
 --------------
 
-.. currentmodule:: baseclasses.python.pyWeight_problem
+.. currentmodule:: python.pyWeight_problem
 
 .. autoclass:: WeightProblem
     :members:
