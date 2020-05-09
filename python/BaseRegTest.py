@@ -11,10 +11,6 @@ class BaseRegTest(object):
 
         self.setRef(ref)
         self.train = train
-        # if not self.train:
-        #     # We need to check here that the reference file exists, otherwise
-        #     # it will hang when it tries to open it on the root proc.
-        #     assert(os.path.isfile(self.ref_file))
 
         if comm is not None:
             self.comm = comm
@@ -22,20 +18,6 @@ class BaseRegTest(object):
             self.comm = MPI.COMM_WORLD
 
         self.rank = self.comm.rank
-        # if self.rank == 0:
-        #     self.counter = 0
-
-        #     if self.train:
-        #         self.db = []
-        #     else:
-        #         # with open(self.ref_file, 'rb') as file_handle:
-        #         #     self.db = pickle.load(file_handle)
-        #         with open(self.ref_file, 'r') as file_handle:
-        #             self.db = [float(val.rstrip()) for val in file_handle.readlines()]
-        # else:
-        #     self.counter = None
-        #     self.db = None
-
 
         # dictionary of real/complex PETSc arch names
         self.arch = {'real':None,'complex':None}
@@ -57,20 +39,8 @@ class BaseRegTest(object):
     def getRef(self):
         return self.db
 
-    # def save(self):
-    #     if self.rank == 0 and self.train:
-    #         # with open(self.ref_file, 'wb') as file_handle:
-    #         #     pickle.dump(self.db, file_handle)
-
-    #         with open(self.ref_file, 'w') as file_handle:
-    #             file_handle.writelines('%23.16e\n' % val for val in self.db)
-    
-    #         with open(output_file, 'w') as fid:
-    #             ref_str = pprint.pformat(ref)
-    #             fid.write('from numpy import array\n\n')
-    #             fid.write( 'ref = ' + ref_str )
-
-
+    def setMode(self,train=False):
+        self.train = train
 
     def checkPETScArch(self):
         # Determine real/complex petsc arches: take the one when the script is
