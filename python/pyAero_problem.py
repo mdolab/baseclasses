@@ -464,6 +464,15 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     def getBCData(self):
         return self.BCData
 
+    def setBCDataArray(self, groupName, varName, dataArray, patch=None):
+        if patch == None:
+            # assume the data is set on the first patch in this group
+            patches = self.BCData[groupName][varName].keys()
+            self.BCData[groupName][varName][patches[0]] = dataArray
+        else:
+            self.BCData[groupName][varName][patch] = dataArray
+
+
     def setActuatorVar(self, varName, value, groupName):
         if not groupName in self.actuatorData.keys():
             self.actuatorData[groupName] = {}
