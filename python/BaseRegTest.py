@@ -159,31 +159,79 @@ class BaseRegTest(object):
         numpy.testing.assert_allclose(actual, reference, rtol=rel_tol, atol=abs_tol, err_msg=msg)
         
 
-    def _add_values(self, values, *args, **kwargs):
+    def _add_values(self, values, name, rel_tol, abs_tol, db=None, err_name=None):
         '''Add values in special value format'''
-        values = numpy.atleast_1d(values)
-        values = values.flatten()
-        for val in values:
-            self._add_value(val, *args, **kwargs)
+        # values = numpy.atleast_1d(values)
+        # values = values.flatten()
+        # for val in values:
+        #     self._add_value(val, *args, **kwargs)
 
-    def _add_dict(self, d, dict_name, rel_tol, abs_tol):
+        if db == None:
+            db = self.db
+
+        if err_name == None:
+            err_name = name
+
+        if self.train:
+            db[name] = values
+        else:
+            self.assert_allclose(values, db[name], err_name, rel_tol, abs_tol)
+
+
+    def _add_dict(self, d, dict_name, rel_tol, abs_tol, db=None, err_name=None):
         """Add all values in a dictionary in sorted key order"""
         
         if self.train:
             self.db[dict_name] = {}
 
+        if db == None:
+            db = self.db
+
+
+
         for key in sorted(d.keys()):
-            
+            print(dict_name, key)
             # if msg is None:
             #     key_msg = key
-            key_msg = dict_name+': '+key
-
+            if err_name:
+                key_msg = err_name+ ':' + dict_name+': '+key
+            else:
+                key_msg = dict_name+': '+key
 
             # if isinstance(d[key],dict):
             #     self._add_dict(d[key], dict_name, rel_tol, abs_tol)
-            
             if type(d[key]) == bool:
-                self._add_value(int(d[key]), key, rel_tol, abs_tol, db=self.db[dict_name], err_name=key_msg)
-            
+                self._add_value(int(d[key]), key, rel_tol, abs_tol, db=db[dict_name], err_name=key_msg)
+            if isinstance(d[key], dict):
+                # do some good ol' fashion recursion 
+                self._add_dict(d[key], key, rel_tol, abs_tol, db=db[dict_name], err_name=dict_name)
             else:
-                self._add_values(d[key], key, rel_tol, abs_tol, db=self.db[dict_name], err_name=key_msg)
+                self._add_values(d[key], key, rel_tol, abs_tol, db=db[dict_name], err_name=key_msg)
+
+
+    # *****************
+    # Static helper method
+    # *****************
+
+    @staticmethod
+    def setLocalPaths(baseDir, sys_path):
+        """added the necessary paths to the version of the files within the same 
+        repo"""
+        repoDir = baseDir.split('/tests/')[0]
+        sys_path.append(repoDir)
+
+        testDir = baseDir.split('/reg_tests/')[0]
+        regTestDir = testDir + '/reg_tests'
+        sys_path.append(regTestDir)
+
+    @staticmethod
+    def getLocalDirPaths(baseDir):
+        """Returns the paths to the reference files and input and outputs based on the 
+        directory of the file (baseDir)"""
+        refDir = baseDir.replace('reg_tests','reg_tests/refs')
+
+        testDir = baseDir.split('/reg_tests')[0]
+        inputDir = os.path.join(testDir,'input_files')
+        outputDir = os.path.join(testDir,'output_files')
+
+        return refDir, inputDir, outputDir
