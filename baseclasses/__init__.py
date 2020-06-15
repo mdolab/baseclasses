@@ -1,5 +1,5 @@
 # This page is intentially left blank
-__version__ = '1.1.0'
+__version__ = '1.2.0'
 
 from .pyAero_problem import AeroProblem
 from .pyTransi_problem import TransiProblem
