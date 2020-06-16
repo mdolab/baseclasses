@@ -14,6 +14,12 @@ aerodynamic, structural and aerostructural solvers, as well as classes
 defining standard ways of describing aerodynamic, structural and
 aerostructural problems for use in those classes.
 
+To install, first clone the repo, then go into the root directory and type::
+
+   pip install .
+
+For stability we recommend cloning or checking out a tagged release.
+
 The classes that the user will interact with are:
 
 .. toctree::
@@ -32,11 +38,3 @@ found on the full API documentation page:
    :maxdepth: 1
 
    API
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
