@@ -27,6 +27,9 @@ setup(name='baseclasses',
       packages=[
           'baseclasses',
       ],
+      install_requires=[
+            'numpy>=1.16.4',
+      ],
       classifiers=[
         "Operating System :: OS Independent",
         "Programming Language :: Python"]
