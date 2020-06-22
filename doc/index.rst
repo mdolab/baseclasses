@@ -20,10 +20,9 @@ To install, first clone the repo, then go into the root directory and type::
 
 For stability we recommend cloning or checking out a tagged release.
 
-The classes that the user will interact with are:
-
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
+   :caption: Problem Classes
 
    pyAero_problem
    pyStruct_problem
@@ -31,10 +30,10 @@ The classes that the user will interact with are:
    pyMission_problem
    pyWeight_problem
 
-The remainder of the documentation for the solver base classes can be
-found on the full API documentation page:
 
 .. toctree::
    :maxdepth: 1
+   :caption: Solver Classes
 
-   API
+   BaseSolver
+   pyAero_solver

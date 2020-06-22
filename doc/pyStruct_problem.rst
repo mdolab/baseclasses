@@ -3,7 +3,7 @@
 pyStruct_problem
 ----------------
 
-.. currentmodule:: python.pyStruct_problem
+.. currentmodule:: baseclasses.pyStruct_problem
 
 .. autoclass:: StructProblem
     :members:
