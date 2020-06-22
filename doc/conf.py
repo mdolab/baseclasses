@@ -29,7 +29,7 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'numpydoc']
 numpydoc_show_class_members = False
 
 # mock import for autodoc
-autodoc_mock_imports = ['numpy']
+autodoc_mock_imports = ['numpy', 'pygeo']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
