@@ -2,7 +2,7 @@ from __future__ import print_function
 try:
     from mpi4py import MPI
 except:
-    print('Warning: unable to fine mpi4py. Parallel regression tests will cause errors')
+    print('Warning: unable to find mpi4py. Parallel regression tests will cause errors')
 import pickle
 import numpy
 import os
