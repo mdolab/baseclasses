@@ -3,7 +3,7 @@
 BaseSolver
 --------------
 
-.. currentmodule:: baseclasses.python.BaseSolver
+.. currentmodule:: python.BaseSolver
 
 .. autoclass:: BaseSolver
     :members:

@@ -16,7 +16,7 @@ import sys, os
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('../'))
 
 # -- General configuration -----------------------------------------------------
 
@@ -27,6 +27,10 @@ import sys, os
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'numpydoc']
 numpydoc_show_class_members = False
+
+# mock import for autodoc
+autodoc_mock_imports = ['numpy', 'pygeo']
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -101,7 +105,7 @@ pygments_style = 'sphinx'
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
 html_theme_path = ['themes']
-html_theme = 'mdolab_theme'
+# html_theme = 'mdolab_theme'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
