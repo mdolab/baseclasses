@@ -1,9 +1,9 @@
 .. _BaseSolver:
 
 BaseSolver
---------------
+----------
 
-.. currentmodule:: baseclasses.python.BaseSolver
+.. currentmodule:: baseclasses.BaseSolver
 
 .. autoclass:: BaseSolver
     :members:
