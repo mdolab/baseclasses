@@ -1,5 +1,9 @@
 from __future__ import print_function
-from mpi4py import MPI
+try:
+    from mpi4py import MPI
+except:
+    print('Warning: unable to find mpi4py. Parallel regression tests will cause errors')
+import pickle
 import numpy
 import os
 import pprint

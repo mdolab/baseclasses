@@ -1,4 +1,3 @@
-from __future__ import print_function
 '''
 pyWeight_problem
 
@@ -21,7 +20,10 @@ History
 
 import sys, numpy, copy
 import warnings
-from pygeo import geo_utils
+try:
+    from pygeo import geo_utils
+except:
+    print('Warning: unable to find pygeo module, some functionality in pyWeight_problem will be unavailable')
 
 class Error(Exception):
     """
