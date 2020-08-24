@@ -17,7 +17,9 @@ import numpy
 import warnings
 from .ICAOAtmosphere import ICAOAtmosphere
 from .FluidProperties import FluidProperties
+import copy
 
+from collections import defaultdict
 
 class CaseInsensitiveDict(dict):
     def __setitem__(self, key, value):
@@ -346,7 +348,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
         # Storage of BC varible values
         # vars are keyed by (bcVarName, Family)
-        self.BCData = {}
+        self.bc_data = {}
         self.actuatorData = {}
 
     def _setStates(self, inputDict):
@@ -455,21 +457,21 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         """
         set the value of a BC variable on a specific variable
         """
-        if not groupName in self.BCData.keys():
-            self.BCData[groupName] = {}
+        if not groupName in self.bc_data.keys():
+            self.bc_data[groupName] = {}
 
-        self.BCData[groupName][varName] = value
+        self.bc_data[groupName][varName] = value
 
     def getBCData(self):
-        return self.BCData
+        return self.bc_data
 
-    def setBCDataArray(self, groupName, varName, dataArray, patch=None):
-        if patch == None:
-            # assume the data is set on the first patch in this group
-            patches = self.BCData[groupName][varName].keys()
-            self.BCData[groupName][varName][patches[0]] = dataArray
-        else:
-            self.BCData[groupName][varName][patch] = dataArray
+    # def setBCArray(self, groupName, varName, dataArray, patch=None):
+    #     if patch == None:
+    #         # assume the data is set on the first patch in this group
+    #         patches = self.BCData[groupName][varName].keys()
+    #         self.BCData[groupName][varName][patches[0]] = dataArray
+    #     else:
+    #         self.BCData[groupName][varName][patch] = dataArray
 
 
     def setActuatorVar(self, varName, value, groupName):
@@ -480,6 +482,44 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
     def getActuatorData(self):
         return self.actuatorData
+
+    # def addBCDV(self, bc_var, value=None, lower=None, upper=None, scale=1.0,
+    #           name=None, offset=0.0, dvOffset=0.0, addToPyOpt=True, familyGroup=None,
+    #           units=None,   **kwargs):
+    #     """
+    #     add a set of bcdata was a design variable
+    #     """
+
+
+    #     if bc_var not in self.possibleBCDVs:
+    #         raise ValueError('%s is not a valid design variable' % key)
+
+
+    #         # get a numpy array by appliying thee filters to the bc data
+    #     data = self.bc_data.getBCArraysFlatData( bc_var, familyGroup=familyGroup)
+
+    #     if name is None:
+    #         dvName = '%s_%s_%s' % (key, familyGroup, self.name)
+    #     else:
+    #         dvName = name
+
+  
+    #     # combine the data 
+
+    #     if value is None:
+    #         value = data
+    #     else:
+    #         # insure that the given size is correct if it is not a float
+    #         #
+    #         if (not isinstance(value, float)) and  value.size == data.size:
+    #             raise Error('give value for {} is not ht right size, {} given {} expected'.format(bc_var, value.size, data.size))
+
+    #     dv = aeroDV(bc_var, value, lower, upper, scale, offset,
+    #                             dvOffset, addToPyOpt, familyGroup, units)                
+    #     self.DVs[dvName] = dv
+    #     return
+
+
 
     def addDV(self, key, value=None, lower=None, upper=None, scale=1.0,
               name=None, offset=0.0, dvOffset=0.0, addToPyOpt=True, familyGroup=None,
@@ -574,10 +614,11 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             else:
                 dvName = name
 
+            
             if value is None:
                 if key in self.possibleBCDVs:
                     try:
-                        value = self.BCData[familyGroup][key]
+                        value = self.bc_data[familyGroup][key]
                     except KeyError :
                         raise Error("The value must be given or set using the setBCVar routine")
                 else: 
@@ -586,46 +627,46 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                     except KeyError :
                         raise Error("The value must be given or set using the setActuatorVar routine")
 
-            # the value of the BCData[familyGroup][key] maybe a dictionary of data for each patch
-            # to accomadate this we will add a variable for each entry in the dictionary
-            if isinstance(value, dict) and  key in self.possibleBCDVs:
+            # # the value of the BCData[familyGroup][key] maybe a dictionary of data for each patch
+            # # to accomadate this we will add a variable for each entry in the dictionary
+            # if isinstance(value, dict) and  key in self.possibleBCDVs:
                 
-                # use a little bit o recursion 
-                for dict_key in value:
-                    dict_key_name = str(dict_key).replace(" ", "")
-                    dict_dvName = '%s_%s' % (dvName , dict_key_name)
+            #     # use a little bit o recursion 
+            #     for dict_key in value:
+            #         dict_key_name = str(dict_key).replace(" ", "")
+            #         dict_dvName = '%s_%s' % (dvName , dict_key_name)
 
-                    if isinstance(lower, dict):
-                        lower_val = lower[dict_key]
-                    else:
-                        lower_val = lower    
-                    if isinstance(upper, dict):
-                        upper_val = upper[dict_key]
-                    else:
-                        upper_val = upper    
-                    if isinstance(scale, dict):
-                        scale_val = scale[dict_key]
-                    else:
-                        scale_val = scale    
-                    if isinstance(offset, dict):
-                        offset_val = offset[dict_key]
-                    else:
-                        offset_val = offset    
-                    if isinstance(dvOffset, dict):
-                        dvOffset_val = dvOffset[dict_key]
-                    else:
-                        dvOffset_val = dvOffset    
+            #         if isinstance(lower, dict):
+            #             lower_val = lower[dict_key]
+            #         else:
+            #             lower_val = lower    
+            #         if isinstance(upper, dict):
+            #             upper_val = upper[dict_key]
+            #         else:
+            #             upper_val = upper    
+            #         if isinstance(scale, dict):
+            #             scale_val = scale[dict_key]
+            #         else:
+            #             scale_val = scale    
+            #         if isinstance(offset, dict):
+            #             offset_val = offset[dict_key]
+            #         else:
+            #             offset_val = offset    
+            #         if isinstance(dvOffset, dict):
+            #             dvOffset_val = dvOffset[dict_key]
+            #         else:
+            #             dvOffset_val = dvOffset    
 
 
-                    # self.addDV(key, , lower_val, upper_val, scale_val, dvName, 
-                    #      offset_val, dvOffset_val, addToPyOpt, familyGroup,
-                    #     units)
+            #         # self.addDV(key, , lower_val, upper_val, scale_val, dvName, 
+            #         #      offset_val, dvOffset_val, addToPyOpt, familyGroup,
+            #         #     units)
 
-                    self.DVs[dict_dvName] = aeroDV(key, value[dict_key], lower_val, upper_val, scale_val, offset_val,
-                                            dvOffset_val, addToPyOpt, familyGroup, units)                
-                    self.DVs[dict_dvName].dict_key = dict_key
+            #         self.DVs[dict_dvName] = aeroDV(key, value[dict_key], lower_val, upper_val, scale_val, offset_val,
+            #                                 dvOffset_val, addToPyOpt, familyGroup, units)                
+            #         self.DVs[dict_dvName].dict_key = dict_key
                 
-                return
+            #     return
 
         else:
             if name is None:
@@ -665,22 +706,19 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
         for dvName in self.DVs:
             if dvName in x:
-                key = self.DVs[dvName].key
-                family = self.DVs[dvName].family
-                value = x[dvName] + self.DVs[dvName].offset
+                dv = self.DVs[dvName]
+                key = dv.key
+                family = dv.family
+                value = x[dvName] + dv.offset
                 if key in self.possibleBCDVs:
+                    self.bc_data[family][key] = value               
 
-                    if hasattr(self.DVs[dvName], 'dict_key'):
-                        dict_key = self.DVs[dvName].dict_key
-                        self.BCData[family][key][dict_key] = value
-                    else:
-                        self.BCData[family][key] = value
                 elif key in self.possibleActuatorDVs:
                     self.actuatorData[family][key] = value               
                 else:
                     setattr(self, key, value)
 
-                self.DVs[dvName].value = x[dvName]
+                dv.value = x[dvName]
                 # try:  # To set in the DV as well if the DV exists:
                 # except:
                 #     # DV doesn't exist
@@ -873,50 +911,6 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         self._setStates({'altitude': value})
         self._set_aeroDV_val('altitude', value)
 
-    # def _update(self):
-    #     """
-    #     Try to finish the complete state:
-    #     """
-
-    #     if self.T is not None:
-    #         self.a = numpy.sqrt(self.gamma*self.R*self.T)
-    #         if self.englishUnits:
-    #             mu = (self.muSuthDim * (
-    #                     (self.TSuthDim + self.SSuthDim) / (self.T/1.8 + self.SSuthDim)) *
-    #                    (((self.T/1.8)/self.TSuthDim)**1.5))
-    #             self.mu = mu / 47.9
-    #         else:
-    #             self.mu = (self.muSuthDim * (
-    #                     (self.TSuthDim + self.SSuthDim) / (self.T + self.SSuthDim)) *
-    #                        ((self.T/self.TSuthDim)**1.5))
-
-    #     if self.mach is not None and self.a is not None:
-    #         self.V = self.mach * self.a
-
-    #     if self.a is not None and self.V is not None:
-    #         self.__dict__['mach'] = self.V/self.a
-
-    #     if  self.P is not None and self.T is not None:
-    #         self.__dict__['rho'] = self.P/(self.R*self.T)
-
-    #     if self.rho is not None and self.T is not None:
-    #         self.__dict__['P'] = self.rho*self.R*self.T
-
-    #     if self.rho is not None and self.P is not None:
-    #         self.__dict__['T'] = self.P /(self.rho*self.R)
-
-    #     if self.mu is not None and self.rho is not None:
-    #         self.nu = self.mu / self.rho
-
-    #     if self.rho is not None and self.V is not None:
-    #         self.q = 0.5*self.rho*self.V**2
-
-    #     if self.rho is not None and self.V is not None and self.mu is not None:
-    #         self.__dict__['re'] = self.rho*self.V/self.mu
-
-    #     if self.re is not None and self.mu is not None and self.V is not None:
-    #         self.__dict__['rho'] = self.re*self.mu/self.V
-
     def _updateFromRe(self):
         '''
         update the full set of states from M,T,P
@@ -1006,6 +1000,107 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
         return rDict
 
+    def evalDVsSensFwd(self, xDvDot):
+        """
+        fwd mod deriv of setDesignVars
+        """
+        aeroDvsDot = {}
+        bcDvsDot = defaultdict(lambda: {})
+        actDvsDot = defaultdict(lambda: {})
+
+        for dvName in self.DVs:
+            if dvName in xDvDot:
+                dv = self.DVs[dvName]
+                key = dv.key
+                family = dv.family
+                value = xDvDot[dvName]
+
+                if key in self.possibleBCDVs:
+                    bcDvsDot[family][key] = value               
+
+                elif key in self.possibleActuatorDVs:
+                    actDvsDot[family][key] = value               
+                else:
+                    aeroDvsDot[key] = value
+
+        return aeroDvsDot, bcDvsDot, actDvsDot
+
+
+    def evalDVsSensBwd(self, aeroDvBar, BCDataBar, actDataBar):
+        """This internal furncion is used to convert the raw array output from
+        the matrix-free product bwd routine into the required
+        dictionary format."""
+
+        DVbar = {}
+        for dvName in self.DVs:
+            key = self.DVs[dvName].key.lower()
+
+            tmp = {}
+            if key == 'altitude':
+                # This design variable is special. It combines changes
+                # in temperature, pressure and density into a single
+                # variable. Since we have derivatives for T, P and
+                # rho, we simply chain rule it back to the the
+                # altitude variable.
+                self.evalFunctionsSens(tmp, ['P', 'T', 'rho'])
+ 
+                # Extract the derivatives wrt the independent
+                # parameters in ADflow
+                dIdP = aeroDvBar['p']
+                dIdT = aeroDvBar['t']
+                dIdrho = aeroDvBar['rho']
+ 
+                # Chain-rule to get the final derivative:
+                DVbar[dvName] = (
+                    tmp[self['P']][dvName]*dIdP +
+                    tmp[self['T']][dvName]*dIdT +
+                    tmp[self['rho']][dvName]*dIdrho)
+
+            elif key == 'mach':
+                self.evalFunctionsSens(tmp, ['P', 'rho'])
+                # Simular story for Mach: It is technically possible
+                # to use a mach number for a fixed RE simulation. For
+                # the RE to stay fixed and change the mach number, the
+                # 'P' and 'rho' must also change. We have to chain run
+                # this dependence back through to the final mach
+                # derivative. When Mach number is used with altitude
+                # or P and T, this calc is unnecessary, but won't do
+                # any harm.
+                dIdP = aeroDvBar['p']
+                dIdrho = aeroDvBar['rho']
+ 
+                # Chain-rule to get the final derivative:
+                DVbar[dvName] = (
+                    tmp[self['P']][dvName]*dIdP +
+                    tmp[self['rho']][dvName]*dIdrho +
+                    aeroDvBar['mach'])
+            # if the variable is an BC DV, get the data from the BCDataBar
+            # dict for each patch
+            elif key in [k.lower() for k in self.possibleBCDVs]:
+                fam = self.DVs[dvName].family
+                dv_key = self.DVs[dvName].key
+            
+                DVbar[dvName] = BCDataBar[fam][dv_key]
+
+            # if the variable is an actuator DV, get the data from the actDataBar
+            elif key in [k.lower() for k in self.possibleActuatorDVs]:
+                fam = self.DVs[dvName].family
+                dv_key = self.DVs[dvName].key
+                DVbar[dvName] = actDataBar[fam][dv_key]
+
+ 
+            else:
+                DVbar[dvName] = aeroDvBar[key]
+
+ 
+
+               
+        return DVbar
+
+
+               
+    #     return DVbar
+
 
 class aeroDV(object):
     """
@@ -1024,3 +1119,19 @@ class aeroDV(object):
         self.addToPyOpt = addToPyOpt
         self.family = family
         self.units = units
+
+
+        if isinstance(value, float):
+            self.size = 1
+        elif isinstance(value, numpy.ndarray):
+            self.size = value.size
+        else:
+            size = None
+            #TODO raise an error?
+        
+    def __repr__(self):
+        '''Returns representation of the object'''
+        msg = "{}({!r}) {}".format(self.__class__.__name__, self.key, self.value)
+        if self.units is not None:
+            msg += self.units
+        return msg
