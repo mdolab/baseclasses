@@ -7,18 +7,22 @@ import pickle
 import numpy
 import os
 import pprint
+import json
+from collections import deque
 
 class BaseRegTest(object):
 
-    def __init__(self, ref , train=False, comm=None, check_arch=False):
-        # self.ref_file = ref_file
-
-        self.setRef(ref)
+    def __init__(self, ref_file, train=False, comm=None, check_arch=False):
+        self.ref_file = ref_file
         self.train = train
-        # if not self.train:
-        #     # We need to check here that the reference file exists, otherwise
-        #     # it will hang when it tries to open it on the root proc.
-        #     assert(os.path.isfile(self.ref_file))
+        if self.train:
+            ref = None
+        else:
+            # We need to check here that the reference file exists, otherwise
+            # it will hang when it tries to open it on the root proc.
+            assert(os.path.isfile(self.ref_file))
+            ref = self.readJSONRef(ref_file)
+        self.setRef(ref)        
 
         if comm is not None:
             self.comm = comm
@@ -56,7 +60,10 @@ class BaseRegTest(object):
         pass
 
     def setRef(self, ref):
-        self.db = ref
+        if self.train:
+            self.db = {}
+        else:
+            self.db = ref
 
     def getRef(self):
         return self.db
@@ -141,7 +148,7 @@ class BaseRegTest(object):
     # *****************
     def _add_value(self, value, name, rel_tol, abs_tol, db=None, err_name=None):
         # We only check floats and integers
-        if db == None:
+        if db is None:
             db = self.db
 
         if err_name == None:
@@ -192,15 +199,68 @@ class BaseRegTest(object):
             else:
                 self._add_values(d[key], key, rel_tol, abs_tol, db=self.db[dict_name], err_name=key_msg)
 
-# =============================================================================
-#                         reference files I/O
-# =============================================================================
+    # =============================================================================
+    #                         reference files I/O
+    # =============================================================================
 
-def convertRegFileToJSONRegFile(file_name, output_file=None):
+    # based on this stack overflow answer https://stackoverflow.com/questions/3488934/simplejson-and-numpy-array/24375113#24375113
+    def writeRef(self, file_name=None, ref=None):
+        if file_name is None:
+            file_name = self.ref_file
+        if ref is None:
+            ref = self.db
+        class NumpyEncoder(json.JSONEncoder):
+
+            def default(self, obj):
+                """If input object is an ndarray it will be converted into a dict 
+                holding dtype, shape and the data, base64 encoded.
+                """
+                if isinstance(obj, numpy.ndarray):
+                    if obj.flags['C_CONTIGUOUS']:
+                        pass
+                    else:
+                        obj = numpy.ascontiguousarray(obj)
+                        assert(obj.flags['C_CONTIGUOUS'])
+
+
+                    shape = obj.shape
+
+                    return dict(__ndarray__=obj.tolist(),
+                                dtype=str(obj.dtype),
+                                shape=shape)
+                                
+                # Let the base class default method raise the TypeError
+                super(NumpyEncoder, self).default(obj)
+
+        with open(file_name,'w') as json_file: 
+            json.dump(ref, json_file, sort_keys=True, indent=4, separators=(',', ': '), cls=NumpyEncoder)
+
+
+    # based on this stack overflow answer https://stackoverflow.com/questions/3488934/simplejson-and-numpy-array/24375113#24375113
+    def readRef(self, file_name):
+        def json_numpy_obj_hook(dct):
+            """Decodes a previously encoded numpy ndarray with proper shape and dtype.
+
+            :param dct: (dict) json encoded ndarray
+            :return: (ndarray) if input was an encoded ndarray
+            """
+            if isinstance(dct, dict) and '__ndarray__' in dct:
+                data = dct['__ndarray__']
+                return numpy.array(data, dct['dtype']).reshape(dct['shape'])
+            return dct
+
+
+
+        with open(file_name,'r') as json_file: 
+            data = json.load(json_file, object_hook=json_numpy_obj_hook) 
+        
+        return data
+
+def convertRegFileToJSONRegFile(self, file_name, output_file=None):
     """ converts from the old format of regression test file to the new JSON format"""
 
     if output_file == None:
-         output_file = os.path.splitext(file_name)[0] + '.json'
+        output_file = os.path.splitext(file_name)[0] + '.json'
 
         
     ref = {}
@@ -242,7 +302,7 @@ def convertRegFileToJSONRegFile(file_name, output_file=None):
                     if "Dictionary Key: " in last_line:
                         # this is a nested dict
                         key = last_line[len('Dictionary Key: '):]
- 
+
                         if len(line_history) >  1 :
                             prior_dict = curr_dict
 
@@ -284,60 +344,3 @@ def convertRegFileToJSONRegFile(file_name, output_file=None):
                 line_history.append(line)
 
     writeRefToJson(output_file, ref)
-
-
-def writeRef(file_name, ref):
-
-    with open(file_name, 'w') as fid:
-        ref_str = pprint.pformat(ref)
-        fid.write('from numpy import array\n\n')
-        fid.write( 'ref = ' + ref_str )
-
-# based on this stack overflow answer https://stackoverflow.com/questions/3488934/simplejson-and-numpy-array/24375113#24375113
-def writeRefToJson(file_name, ref):
-    class NumpyEncoder(json.JSONEncoder):
-
-        def default(self, obj):
-            """If input object is an ndarray it will be converted into a dict 
-            holding dtype, shape and the data, base64 encoded.
-            """
-            if isinstance(obj, numpy.ndarray):
-                if obj.flags['C_CONTIGUOUS']:
-                    pass
-                else:
-                    obj = numpy.ascontiguousarray(obj)
-                    assert(obj.flags['C_CONTIGUOUS'])
-
-
-                shape = obj.shape
-
-                return dict(__ndarray__=obj.tolist(),
-                            dtype=str(obj.dtype),
-                            shape=shape)
-                            
-            # Let the base class default method raise the TypeError
-            super(NumpyEncoder, self).default(obj)
-
-    with open(file_name,'w') as json_file: 
-        json.dump(ref, json_file, sort_keys=True, indent=4, separators=(',', ': '), cls=NumpyEncoder) 
-
-
-# based on this stack overflow answer https://stackoverflow.com/questions/3488934/simplejson-and-numpy-array/24375113#24375113
-def readJSONRef(file_name):
-    def json_numpy_obj_hook(dct):
-        """Decodes a previously encoded numpy ndarray with proper shape and dtype.
-
-        :param dct: (dict) json encoded ndarray
-        :return: (ndarray) if input was an encoded ndarray
-        """
-        if isinstance(dct, dict) and '__ndarray__' in dct:
-            data = dct['__ndarray__']
-            return numpy.array(data, dct['dtype']).reshape(dct['shape'])
-        return dct
-
-
-
-    with open(file_name,'r') as json_file: 
-        data = json.load(json_file, object_hook=json_numpy_obj_hook) 
-    
-    return data
