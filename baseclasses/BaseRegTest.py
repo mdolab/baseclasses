@@ -13,13 +13,12 @@ class BaseRegTest(object):
         self.ref_file = ref_file
         self.train = train
         if self.train:
-            ref = None
+            self.db = {}
         else:
             # We need to check here that the reference file exists, otherwise
             # it will hang when it tries to open it on the root proc.
             assert os.path.isfile(self.ref_file)
-            ref = self.readRef(ref_file)
-        self.setRef(ref)
+            self.db = self.readRef()
 
         if comm is not None:
             self.comm = comm
@@ -41,12 +40,6 @@ class BaseRegTest(object):
     def __exit__(self, exc_type, exc_value, traceback):
         # self.save()
         pass
-
-    def setRef(self, ref):
-        if self.train:
-            self.db = {}
-        else:
-            self.db = ref
 
     def getRef(self):
         return self.db
