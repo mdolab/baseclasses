@@ -7,6 +7,28 @@ import os
 import json
 from collections import deque
 
+def getTol(**kwargs):
+    """
+    Returns the tolerances based on kwargs.
+    There are two ways of specifying tolerance:
+    1. pass in "tol" which will set atol = rtol = tol
+    2. individually set atol and rtol.
+    If any values are unspecified, the default value will be used.
+    """
+    DEFAULT_TOL = 1e-12
+    if "tol" in kwargs:
+        rtol = kwargs["tol"]
+        atol = kwargs["tol"]
+    else:
+        if "rtol" in kwargs:
+            rtol = kwargs["rtol"]
+        else:
+            rtol = DEFAULT_TOL
+        if "atol" in kwargs:
+            atol = kwargs["atol"]
+        else:
+            atol = DEFAULT_TOL
+    return rtol, atol
 
 class BaseRegTest(object):
     def __init__(self, ref_file, train=False, comm=None, check_arch=False):
@@ -79,41 +101,46 @@ class BaseRegTest(object):
             print(s)
 
     # Add values from root only
-    def root_add_val(self, values, name, rel_tol=1e-12, abs_tol=1e-12):
+    def root_add_val(self, values, name, **kwargs):
         """Add values but only on the root proc"""
+        rtol, atol = getTol(**kwargs)
         if self.rank == 0:
-            self._add_values(values, name, rel_tol, abs_tol)
+            self._add_values(values, name, rtol, atol)
 
-    def root_add_dict(self, d, name, rel_tol=1e-12, abs_tol=1e-12):
+    def root_add_dict(self, d, name, **kwargs):
         """Only write from the root proc"""
+        rtol, atol = getTol(**kwargs)
         if self.rank == 0:
-            self._add_dict(d, name, rel_tol, abs_tol)
+            self._add_dict(d, name, rtol, atol)
 
     # Add values from all processors
-    def par_add_val(self, values, name, rel_tol=1e-12, abs_tol=1e-12):
+    def par_add_val(self, values, name, **kwargs):
         """Add value(values) from parallel process in sorted order"""
+        rtol, atol = getTol(**kwargs)
         values = self.comm.gather(values)
         if self.rank == 0:
             for i in range(len(values)):
                 print("Value(s) on processor: %d" % i)
-                self._add_values(values[i], name, rel_tol, abs_tol)
+                self._add_values(values[i], name, rtol, atol)
 
-    def par_add_sum(self, values, name, rel_tol=1e-12, abs_tol=1e-12):
+    def par_add_sum(self, values, name, **kwargs):
         """Add the sum of sum of the values from all processors."""
+        rtol, atol = getTol(**kwargs)
         reducedSum = self.comm.reduce(numpy.sum(values))
         if self.rank == 0:
-            self._add_value(reducedSum, name, rel_tol, abs_tol)
+            self._add_value(reducedSum, name, rtol, atol)
 
-    def par_add_norm(self, values, name, rel_tol=1e-12, abs_tol=1e-12):
+    def par_add_norm(self, values, name, **kwargs):
         """Add the norm across values from all processors."""
+        rtol, atol = getTol(**kwargs)
         reducedSum = self.comm.reduce(numpy.sum(values ** 2))
         if self.rank == 0:
-            self._add_value(numpy.sqrt(reducedSum), name, rel_tol, abs_tol)
+            self._add_value(numpy.sqrt(reducedSum), name, rtol, atol)
 
     # *****************
     # Private functions
     # *****************
-    def _add_value(self, value, name, rel_tol, abs_tol, db=None, err_name=None):
+    def _add_value(self, value, name, rtol, atol, db=None, err_name=None):
         # We only check floats and integers
         if db is None:
             db = self.db
@@ -128,13 +155,13 @@ class BaseRegTest(object):
         if self.train:
             db[name] = value
         else:
-            self.assert_allclose(value, db[name], err_name, rel_tol, abs_tol)
+            self.assert_allclose(value, db[name], err_name, rtol, atol)
 
-    def assert_allclose(self, actual, reference, name, rel_tol, abs_tol):
+    def assert_allclose(self, actual, reference, name, rtol, atol):
         msg = "Failed value for: {}".format(name)
-        numpy.testing.assert_allclose(actual, reference, rtol=rel_tol, atol=abs_tol, err_msg=msg)
+        numpy.testing.assert_allclose(actual, reference, rtol=rtol, atol=atol, err_msg=msg)
 
-    def _add_values(self, values, name, rel_tol, abs_tol, db=None, err_name=None):
+    def _add_values(self, values, name, rtol, atol, db=None, err_name=None):
         """Add values in special value format"""
         # values = numpy.atleast_1d(values)
         # values = values.flatten()
@@ -148,9 +175,9 @@ class BaseRegTest(object):
         if self.train:
             db[name] = values
         else:
-            self.assert_allclose(values, db[name], err_name, rel_tol, abs_tol)
+            self.assert_allclose(values, db[name], err_name, rtol, atol)
 
-    def _add_dict(self, d, dict_name, rel_tol, abs_tol, db=None, err_name=None):
+    def _add_dict(self, d, dict_name, rtol, atol, db=None, err_name=None):
         """Add all values in a dictionary in sorted key order"""
 
         if self.train:
@@ -168,12 +195,12 @@ class BaseRegTest(object):
                 key_msg = dict_name + ": " + key
 
             if type(d[key]) == bool:
-                self._add_value(int(d[key]), key, rel_tol, abs_tol, db=db[dict_name], err_name=key_msg)
+                self._add_value(int(d[key]), key, rtol, atol, db=db[dict_name], err_name=key_msg)
             if isinstance(d[key], dict):
                 # do some good ol' fashion recursion
-                self._add_dict(d[key], key, rel_tol, abs_tol, db=db[dict_name], err_name=dict_name)
+                self._add_dict(d[key], key, rtol, atol, db=db[dict_name], err_name=dict_name)
             else:
-                self._add_values(d[key], key, rel_tol, abs_tol, db=self.db[dict_name], err_name=key_msg)
+                self._add_values(d[key], key, rtol, atol, db=self.db[dict_name], err_name=key_msg)
 
     # *****************
     # Static helper method
@@ -202,14 +229,12 @@ class BaseRegTest(object):
 
         return refDir, inputDir, outputDir
 
-
 # =============================================================================
 #                         reference files I/O
 # =============================================================================
 
 # based on this stack overflow answer https://stackoverflow.com/questions/3488934/simplejson-and-numpy-array/24375113#24375113
 def writeRefJSON(file_name, ref):
-
     class NumpyEncoder(json.JSONEncoder):
         def default(self, obj):
             """If input object is an ndarray it will be converted into a dict 
@@ -230,6 +255,7 @@ def writeRefJSON(file_name, ref):
     with open(file_name, "w") as json_file:
         json.dump(ref, json_file, sort_keys=True, indent=4, separators=(",", ": "), cls=NumpyEncoder)
 
+
 # based on this stack overflow answer https://stackoverflow.com/questions/3488934/simplejson-and-numpy-array/24375113#24375113
 def readRefJSON(file_name):
     def json_numpy_obj_hook(dct):
@@ -247,6 +273,7 @@ def readRefJSON(file_name):
         data = json.load(json_file, object_hook=json_numpy_obj_hook)
 
     return data
+
 
 def convertRegFileToJSONRegFile(file_name, output_file=None):
     """ converts from the old format of regression test file to the new JSON format"""
