@@ -200,34 +200,7 @@ class BaseRegTest(object):
                 # do some good ol' fashion recursion
                 self._add_dict(d[key], key, rtol, atol, db=db[dict_name], err_name=dict_name)
             else:
-                self._add_values(d[key], key, rtol, atol, db=self.db[dict_name], err_name=key_msg)
-
-    # *****************
-    # Static helper method
-    # *****************
-
-    @staticmethod
-    def setLocalPaths(baseDir, sys_path):
-        """added the necessary paths to the version of the files within the same 
-        repo"""
-        repoDir = baseDir.split("/tests/")[0]
-        sys_path.append(repoDir)
-
-        testDir = baseDir.split("/reg_tests/")[0]
-        regTestDir = testDir + "/reg_tests"
-        sys_path.append(regTestDir)
-
-    @staticmethod
-    def getLocalDirPaths(baseDir):
-        """Returns the paths to the reference files and input and outputs based on the 
-        directory of the file (baseDir)"""
-        refDir = baseDir.replace("reg_tests", "reg_tests/refs")
-
-        testDir = baseDir.split("/reg_tests")[0]
-        inputDir = os.path.join(testDir, "input_files")
-        outputDir = os.path.join(testDir, "output_files")
-
-        return refDir, inputDir, outputDir
+                self._add_values(d[key], key, rtol, atol, db=db[dict_name], err_name=key_msg)
 
 # =============================================================================
 #                         reference files I/O
