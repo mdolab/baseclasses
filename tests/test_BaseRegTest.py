@@ -49,7 +49,7 @@ class TestBaseRegTest(unittest.TestCase):
 
     def test_tol(self):
         """
-        Test that the getTol function
+        Test that the getTol function is returning the appropriate values
         """
         x = 1e-1
         y = 1e-2
