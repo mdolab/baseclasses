@@ -108,39 +108,39 @@ class BaseRegTest(object):
             print(s)
 
     # Add values from root only
-    def root_add_val(self, values, name, **kwargs):
+    def root_add_val(self, name, values, **kwargs):
         """Add values but only on the root proc"""
         rtol, atol = getTol(**kwargs)
         if self.rank == 0:
-            self._add_values(values, name, rtol, atol)
+            self._add_values(name, values, rtol, atol)
 
-    def root_add_dict(self, d, name, **kwargs):
+    def root_add_dict(self, name, d, **kwargs):
         """Only write from the root proc"""
         rtol, atol = getTol(**kwargs)
         if self.rank == 0:
-            self._add_dict(d, name, rtol, atol)
+            self._add_dict(name, d, rtol, atol)
 
     # Add values from all processors
-    def par_add_val(self, values, name, **kwargs):
+    def par_add_val(self, name, values, **kwargs):
         """Add value(values) from parallel process in sorted order"""
         rtol, atol = getTol(**kwargs)
         values = self.comm.gather(values)
         if self.rank == 0:
-            self._add_values(values, name, rtol, atol)
+            self._add_values(name, values, rtol, atol)
 
-    def par_add_sum(self, values, name, **kwargs):
+    def par_add_sum(self, name, values, **kwargs):
         """Add the sum of sum of the values from all processors."""
         rtol, atol = getTol(**kwargs)
         reducedSum = self.comm.reduce(numpy.sum(values))
         if self.rank == 0:
-            self._add_values(reducedSum, name, rtol, atol)
+            self._add_values(name, reducedSum, rtol, atol)
 
-    def par_add_norm(self, values, name, **kwargs):
+    def par_add_norm(self, name, values, **kwargs):
         """Add the norm across values from all processors."""
         rtol, atol = getTol(**kwargs)
         reducedSum = self.comm.reduce(numpy.sum(values ** 2))
         if self.rank == 0:
-            self._add_values(numpy.sqrt(reducedSum), name, rtol, atol)
+            self._add_values(name, numpy.sqrt(reducedSum), rtol, atol)
 
     # *****************
     # Private functions
@@ -149,7 +149,7 @@ class BaseRegTest(object):
         msg = "Failed value for: {}".format(name)
         numpy.testing.assert_allclose(actual, reference, rtol=rtol, atol=atol, err_msg=msg)
 
-    def _add_values(self, values, name, rtol, atol, db=None):
+    def _add_values(self, name, values, rtol, atol, db=None):
         """Add values in special value format"""
         if db is None:
             db = self.db
@@ -162,7 +162,7 @@ class BaseRegTest(object):
         else:
             self.assert_allclose(values, db[name], name, rtol, atol)
 
-    def _add_dict(self, d, dict_name, rtol, atol, db=None):
+    def _add_dict(self, dict_name, d, rtol, atol, db=None):
         """Add all values in a dictionary in sorted key order"""
 
         if db is None:
@@ -172,12 +172,12 @@ class BaseRegTest(object):
             name = "{}: {}".format(dict_name, key)
 
             if type(d[key]) == bool:
-                self._add_values(int(d[key]), name, rtol, atol, db=db[dict_name])
+                self._add_values(name, int(d[key]), rtol, atol, db=db[dict_name])
             if isinstance(d[key], dict):
                 # do some good ol' fashion recursion
-                self._add_dict(d[key], name, rtol, atol)
+                self._add_dict(name, d[key], rtol, atol)
             else:
-                self._add_values(d[key], name, rtol, atol)
+                self._add_values(name, d[key], rtol, atol)
 
 
 # =============================================================================

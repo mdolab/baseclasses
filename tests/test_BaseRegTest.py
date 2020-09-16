@@ -32,9 +32,9 @@ def regression_test_root(handler):
     """
     for key, val in root_vals.items():
         if isinstance(val, dict):
-            handler.root_add_dict(val, key)
+            handler.root_add_dict(key, val)
         elif isinstance(val, (float, int)):
-            handler.root_add_val(val, key)
+            handler.root_add_val(key, val)
 
 
 def regression_test_par(handler):
@@ -42,9 +42,9 @@ def regression_test_par(handler):
     This function adds values in parallel
     """
     val = comm.rank + 0.5
-    handler.par_add_val(val, "par val")
-    handler.par_add_sum(val, "par sum")
-    handler.par_add_norm(val, "par norm")
+    handler.par_add_val("par val", val)
+    handler.par_add_sum("par sum", val)
+    handler.par_add_norm("par norm", val)
 
 
 class TestBaseRegTest(unittest.TestCase):
