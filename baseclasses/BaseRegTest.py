@@ -133,39 +133,18 @@ class BaseRegTest(object):
         rtol, atol = getTol(**kwargs)
         reducedSum = self.comm.reduce(numpy.sum(values))
         if self.rank == 0:
-            self._add_value(reducedSum, name, rtol, atol)
+            self._add_values(reducedSum, name, rtol, atol)
 
     def par_add_norm(self, values, name, **kwargs):
         """Add the norm across values from all processors."""
         rtol, atol = getTol(**kwargs)
         reducedSum = self.comm.reduce(numpy.sum(values ** 2))
         if self.rank == 0:
-            self._add_value(numpy.sqrt(reducedSum), name, rtol, atol)
+            self._add_values(numpy.sqrt(reducedSum), name, rtol, atol)
 
     # *****************
     # Private functions
     # *****************
-    def _add_value(self, value, name, rtol, atol, db=None, err_name=None):
-        # We only check floats and integers
-        if db is None:
-            db = self.db
-
-        if err_name is None:
-            err_name = name
-
-        value = numpy.atleast_1d(value).flatten()
-        assert value.size == 1
-
-        value = value[0]
-        if self.train:
-            if name in db.keys():
-                raise ValueError(
-                    "The name {} is already in the training database. Please give values UNIQUE keys.".format(name)
-                )
-            db[name] = value
-        else:
-            self.assert_allclose(value, db[name], err_name, rtol, atol)
-
     def assert_allclose(self, actual, reference, name, rtol, atol):
         msg = "Failed value for: {}".format(name)
         numpy.testing.assert_allclose(actual, reference, rtol=rtol, atol=atol, err_msg=msg)
@@ -199,7 +178,7 @@ class BaseRegTest(object):
                 key_msg = name
 
             if type(d[key]) == bool:
-                self._add_value(int(d[key]), name, rtol, atol, db=db[dict_name], err_name=key_msg)
+                self._add_values(int(d[key]), name, rtol, atol, db=db[dict_name])
             if isinstance(d[key], dict):
                 # do some good ol' fashion recursion
                 self._add_dict(d[key], name, rtol, atol, err_name=dict_name)
