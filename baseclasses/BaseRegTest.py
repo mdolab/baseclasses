@@ -126,9 +126,7 @@ class BaseRegTest(object):
         rtol, atol = getTol(**kwargs)
         values = self.comm.gather(values)
         if self.rank == 0:
-            for i in range(len(values)):
-                print("Value(s) on processor: %d" % i)
-                self._add_values(values[i], name, rtol, atol)
+            self._add_values(values, name, rtol, atol)
 
     def par_add_sum(self, values, name, **kwargs):
         """Add the sum of sum of the values from all processors."""
@@ -217,7 +215,7 @@ class BaseRegTest(object):
 def writeRefJSON(file_name, ref):
     class NumpyEncoder(json.JSONEncoder):
         def default(self, obj):
-            """If input object is an ndarray it will be converted into a dict 
+            """If input object is an ndarray it will be converted into a dict
             holding dtype, shape and the data, base64 encoded.
             """
             if isinstance(obj, numpy.ndarray):
