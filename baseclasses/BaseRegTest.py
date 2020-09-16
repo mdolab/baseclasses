@@ -7,6 +7,7 @@ import os
 import json
 from collections import deque
 
+
 def getTol(**kwargs):
     """
     Returns the tolerances based on kwargs.
@@ -30,9 +31,16 @@ def getTol(**kwargs):
             atol = DEFAULT_TOL
     return rtol, atol
 
+
 class BaseRegTest(object):
     def __init__(self, ref_file, train=False, comm=None, check_arch=False):
         self.ref_file = ref_file
+        if comm is not None:
+            self.comm = comm
+        else:
+            self.comm = MPI.COMM_WORLD
+        self.rank = self.comm.rank
+
         self.train = train
         if self.train:
             self.db = {}
@@ -41,13 +49,6 @@ class BaseRegTest(object):
             # it will hang when it tries to open it on the root proc.
             assert os.path.isfile(self.ref_file)
             self.db = self.readRef()
-
-        if comm is not None:
-            self.comm = comm
-        else:
-            self.comm = MPI.COMM_WORLD
-
-        self.rank = self.comm.rank
 
         # dictionary of real/complex PETSc arch names
         self.arch = {"real": None, "complex": None}
@@ -67,10 +68,16 @@ class BaseRegTest(object):
         return self.db
 
     def writeRef(self):
-        writeRefJSON(self.ref_file, self.db)
+        if self.rank == 0:
+            writeRefJSON(self.ref_file, self.db)
 
     def readRef(self):
-        return readRefJSON(self.ref_file)
+        if self.rank == 0:
+            db = readRefJSON(self.ref_file)
+        else:
+            db = None
+        db = self.comm.bcast(db)
+        return db
 
     def checkPETScArch(self):
         # Determine real/complex petsc arches: take the one when the script is
@@ -101,106 +108,79 @@ class BaseRegTest(object):
             print(s)
 
     # Add values from root only
-    def root_add_val(self, values, name, **kwargs):
+    def root_add_val(self, name, values, **kwargs):
         """Add values but only on the root proc"""
         rtol, atol = getTol(**kwargs)
         if self.rank == 0:
-            self._add_values(values, name, rtol, atol)
+            self._add_values(name, values, rtol, atol)
 
-    def root_add_dict(self, d, name, **kwargs):
+    def root_add_dict(self, name, d, **kwargs):
         """Only write from the root proc"""
         rtol, atol = getTol(**kwargs)
         if self.rank == 0:
-            self._add_dict(d, name, rtol, atol)
+            self._add_dict(name, d, rtol, atol)
 
     # Add values from all processors
-    def par_add_val(self, values, name, **kwargs):
+    def par_add_val(self, name, values, **kwargs):
         """Add value(values) from parallel process in sorted order"""
         rtol, atol = getTol(**kwargs)
         values = self.comm.gather(values)
         if self.rank == 0:
-            for i in range(len(values)):
-                print("Value(s) on processor: %d" % i)
-                self._add_values(values[i], name, rtol, atol)
+            self._add_values(name, values, rtol, atol)
 
-    def par_add_sum(self, values, name, **kwargs):
+    def par_add_sum(self, name, values, **kwargs):
         """Add the sum of sum of the values from all processors."""
         rtol, atol = getTol(**kwargs)
         reducedSum = self.comm.reduce(numpy.sum(values))
         if self.rank == 0:
-            self._add_value(reducedSum, name, rtol, atol)
+            self._add_values(name, reducedSum, rtol, atol)
 
-    def par_add_norm(self, values, name, **kwargs):
+    def par_add_norm(self, name, values, **kwargs):
         """Add the norm across values from all processors."""
         rtol, atol = getTol(**kwargs)
         reducedSum = self.comm.reduce(numpy.sum(values ** 2))
         if self.rank == 0:
-            self._add_value(numpy.sqrt(reducedSum), name, rtol, atol)
+            self._add_values(name, numpy.sqrt(reducedSum), rtol, atol)
 
     # *****************
     # Private functions
     # *****************
-    def _add_value(self, value, name, rtol, atol, db=None, err_name=None):
-        # We only check floats and integers
-        if db is None:
-            db = self.db
-
-        if err_name is None:
-            err_name = name
-
-        value = numpy.atleast_1d(value).flatten()
-        assert value.size == 1
-
-        value = value[0]
-        if self.train:
-            db[name] = value
-        else:
-            self.assert_allclose(value, db[name], err_name, rtol, atol)
-
     def assert_allclose(self, actual, reference, name, rtol, atol):
         msg = "Failed value for: {}".format(name)
         numpy.testing.assert_allclose(actual, reference, rtol=rtol, atol=atol, err_msg=msg)
 
-    def _add_values(self, values, name, rtol, atol, db=None, err_name=None):
+    def _add_values(self, name, values, rtol, atol, db=None):
         """Add values in special value format"""
-        # values = numpy.atleast_1d(values)
-        # values = values.flatten()
-        # for val in values:
-        #     self._add_value(val, *args, **kwargs)
-
         if db is None:
             db = self.db
-        if err_name is None:
-            err_name = name
         if self.train:
+            if name in db.keys():
+                raise ValueError(
+                    "The name {} is already in the training database. Please give values UNIQUE keys.".format(name)
+                )
             db[name] = values
         else:
-            self.assert_allclose(values, db[name], err_name, rtol, atol)
+            self.assert_allclose(values, db[name], name, rtol, atol)
 
-    def _add_dict(self, d, dict_name, rtol, atol, db=None, err_name=None):
+    def _add_dict(self, dict_name, d, rtol, atol, db=None):
         """Add all values in a dictionary in sorted key order"""
 
-        if self.train:
-            self.db[dict_name] = {}
         if db is None:
             db = self.db
+        if self.train:
+            db[dict_name] = {}
+        elif dict_name not in db.keys():
+            raise ValueError("The key '{}' was not found in the reference file!")
 
         for key in sorted(d.keys()):
-            print(dict_name, key)
-            # if msg is None:
-            #     key_msg = key
-            if err_name:
-                key_msg = err_name + ":" + dict_name + ": " + key
-            else:
-                key_msg = dict_name + ": " + key
-
-            if type(d[key]) == bool:
-                self._add_value(int(d[key]), key, rtol, atol, db=db[dict_name], err_name=key_msg)
+            if isinstance(d[key], bool):
+                self._add_values(key, int(d[key]), rtol, atol, db=db[dict_name])
             if isinstance(d[key], dict):
                 # do some good ol' fashion recursion
-                self._add_dict(d[key], key, rtol, atol, db=db[dict_name], err_name=dict_name)
+                self._add_dict(key, d[key], rtol, atol, db=db[dict_name])
             else:
-                self._add_values(d[key], key, rtol, atol, db=db[dict_name], err_name=key_msg)
+                self._add_values(key, d[key], rtol, atol, db=db[dict_name])
+
 
 # =============================================================================
 #                         reference files I/O
@@ -210,7 +190,7 @@ class BaseRegTest(object):
 def writeRefJSON(file_name, ref):
     class NumpyEncoder(json.JSONEncoder):
         def default(self, obj):
-            """If input object is an ndarray it will be converted into a dict 
+            """If input object is an ndarray it will be converted into a dict
             holding dtype, shape and the data, base64 encoded.
             """
             if isinstance(obj, numpy.ndarray):
@@ -219,8 +199,11 @@ def writeRefJSON(file_name, ref):
                 else:
                     obj = numpy.ascontiguousarray(obj)
                     assert obj.flags["C_CONTIGUOUS"]
-                shape = obj.shape
-                return dict(__ndarray__=obj.tolist(), dtype=str(obj.dtype), shape=shape)
+                return dict(__ndarray__=obj.tolist(), dtype=str(obj.dtype), shape=obj.shape)
+            elif isinstance(obj, numpy.integer):
+                return dict(__ndarray__=int(obj), dtype=str(obj.dtype), shape=obj.shape)
+            elif isinstance(obj, numpy.floating):
+                return dict(__ndarray__=float(obj), dtype=str(obj.dtype), shape=obj.shape)
 
             # Let the base class default method raise the TypeError
             super(NumpyEncoder, self).default(obj)
