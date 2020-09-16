@@ -7,6 +7,7 @@ import os
 import json
 from collections import deque
 
+
 def getTol(**kwargs):
     """
     Returns the tolerances based on kwargs.
@@ -30,9 +31,16 @@ def getTol(**kwargs):
             atol = DEFAULT_TOL
     return rtol, atol
 
+
 class BaseRegTest(object):
     def __init__(self, ref_file, train=False, comm=None, check_arch=False):
         self.ref_file = ref_file
+        if comm is not None:
+            self.comm = comm
+        else:
+            self.comm = MPI.COMM_WORLD
+        self.rank = self.comm.rank
+
         self.train = train
         if self.train:
             self.db = {}
@@ -41,13 +49,6 @@ class BaseRegTest(object):
             # it will hang when it tries to open it on the root proc.
             assert os.path.isfile(self.ref_file)
             self.db = self.readRef()
-
-        if comm is not None:
-            self.comm = comm
-        else:
-            self.comm = MPI.COMM_WORLD
-
-        self.rank = self.comm.rank
 
         # dictionary of real/complex PETSc arch names
         self.arch = {"real": None, "complex": None}
@@ -67,10 +68,16 @@ class BaseRegTest(object):
         return self.db
 
     def writeRef(self):
-        writeRefJSON(self.ref_file, self.db)
+        if self.rank == 0:
+            writeRefJSON(self.ref_file, self.db)
 
     def readRef(self):
-        return readRefJSON(self.ref_file)
+        if self.rank == 0:
+            db = readRefJSON(self.ref_file)
+        else:
+            db = None
+        db = self.comm.bcast(db)
+        return db
 
     def checkPETScArch(self):
         # Determine real/complex petsc arches: take the one when the script is
