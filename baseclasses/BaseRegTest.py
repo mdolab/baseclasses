@@ -224,8 +224,11 @@ def writeRefJSON(file_name, ref):
                 else:
                     obj = numpy.ascontiguousarray(obj)
                     assert obj.flags["C_CONTIGUOUS"]
-                shape = obj.shape
-                return dict(__ndarray__=obj.tolist(), dtype=str(obj.dtype), shape=shape)
+                return dict(__ndarray__=obj.tolist(), dtype=str(obj.dtype), shape=obj.shape)
+            elif isinstance(obj, numpy.integer):
+                return dict(__ndarray__=int(obj), dtype=str(obj.dtype), shape=obj.shape)
+            elif isinstance(obj, numpy.floating):
+                return dict(__ndarray__=float(obj), dtype=str(obj.dtype), shape=obj.shape)
 
             # Let the base class default method raise the TypeError
             super(NumpyEncoder, self).default(obj)
