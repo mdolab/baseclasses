@@ -158,6 +158,10 @@ class BaseRegTest(object):
 
         value = value[0]
         if self.train:
+            if name in db.keys():
+                raise ValueError(
+                    "The name {} is already in the training database. Please give values UNIQUE keys.".format(name)
+                )
             db[name] = value
         else:
             self.assert_allclose(value, db[name], err_name, rtol, atol)
@@ -168,16 +172,15 @@ class BaseRegTest(object):
 
     def _add_values(self, values, name, rtol, atol, db=None, err_name=None):
         """Add values in special value format"""
-        # values = numpy.atleast_1d(values)
-        # values = values.flatten()
-        # for val in values:
-        #     self._add_value(val, *args, **kwargs)
-
         if db is None:
             db = self.db
         if err_name is None:
             err_name = name
         if self.train:
+            if name in db.keys():
+                raise ValueError(
+                    "The name {} is already in the training database. Please give values UNIQUE keys.".format(name)
+                )
             db[name] = values
         else:
             self.assert_allclose(values, db[name], err_name, rtol, atol)
@@ -185,27 +188,24 @@ class BaseRegTest(object):
     def _add_dict(self, d, dict_name, rtol, atol, db=None, err_name=None):
         """Add all values in a dictionary in sorted key order"""
 
-        if self.train:
-            self.db[dict_name] = {}
         if db is None:
             db = self.db
 
         for key in sorted(d.keys()):
-            print(dict_name, key)
-            # if msg is None:
-            #     key_msg = key
+            name = "{}: {}".format(dict_name, key)
             if err_name:
-                key_msg = err_name + ":" + dict_name + ": " + key
+                key_msg = err_name + ":" + name
             else:
-                key_msg = dict_name + ": " + key
+                key_msg = name
 
             if type(d[key]) == bool:
-                self._add_value(int(d[key]), key, rtol, atol, db=db[dict_name], err_name=key_msg)
+                self._add_value(int(d[key]), name, rtol, atol, db=db[dict_name], err_name=key_msg)
             if isinstance(d[key], dict):
                 # do some good ol' fashion recursion
-                self._add_dict(d[key], key, rtol, atol, db=db[dict_name], err_name=dict_name)
+                self._add_dict(d[key], name, rtol, atol, err_name=dict_name)
             else:
-                self._add_values(d[key], key, rtol, atol, db=db[dict_name], err_name=key_msg)
+                self._add_values(d[key], name, rtol, atol, err_name=key_msg)
+
 
 # =============================================================================
 #                         reference files I/O
