@@ -149,12 +149,10 @@ class BaseRegTest(object):
         msg = "Failed value for: {}".format(name)
         numpy.testing.assert_allclose(actual, reference, rtol=rtol, atol=atol, err_msg=msg)
 
-    def _add_values(self, values, name, rtol, atol, db=None, err_name=None):
+    def _add_values(self, values, name, rtol, atol, db=None):
         """Add values in special value format"""
         if db is None:
             db = self.db
-        if err_name is None:
-            err_name = name
         if self.train:
             if name in db.keys():
                 raise ValueError(
@@ -162,9 +160,9 @@ class BaseRegTest(object):
                 )
             db[name] = values
         else:
-            self.assert_allclose(values, db[name], err_name, rtol, atol)
+            self.assert_allclose(values, db[name], name, rtol, atol)
 
-    def _add_dict(self, d, dict_name, rtol, atol, db=None, err_name=None):
+    def _add_dict(self, d, dict_name, rtol, atol, db=None):
         """Add all values in a dictionary in sorted key order"""
 
         if db is None:
@@ -172,18 +170,14 @@ class BaseRegTest(object):
 
         for key in sorted(d.keys()):
             name = "{}: {}".format(dict_name, key)
-            if err_name:
-                key_msg = err_name + ":" + name
-            else:
-                key_msg = name
 
             if type(d[key]) == bool:
                 self._add_values(int(d[key]), name, rtol, atol, db=db[dict_name])
             if isinstance(d[key], dict):
                 # do some good ol' fashion recursion
-                self._add_dict(d[key], name, rtol, atol, err_name=dict_name)
+                self._add_dict(d[key], name, rtol, atol)
             else:
-                self._add_values(d[key], name, rtol, atol, err_name=key_msg)
+                self._add_values(d[key], name, rtol, atol)
 
 
 # =============================================================================
