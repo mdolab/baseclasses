@@ -1,6 +1,5 @@
 import os
 import unittest
-import copy
 import numpy as np
 from mpi4py import MPI
 from baseclasses import BaseRegTest
@@ -10,16 +9,11 @@ from baseclasses.BaseRegTest import getTol
 comm = MPI.COMM_WORLD
 baseDir = os.path.dirname(os.path.abspath(__file__))
 # this is the dictionary of values to be added
-root_vals = {"scalar": 1.0}
-root_vals_ref = copy.copy(root_vals)
-root_vals["simple dictionary"] = {"a": 1.0}
-root_vals["nested dictionary"] = {"a": {"b": 1.0, "c": 2.0}}
-# this is the dictionary of reference values
-# note that the format is different, because when we recursively add dictionaries we just modify the key
-# and flatten it, instead of storing them as nested dictionaries in JSON
-root_vals_ref["simple dictionary: a"] = 1.0
-root_vals_ref["nested dictionary: a: b"] = 1.0
-root_vals_ref["nested dictionary: a: c"] = 2.0
+root_vals = {
+    "scalar": 1.0,
+    "simple dictionary": {"a": 1.0},
+    "nested dictionary": {"a": {"b": 1.0, "c": 2.0}},
+}
 
 # this is the dictionary for parallel tests
 par_vals = {
@@ -84,9 +78,7 @@ class TestBaseRegTest(unittest.TestCase):
         regression_test_root(handler)
         handler.writeRef()
         test_vals = handler.readRef()
-        # self.assertEqual(test_vals, root_vals_ref)
-        handler.root_print(test_vals)
-        handler.root_print(root_vals_ref)
+        self.assertEqual(test_vals, root_vals)
         handler = BaseRegTest(fileName, train=False)
         regression_test_root(handler)
 

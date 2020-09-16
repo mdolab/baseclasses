@@ -167,17 +167,19 @@ class BaseRegTest(object):
 
         if db is None:
             db = self.db
+        if self.train:
+            db[dict_name] = {}
+        elif dict_name not in db.keys():
+            raise ValueError("The key '{}' was not found in the reference file!")
 
         for key in sorted(d.keys()):
-            name = "{}: {}".format(dict_name, key)
-
-            if type(d[key]) == bool:
-                self._add_values(name, int(d[key]), rtol, atol, db=db[dict_name])
+            if isinstance(d[key], bool):
+                self._add_values(key, int(d[key]), rtol, atol, db=db[dict_name])
             if isinstance(d[key], dict):
                 # do some good ol' fashion recursion
-                self._add_dict(name, d[key], rtol, atol)
+                self._add_dict(key, d[key], rtol, atol, db=db[dict_name])
             else:
-                self._add_values(name, d[key], rtol, atol)
+                self._add_values(key, d[key], rtol, atol, db=db[dict_name])
 
 
 # =============================================================================
