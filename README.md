@@ -1,4 +1,5 @@
 # baseclasses
+[![Build Status](https://travis-ci.com/mdolab/baseclasses.svg?branch=master)](https://travis-ci.com/mdolab/baseclasses)
 [![Documentation Status](https://readthedocs.com/projects/mdolab-baseclasses/badge/?version=latest)](https://mdolab-baseclasses.readthedocs-hosted.com/?badge=latest)
 
 `baseclasses` contains, well, base classes that are used together with the rest of MDO lab tools.
