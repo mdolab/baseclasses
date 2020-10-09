@@ -3,7 +3,8 @@ try:
 except ImportError:
     print("Warning: unable to find mpi4py. Parallel regression tests will cause errors")
 import numpy
-import os, sys
+import os
+import sys
 import json
 from collections import deque
 from contextlib import contextmanager
@@ -170,9 +171,7 @@ class BaseRegTest(object):
                 )
             db[name] = values
         else:
-            print(self.comm.rank, 'making the assert ------------')
             self.assert_allclose(values, db[name], name, rtol, atol)
-            print(self.comm.rank, 'passed the assert ------------')
 
     def _add_dict(self, dict_name, d, rtol, atol, db=None):
         """Add all values in a dictionary in sorted key order"""
@@ -320,10 +319,11 @@ def convertRegFileToJSONRegFile(file_name, output_file=None):
     writeRefJSON(output_file, ref)
 
 
-
 """This strategy of dealing with error propagation to multiple procs is taken directly form openMDAO.utils;
 It was not imported and used here to avoid adding openMDAO as a dependency. If openMDAO is added as a dependency in
 the future this context manager definition should be replaced by an import"""
+
+
 @contextmanager
 def multi_proc_exception_check(comm):
     """
@@ -363,4 +363,3 @@ def multi_proc_exception_check(comm):
                 for m in allmsgs:
                     if m is not None:
                         raise RuntimeError(f"Exception raised on other rank: {m}.")
-
