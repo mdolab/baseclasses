@@ -3,9 +3,10 @@ try:
 except ImportError:
     print("Warning: unable to find mpi4py. Parallel regression tests will cause errors")
 import numpy
-import os
+import os, sys
 import json
 from collections import deque
+from contextlib import contextmanager
 
 
 def getTol(**kwargs):
@@ -68,16 +69,18 @@ class BaseRegTest(object):
         return self.db
 
     def writeRef(self):
-        if self.rank == 0:
-            writeRefJSON(self.ref_file, self.db)
+        with multi_proc_exception_check(self.comm):
+            if self.rank == 0:
+                writeRefJSON(self.ref_file, self.db)
 
     def readRef(self):
-        if self.rank == 0:
-            db = readRefJSON(self.ref_file)
-        else:
-            db = None
-        db = self.comm.bcast(db)
-        return db
+        with multi_proc_exception_check(self.comm):
+            if self.rank == 0:
+                db = readRefJSON(self.ref_file)
+            else:
+                db = None
+            db = self.comm.bcast(db)
+            return db
 
     def checkPETScArch(self):
         # Determine real/complex petsc arches: take the one when the script is
@@ -111,36 +114,42 @@ class BaseRegTest(object):
     def root_add_val(self, name, values, **kwargs):
         """Add values but only on the root proc"""
         rtol, atol = getTol(**kwargs)
-        if self.rank == 0:
-            self._add_values(name, values, rtol, atol)
+        with multi_proc_exception_check(self.comm):
+            if self.rank == 0:
+                self._add_values(name, values, rtol, atol)
 
     def root_add_dict(self, name, d, **kwargs):
         """Only write from the root proc"""
         rtol, atol = getTol(**kwargs)
-        if self.rank == 0:
-            self._add_dict(name, d, rtol, atol)
+        with multi_proc_exception_check(self.comm):
+
+            if self.rank == 0:
+                self._add_dict(name, d, rtol, atol)
 
     # Add values from all processors
     def par_add_val(self, name, values, **kwargs):
         """Add value(values) from parallel process in sorted order"""
         rtol, atol = getTol(**kwargs)
         values = self.comm.gather(values)
-        if self.rank == 0:
-            self._add_values(name, values, rtol, atol)
+        with multi_proc_exception_check(self.comm):
+            if self.rank == 0:
+                self._add_values(name, values, rtol, atol)
 
     def par_add_sum(self, name, values, **kwargs):
         """Add the sum of sum of the values from all processors."""
         rtol, atol = getTol(**kwargs)
         reducedSum = self.comm.reduce(numpy.sum(values))
-        if self.rank == 0:
-            self._add_values(name, reducedSum, rtol, atol)
+        with multi_proc_exception_check(self.comm):
+            if self.rank == 0:
+                self._add_values(name, reducedSum, rtol, atol)
 
     def par_add_norm(self, name, values, **kwargs):
         """Add the norm across values from all processors."""
         rtol, atol = getTol(**kwargs)
         reducedSum = self.comm.reduce(numpy.sum(values ** 2))
-        if self.rank == 0:
-            self._add_values(name, numpy.sqrt(reducedSum), rtol, atol)
+        with multi_proc_exception_check(self.comm):
+            if self.rank == 0:
+                self._add_values(name, numpy.sqrt(reducedSum), rtol, atol)
 
     # *****************
     # Private functions
@@ -151,6 +160,7 @@ class BaseRegTest(object):
 
     def _add_values(self, name, values, rtol, atol, db=None):
         """Add values in special value format"""
+
         if db is None:
             db = self.db
         if self.train:
@@ -160,7 +170,9 @@ class BaseRegTest(object):
                 )
             db[name] = values
         else:
+            print(self.comm.rank, 'making the assert ------------')
             self.assert_allclose(values, db[name], name, rtol, atol)
+            print(self.comm.rank, 'passed the assert ------------')
 
     def _add_dict(self, dict_name, d, rtol, atol, db=None):
         """Add all values in a dictionary in sorted key order"""
@@ -306,3 +318,49 @@ def convertRegFileToJSONRegFile(file_name, output_file=None):
                 line_history.append(line)
 
     writeRefJSON(output_file, ref)
+
+
+
+"""This strategy of dealing with error propagation to multiple procs is taken directly form openMDAO.utils;
+It was not imported and used here to avoid adding openMDAO as a dependency. If openMDAO is added as a dependency in
+the future this context manager definition should be replaced by an import"""
+@contextmanager
+def multi_proc_exception_check(comm):
+    """
+    Raise an exception on all procs if it is raised on one.
+    Wrap this around code that you want to globally fail if it fails
+    on any MPI process in comm.  If not running under MPI, don't
+    handle any exceptions.
+    Parameters
+    ----------
+    comm : MPI communicator or None
+        Communicator from the ParallelGroup that owns the calling solver.
+    """
+    if MPI is None or comm is None or comm.size == 1:
+        yield
+    else:
+        try:
+            yield
+        except Exception:
+            exc = sys.exc_info()
+
+            fail = 1
+        else:
+            fail = 0
+
+        failed = comm.allreduce(fail)
+        if failed:
+            if fail:
+                msg = f"{exc[1]}"
+            else:
+                msg = None
+            allmsgs = comm.allgather(msg)
+            if fail:
+                msg = f"Exception raised on rank {comm.rank}: {exc[1]}"
+                raise exc[0](msg).with_traceback(exc[2])
+                raise exc[0](msg).with_traceback(exc[2])
+            else:
+                for m in allmsgs:
+                    if m is not None:
+                        raise RuntimeError(f"Exception raised on other rank: {m}.")
+
