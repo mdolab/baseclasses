@@ -170,7 +170,10 @@ class BaseRegTest(object):
                 raise ValueError(
                     "The name {} is already in the training database. Please give values UNIQUE keys.".format(name)
                 )
-            db[name] = values.copy()
+            if isinstance(values, numpy.ndarray):
+                db[name] = values.copy()
+            else:
+                db[name] = values
         else:
             self.assert_allclose(values, db[name], name, rtol, atol)
 
