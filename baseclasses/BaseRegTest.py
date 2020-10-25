@@ -64,7 +64,8 @@ class BaseRegTest(object):
 
     def __exit__(self, exc_type, exc_value, traceback):
         # self.save()
-        pass
+        if self.train:
+            self.writeRef()
 
     def getRef(self):
         return self.db
@@ -169,7 +170,7 @@ class BaseRegTest(object):
                 raise ValueError(
                     "The name {} is already in the training database. Please give values UNIQUE keys.".format(name)
                 )
-            db[name] = values
+            db[name] = values.copy()
         else:
             self.assert_allclose(values, db[name], name, rtol, atol)
 
