@@ -1,8 +1,7 @@
-import sys
-import os
 from pprint import pprint as pp
-#!/usr/local/bin/python
-'''
+
+# !/usr/local/bin/python
+"""
 BaseSolver
 
 Holds a basic Python Analysis Classes (base and inherited).
@@ -20,9 +19,9 @@ History
 -------
     v. 1.0    - Initial Class Creation (CAM, 2013)
     v. 2.0    - Major update to options implementation (CAM,2017)
-'''
+"""
 
-__version__ = '$Revision: $'
+__version__ = "$Revision: $"
 
 
 # =============================================================================
@@ -52,16 +51,16 @@ class Error(Exception):
     """
 
     def __init__(self, message):
-        msg = '\n+'+'-'*78+'+'+'\n' + '| BaseSolver Error: '
+        msg = "\n+" + "-" * 78 + "+" + "\n" + "| BaseSolver Error: "
         i = 19
         for word in message.split():
             if len(word) + i + 1 > 78:  # Finish line and start new one
-                msg += ' '*(78-i)+'|\n| ' + word + ' '
-                i = 1 + len(word)+1
+                msg += " " * (78 - i) + "|\n| " + word + " "
+                i = 1 + len(word) + 1
             else:
-                msg += word + ' '
-                i += len(word)+1
-        msg += ' '*(78-i) + '|\n' + '+'+'-'*78+'+'+'\n'
+                msg += word + " "
+                i += len(word) + 1
+        msg += " " * (78 - i) + "|\n" + "+" + "-" * 78 + "+" + "\n"
         print(msg)
         Exception.__init__(self)
 
@@ -71,16 +70,16 @@ class Error(Exception):
 # =============================================================================
 class BaseSolver(object):
 
-    '''
+    """
     Abstract Class for a basic Solver Object
-    '''
+    """
 
     def __init__(self, name, category={}, def_options={}, **kwargs):
-        '''
+        """
         Solver Class Initialization
 
         Documentation last updated:
-        '''
+        """
 
         #
         self.name = name
@@ -94,18 +93,18 @@ class BaseSolver(object):
         for key in self.defaultOptions:
             self.setOption(key, self.defaultOptions[key][1])
 
-        koptions = kwargs.pop('options', CaseInsensitiveDict())
+        koptions = kwargs.pop("options", CaseInsensitiveDict())
         for key in koptions:
             self.setOption(key, koptions[key])
 
         self.solverCreated = True
 
-    def __call__(self,  *args, **kwargs):
-        '''
+    def __call__(self, *args, **kwargs):
+        """
         Run Analyzer (Calling Routine)
 
         Documentation last updated:
-        '''
+        """
 
         # Checks
         pass
@@ -126,24 +125,23 @@ class BaseSolver(object):
         try:
             self.defaultOptions[name]
         except KeyError:
-            Error("Option \'%-30s\' is not a valid %s option." % (
-                name,  self.name))
+            Error("Option '%-30s' is not a valid %s option." % (name, self.name))
 
         # Make sure we are not trying to change an immutable option if
         # we are not allowed to.
         if self.solverCreated and name in self.imOptions:
-            raise Error("Option '%-35s' cannot be modified after the solver "
-                        "is created." % name)
+            raise Error("Option '%-35s' cannot be modified after the solver " "is created." % name)
 
         # Now we know the option exists, lets check if the type is ok:
         if isinstance(value, self.defaultOptions[name][0]):
             # Just set:
             self.options[name] = [type(value), value]
         else:
-            raise Error("Datatype for Option %-35s was not valid \n "
-                        "Expected data type is %-47s \n "
-                        "Received data type is %-47s" % (
-                            name, self.defaultOptions[name][0], type(value)))
+            raise Error(
+                "Datatype for Option %-35s was not valid \n "
+                "Expected data type is %-47s \n "
+                "Received data type is %-47s" % (name, self.defaultOptions[name][0], type(value))
+            )
 
     def getOption(self, name):
         """
@@ -163,16 +161,16 @@ class BaseSolver(object):
         if name.lower() in self.defaultOptions:
             return self.options[name.lower()][1]
         else:
-            raise Error('%s is not a valid option name.' % name)
+            raise Error("%s is not a valid option name." % name)
 
     def printCurrentOptions(self):
         """
         Prints a nicely formatted dictionary of all the current solver
         options to the stdout on the root processor"""
         if self.comm.rank == 0:
-            print('+---------------------------------------+')
-            print('|          All %s Options:          |' % self.name)
-            print('+---------------------------------------+')
+            print("+---------------------------------------+")
+            print("|          All %s Options:          |" % self.name)
+            print("+---------------------------------------+")
             # Need to assemble a temporary dictionary
             tmpDict = {}
             for key in self.options:
@@ -185,9 +183,9 @@ class BaseSolver(object):
         options that have been modified from the defaults to the root
         processor"""
         if self.comm.rank == 0:
-            print('+---------------------------------------+')
-            print('|      All Modified %s Options:     |' % self.name)
-            print('+---------------------------------------+')
+            print("+---------------------------------------+")
+            print("|      All Modified %s Options:     |" % self.name)
+            print("+---------------------------------------+")
             # Need to assemble a temporary dictionary
             tmpDict = {}
             for key in self.options:
@@ -199,10 +197,10 @@ class BaseSolver(object):
 # ==============================================================================
 # Optimizer Test
 # ==============================================================================
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    print('Testing ...')
+    print("Testing ...")
 
     # Test Optimizer
-    azr = BaseSolver('Test')
+    azr = BaseSolver("Test")
     dir(azr)
