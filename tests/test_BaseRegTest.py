@@ -55,18 +55,30 @@ class TestBaseRegTest(unittest.TestCase):
         y = 1e-2
         c = 1e-3
         d = 1e-12
-        r, a = getTol(atol=x, rtol=y)
+        r, a, kw = getTol(atol=x, rtol=y)
         self.assertEqual(a, x)
         self.assertEqual(r, y)
-        r, a = getTol(atol=c)
+        self.assertEqual(kw, {})
+        r, a, kw = getTol(atol=x, rtol=y, check=True)
+        self.assertEqual(kw, {"check": True})
+        r, a, kw = getTol(atol=c)
         self.assertEqual(a, c)
         self.assertEqual(r, d)
-        r, a = getTol(rtol=c)
+        self.assertEqual(kw, {})
+        r, a, kw = getTol(atol=c, check=False)
+        self.assertEqual(kw, {"check": False})
+        r, a, kw = getTol(rtol=c)
         self.assertEqual(a, d)
         self.assertEqual(r, c)
-        r, a = getTol(tol=c)
+        self.assertEqual(kw, {})
+        r, a, kw = getTol(rtol=c, check=True)
+        self.assertEqual(kw, {"check": True})
+        r, a, kw = getTol(tol=c)
         self.assertEqual(a, c)
         self.assertEqual(r, c)
+        self.assertEqual(kw, {})
+        r, a, kw = getTol(tol=c, check=True)
+        self.assertEqual(kw, {"check": True})
 
     def test_train_then_test_root(self):
         """

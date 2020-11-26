@@ -12,26 +12,31 @@ from contextlib import contextmanager
 
 def getTol(**kwargs):
     """
-    Returns the tolerances based on kwargs.
+    Returns the tolerances based on kwargs, as well as the trimmed
+    kwargs without the tolerances stored.
     There are two ways of specifying tolerance:
     1. pass in "tol" which will set atol = rtol = tol
     2. individually set atol and rtol.
     If any values are unspecified, the default value will be used.
+
     """
     DEFAULT_TOL = 1e-12
     if "tol" in kwargs:
         rtol = kwargs["tol"]
         atol = kwargs["tol"]
+        kwargs.pop("tol")
     else:
         if "rtol" in kwargs:
             rtol = kwargs["rtol"]
+            kwargs.pop("rtol")
         else:
             rtol = DEFAULT_TOL
         if "atol" in kwargs:
             atol = kwargs["atol"]
+            kwargs.pop("atol")
         else:
             atol = DEFAULT_TOL
-    return rtol, atol
+    return rtol, atol, kwargs
 
 
 class BaseRegTest(object):
@@ -124,43 +129,42 @@ class BaseRegTest(object):
     # Add values from root only
     def root_add_val(self, name, values, **kwargs):
         """Add values but only on the root proc"""
-        rtol, atol = getTol(**kwargs)
+        rtol, atol, kwargs = getTol(**kwargs)
         with multi_proc_exception_check(self.comm):
             if self.rank == 0:
-                self._add_values(name, values, rtol, atol)
+                self._add_values(name, values, rtol, atol, **kwargs)
 
     def root_add_dict(self, name, d, **kwargs):
         """Only write from the root proc"""
-        rtol, atol = getTol(**kwargs)
+        rtol, atol, kwargs = getTol(**kwargs)
         with multi_proc_exception_check(self.comm):
-
             if self.rank == 0:
                 self._add_dict(name, d, rtol, atol)
 
     # Add values from all processors
     def par_add_val(self, name, values, **kwargs):
         """Add value(values) from parallel process in sorted order"""
-        rtol, atol = getTol(**kwargs)
+        rtol, atol, kwargs = getTol(**kwargs)
         values = self.comm.gather(values)
         with multi_proc_exception_check(self.comm):
             if self.rank == 0:
-                self._add_values(name, values, rtol, atol)
+                self._add_values(name, values, rtol, atol, **kwargs)
 
     def par_add_sum(self, name, values, **kwargs):
         """Add the sum of sum of the values from all processors."""
-        rtol, atol = getTol(**kwargs)
+        rtol, atol, kwargs = getTol(**kwargs)
         reducedSum = self.comm.reduce(numpy.sum(values))
         with multi_proc_exception_check(self.comm):
             if self.rank == 0:
-                self._add_values(name, reducedSum, rtol, atol)
+                self._add_values(name, reducedSum, rtol, atol, **kwargs)
 
     def par_add_norm(self, name, values, **kwargs):
         """Add the norm across values from all processors."""
-        rtol, atol = getTol(**kwargs)
+        rtol, atol, kwargs = getTol(**kwargs)
         reducedSum = self.comm.reduce(numpy.sum(values ** 2))
         with multi_proc_exception_check(self.comm):
             if self.rank == 0:
-                self._add_values(name, numpy.sqrt(reducedSum), rtol, atol)
+                self._add_values(name, numpy.sqrt(reducedSum), rtol, atol, **kwargs)
 
     # *****************
     # Private functions
@@ -169,13 +173,19 @@ class BaseRegTest(object):
         msg = "Failed value for: {}".format(name)
         numpy.testing.assert_allclose(actual, reference, rtol=rtol, atol=atol, err_msg=msg)
 
-    def _add_values(self, name, values, rtol, atol, db=None):
-        """Add values in special value format"""
+    def _add_values(self, name, values, rtol, atol, db=None, check=False):
+        """
+        Add values in special value format
+        If check=True, it will check against the database instead of adding the value
+        even in training mode. This is used for example in dot product tests.
+        """
 
         if db is None:
             db = self.db
-        if self.train:
-            if name in db.keys():
+        if not self.train or (self.train and check):
+            self.assert_allclose(values, db[name], name, rtol, atol)
+        else:
+            if name in db.keys() and not check:
                 raise ValueError(
                     "The name {} is already in the training database. Please give values UNIQUE keys.".format(name)
                 )
@@ -183,8 +193,6 @@ class BaseRegTest(object):
                 db[name] = values.copy()
             else:
                 db[name] = values
-        else:
-            self.assert_allclose(values, db[name], name, rtol, atol)
 
     def _add_dict(self, dict_name, d, rtol, atol, db=None):
         """Add all values in a dictionary in sorted key order"""
