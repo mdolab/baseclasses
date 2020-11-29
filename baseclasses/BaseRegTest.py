@@ -178,8 +178,9 @@ class BaseRegTest(object):
     def _add_values(self, name, values, db=None, **kwargs):
         """
         Add values in special value format
-        If compare=True, it will compare against the database instead of adding the value
-        even in training mode. This is used for example in dot product tests.
+        If compare=True, it will compare the supplied value against an existing value
+        in the database instead of adding the value, even in training mode. This is useful
+        for example in dot product tests when comparing two values.
         """
         rtol, atol = getTol(**kwargs)
         compare = kwargs["compare"] if "compare" in kwargs else False
