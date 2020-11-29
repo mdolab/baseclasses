@@ -178,17 +178,17 @@ class BaseRegTest(object):
     def _add_values(self, name, values, db=None, **kwargs):
         """
         Add values in special value format
-        If check=True, it will check against the database instead of adding the value
+        If compare=True, it will compare against the database instead of adding the value
         even in training mode. This is used for example in dot product tests.
         """
         rtol, atol = getTol(**kwargs)
-        check = kwargs["check"] if "check" in kwargs else False
+        compare = kwargs["compare"] if "compare" in kwargs else False
         if db is None:
             db = self.db
-        if not self.train or (self.train and check):
+        if not self.train or (self.train and compare):
             self.assert_allclose(values, db[name], name, rtol, atol)
         else:
-            if name in db.keys() and not check:
+            if name in db.keys() and not compare:
                 raise ValueError(
                     "The name {} is already in the training database. Please give values UNIQUE keys.".format(name)
                 )
