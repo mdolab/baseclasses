@@ -23,9 +23,7 @@ par_vals = {
 }
 
 
-class TestBaseRegTest(unittest.TestCase):
-    N_PROCS = 2
-
+class TestGetTol(unittest.TestCase):
     def test_tol(self):
         """
         Test that the getTol function is returning the appropriate values
@@ -46,6 +44,10 @@ class TestBaseRegTest(unittest.TestCase):
         r, a = getTol(tol=c)
         self.assertEqual(a, c)
         self.assertEqual(r, c)
+
+
+class TestBaseRegTest(unittest.TestCase):
+    N_PROCS = 2
 
     def regression_test_root(self, handler):
         """
@@ -110,3 +112,7 @@ class TestBaseRegTest(unittest.TestCase):
         self.assertEqual(test_vals, par_vals)
         with BaseRegTest(self.ref_file, train=False) as handler:
             self.regression_test_par(handler)
+
+    def tearDown(self):
+        if comm.rank == 0:
+            os.remove(self.ref_file)
