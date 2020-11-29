@@ -12,13 +12,11 @@ from contextlib import contextmanager
 
 def getTol(**kwargs):
     """
-    Returns the tolerances based on kwargs, as well as the trimmed
-    kwargs without the tolerances stored.
+    Returns the tolerances based on kwargs.
     There are two ways of specifying tolerance:
     1. pass in "tol" which will set atol = rtol = tol
     2. individually set atol and rtol.
     If any values are unspecified, the default value will be used.
-
     """
     DEFAULT_TOL = 1e-12
     if "tol" in kwargs:
@@ -47,7 +45,6 @@ class BaseRegTest(object):
 
         self.train = train
         if self.train:
-            self.train = True
             self.db = {}
         else:
             # We need to check here that the reference file exists, otherwise
