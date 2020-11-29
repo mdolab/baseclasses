@@ -177,7 +177,7 @@ class BaseRegTest(object):
         if not self.train or (self.train and compare):
             self.assert_allclose(values, db[name], name, rtol, atol)
         else:
-            if name in db.keys() and not compare:
+            if name in db.keys():
                 raise ValueError(
                     "The name {} is already in the training database. Please give values UNIQUE keys.".format(name)
                 )
