@@ -47,7 +47,8 @@ class BaseRegTest(object):
 
         self.train = train
         if self.train:
-            self.setTrainingMode()
+            self.train = True
+            self.db = {}
         else:
             # We need to check here that the reference file exists, otherwise
             # it will hang when it tries to open it on the root proc.
@@ -67,16 +68,6 @@ class BaseRegTest(object):
     def __exit__(self, exc_type, exc_value, traceback):
         if self.train:
             self.writeRef()
-
-    def setTrainingMode(self):
-        """
-        This function is used in cases where you may need to instantiate BaseRegTest with train=False,
-        then update it to True later on (see ADflow).
-        Since this resets the database, it must be called before any values are added, otherwise
-        they will be erased.
-        """
-        self.train = True
-        self.db = {}
 
     def getRef(self):
         return self.db
