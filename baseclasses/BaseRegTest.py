@@ -24,19 +24,16 @@ def getTol(**kwargs):
     if "tol" in kwargs:
         rtol = kwargs["tol"]
         atol = kwargs["tol"]
-        kwargs.pop("tol")
     else:
         if "rtol" in kwargs:
             rtol = kwargs["rtol"]
-            kwargs.pop("rtol")
         else:
             rtol = DEFAULT_TOL
         if "atol" in kwargs:
             atol = kwargs["atol"]
-            kwargs.pop("atol")
         else:
             atol = DEFAULT_TOL
-    return rtol, atol, kwargs
+    return rtol, atol
 
 
 class BaseRegTest(object):
@@ -128,43 +125,48 @@ class BaseRegTest(object):
 
     # Add values from root only
     def root_add_val(self, name, values, **kwargs):
-        """Add values but only on the root proc"""
-        rtol, atol, kwargs = getTol(**kwargs)
+        """
+        Add values but only on the root proc
+        """
         with multi_proc_exception_check(self.comm):
             if self.rank == 0:
-                self._add_values(name, values, rtol, atol, **kwargs)
+                self._add_values(name, values, **kwargs)
 
     def root_add_dict(self, name, d, **kwargs):
-        """Only write from the root proc"""
-        rtol, atol, kwargs = getTol(**kwargs)
+        """
+        Only write from the root proc
+        """
         with multi_proc_exception_check(self.comm):
             if self.rank == 0:
-                self._add_dict(name, d, rtol, atol)
+                self._add_dict(name, d, **kwargs)
 
     # Add values from all processors
     def par_add_val(self, name, values, **kwargs):
-        """Add value(values) from parallel process in sorted order"""
-        rtol, atol, kwargs = getTol(**kwargs)
+        """
+        Add value(values) from parallel process in sorted order
+        """
         values = self.comm.gather(values)
         with multi_proc_exception_check(self.comm):
             if self.rank == 0:
-                self._add_values(name, values, rtol, atol, **kwargs)
+                self._add_values(name, values, **kwargs)
 
     def par_add_sum(self, name, values, **kwargs):
-        """Add the sum of sum of the values from all processors."""
-        rtol, atol, kwargs = getTol(**kwargs)
+        """
+        Add the sum of sum of the values from all processors.
+        """
         reducedSum = self.comm.reduce(numpy.sum(values))
         with multi_proc_exception_check(self.comm):
             if self.rank == 0:
-                self._add_values(name, reducedSum, rtol, atol, **kwargs)
+                self._add_values(name, reducedSum, **kwargs)
 
     def par_add_norm(self, name, values, **kwargs):
-        """Add the norm across values from all processors."""
-        rtol, atol, kwargs = getTol(**kwargs)
+        """
+        Add the norm across values from all processors.
+        """
         reducedSum = self.comm.reduce(numpy.sum(values ** 2))
         with multi_proc_exception_check(self.comm):
             if self.rank == 0:
-                self._add_values(name, numpy.sqrt(reducedSum), rtol, atol, **kwargs)
+                self._add_values(name, numpy.sqrt(reducedSum), **kwargs)
 
     # *****************
     # Private functions
@@ -173,13 +175,14 @@ class BaseRegTest(object):
         msg = "Failed value for: {}".format(name)
         numpy.testing.assert_allclose(actual, reference, rtol=rtol, atol=atol, err_msg=msg)
 
-    def _add_values(self, name, values, rtol, atol, db=None, check=False):
+    def _add_values(self, name, values, db=None, **kwargs):
         """
         Add values in special value format
         If check=True, it will check against the database instead of adding the value
         even in training mode. This is used for example in dot product tests.
         """
-
+        rtol, atol = getTol(**kwargs)
+        check = kwargs["check"] if "check" in kwargs else False
         if db is None:
             db = self.db
         if not self.train or (self.train and check):
@@ -194,9 +197,11 @@ class BaseRegTest(object):
             else:
                 db[name] = values
 
-    def _add_dict(self, dict_name, d, rtol, atol, db=None):
-        """Add all values in a dictionary in sorted key order"""
-
+    def _add_dict(self, dict_name, d, db=None, **kwargs):
+        """
+        Add all values in a dictionary in sorted key order
+        """
+        rtol, atol = getTol(**kwargs)
         if db is None:
             db = self.db
         if self.train:
@@ -206,12 +211,12 @@ class BaseRegTest(object):
 
         for key in sorted(d.keys()):
             if isinstance(d[key], bool):
-                self._add_values(key, int(d[key]), rtol, atol, db=db[dict_name])
+                self._add_values(key, int(d[key]), rtol=rtol, atol=atol, db=db[dict_name])
             if isinstance(d[key], dict):
                 # do some good ol' fashion recursion
-                self._add_dict(key, d[key], rtol, atol, db=db[dict_name])
+                self._add_dict(key, d[key], rtol=rtol, atol=atol, db=db[dict_name])
             else:
-                self._add_values(key, d[key], rtol, atol, db=db[dict_name])
+                self._add_values(key, d[key], rtol=rtol, atol=atol, db=db[dict_name])
 
 
 # =============================================================================
