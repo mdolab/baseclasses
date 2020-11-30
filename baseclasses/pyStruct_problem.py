@@ -9,7 +9,6 @@ Developers:
 # =============================================================================
 # Imports
 # =============================================================================
-import numpy
 import warnings
 
 
@@ -133,7 +132,7 @@ class StructProblem(object):
         if value is None:
             raise Error("Value must be given for keyword 'value'.")
 
-        self.DVs[dvName] = structoDV(key, value, lower, upper, scale, offset)
+        self.DVs[dvName] = structDV(key, value, lower, upper, scale, offset)  # noqa
         self.DVNames[key] = dvName
 
     def setDesignVars(self, x):

@@ -15,12 +15,13 @@ Developers:
 
 History
 -------
-	v. 1.0 - Initial Class Creation (CM,GK, 2014)
+    v. 1.0 - Initial Class Creation (CM,GK, 2014)
 
 """
 
-import sys, numpy, copy
-import warnings
+import sys
+import numpy
+import copy
 
 from .ICAOAtmosphere import ICAOAtmosphere
 from .FluidProperties import FluidProperties
@@ -426,7 +427,7 @@ class MissionProfile(object):
         # if they don't exist, copy.
         for i in range(len(self.segments)):
             seg = self.segments[i]
-            if seg.propagateInputs == False:
+            if seg.propagateInputs is False:
                 # Segment is a fuel fraction segment nothing needs to be done
                 pass
             else:
@@ -472,7 +473,7 @@ class MissionProfile(object):
                     CASi = getattr(seg, "initCAS")
                     Mi = getattr(seg, "initMach")
                     Alti = getattr(seg, "initAlt")
-                    if not CASi is None:
+                    if CASi is not None:
                         if not CASi == refCAS:
                             raise Error(
                                 "%s: Specified initCAS \
@@ -485,7 +486,7 @@ class MissionProfile(object):
                     else:
                         setattr(seg, "initCAS", refCAS)
                     # end
-                    if not TASi is None:
+                    if TASi is not None:
                         if not TASi == refTAS:
                             raise Error(
                                 "%s: Specified initTAS \
@@ -498,7 +499,7 @@ class MissionProfile(object):
                     else:
                         setattr(seg, "initTAS", refTAS)
                     # end
-                    if not Alti is None:
+                    if Alti is not None:
                         if not Alti == refAlt:
                             raise Error(
                                 "%s: Specified initAlt \
@@ -510,7 +511,7 @@ class MissionProfile(object):
                     else:
                         setattr(seg, "initAlt", refAlt)
                     # end
-                    if not Mi is None:
+                    if Mi is not None:
                         if not Mi == refMach:
                             raise Error(
                                 "%s: Specified initMach \
@@ -610,7 +611,7 @@ class MissionSegment(object):
         # propagateInputs should be true for everything
         # except fuelFraction and fixedThrottle segments
         self.propagateInputs = True
-        if self.fuelFraction != None or self.throttle != None:
+        if self.fuelFraction is not None or self.throttle is not None:
             self.propagateInputs = False
 
         # Storage of DVs
@@ -680,13 +681,13 @@ class MissionSegment(object):
         for var in self.segInputs:
             if "init" in var:
                 count += 1
-        if count < 2 and self.fuelFraction == None:
+        if count < 2 and self.fuelFraction is None:
             raise Error(
                 "%s: There does not appear to be two inputs at the \
                          start of this segment"
                 % self.phase
             )
-        elif count > 2 and self.fuelFraction == None:
+        elif count > 2 and self.fuelFraction is None:
             raise Error(
                 "%s: There appears to be more than two inputs at the \
                          start of this segment, may not be consistent"
@@ -804,7 +805,7 @@ class MissionSegment(object):
         Set the final V,M,h base on initial values and segType.
         """
 
-        if self.propagateInputs == False:
+        if self.propagateInputs is False:
             # A FuelFraction type segment, nothing to propagate
             return
 
@@ -962,7 +963,7 @@ class MissionSegment(object):
         alt = getattr(self, altTag)
 
         # Given M, CAS, or TAS, calculate the other two speeds
-        if alt == None:
+        if alt is None:
             sys.exit(0)
         a = self._getSoundSpeed(alt)
         if CASTag in self.segInputs:
@@ -1031,7 +1032,6 @@ class MissionSegment(object):
 
     def _TAS2CAS(self, TAS, h):
         # get sea level properties
-        a0 = self._getSoundSpeed(0)
         P0, T0, rho0 = self._getPTRho(0)
 
         # get the properties at the current altitude
@@ -1040,7 +1040,6 @@ class MissionSegment(object):
 
         # compute the ratios at for the static atmospheric states
         PRatio = P / P0
-        TRatio = T / T0
         RhoRatio = rho / rho0
 
         # Convert the TAS to EAS
@@ -1065,10 +1064,6 @@ class MissionSegment(object):
 
         a = self._getSoundSpeed(h)
         P, T, rho = self._getPTRho(h)
-
-        PRatio = P / P0
-        TRatio = T / T0
-        RhoRatio = rho / rho0
 
         # Source: http://williams.best.vwh.net/avform.htm#Intro
         # Differential pressure: Units of CAS and a0 must be consistent
@@ -1099,46 +1094,46 @@ class MissionSegment(object):
         set the data for the current segment in the fortran module
         """
         h1 = getattr(self, "initAlt")
-        if h1 == None:
+        if h1 is None:
             h1 = 0.0
         h2 = getattr(self, "finalAlt")
-        if h2 == None:
+        if h2 is None:
             h2 = 0.0
         M1 = getattr(self, "initMach")
-        if M1 == None:
+        if M1 is None:
             M1 = 0.0
         M2 = getattr(self, "finalMach")
-        if M2 == None:
+        if M2 is None:
             M2 = 0.0
         deltaTime = getattr(self, "segTime")
-        if deltaTime == None:
+        if deltaTime is None:
             deltaTime = 0.0
         # end
 
         rangeFraction = getattr(self, "rangeFraction")
-        if rangeFraction == None:
+        if rangeFraction is None:
             rangeFraction = 1.0
         # end
 
         # Get the fuel-fraction, if provided, then segment is a generic fuel fraction type
         fuelFraction = getattr(self, "fuelFraction")
         throttle = getattr(self, "throttle")
-        if fuelFraction == None and throttle == None:
+        if fuelFraction is None and throttle is None:
             segTypeID = segTypeDict[getattr(self, "phase").lower()]
             fuelFraction = 0.0
             throttle = 0.0
-        elif fuelFraction != None:
+        elif fuelFraction is not None:
             segTypeID = segTypeDict["fuelFraction"]
             throttle = 0.0
-        elif throttle != None:
+        elif throttle is not None:
             segTypeID = segTypeDict["fixedThrottle"]
             fuelFraction = 0.0
         # end
 
         # Get the engine type and ensure the engine type is defined in engTypeDict
-        if self.engType not in engTypeDict and self.engType != None:
+        if self.engType not in engTypeDict and self.engType is not None:
             raise Error("engType %s defined in segment %s not defined in engTypeDict" % (self.engType, self.phase))
-        if self.engType == None:
+        if self.engType is None:
             self.engType = "None"
         engTypeID = engTypeDict[getattr(self, "engType")]
 
@@ -1245,7 +1240,7 @@ class MissionSegment(object):
                 updateNext = self.constMachDV
             elif paramType == "Alt":
                 updateNext = self.constAltDV
-            elif paramType == "CAS" or parmaType == "TAS":
+            elif paramType == "CAS" or paramType == "TAS":
                 updateNext = self.constVelDV
         else:
             key = "final" + paramType
@@ -1277,7 +1272,7 @@ class MissionSegment(object):
 
         # if len(idTag) > 0:
         #     idTag = '  ---  %s'%idTag
-        if segNum == None:
+        if segNum is None:
             idTag = ""
         else:
             idTag = "%02d:" % segNum
@@ -1286,7 +1281,7 @@ class MissionSegment(object):
         states = numpy.zeros([2, 4])
         states[0, :] = [self.initAlt, self.initMach, self.initCAS, self.initTAS]
         states[1, :] = [self.finalAlt, self.finalMach, self.finalCAS, self.finalTAS]
-        if self.fuelFraction != None:
+        if self.fuelFraction is None:
             fuelFrac = self.fuelFraction
         else:
             fuelFrac = numpy.nan

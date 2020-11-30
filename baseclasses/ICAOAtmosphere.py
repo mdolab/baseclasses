@@ -11,7 +11,6 @@ History
     v. 0.1    - Split atmosphere out of AeroProblem (CAM, 2014)
 """
 import numpy
-import warnings
 
 
 class ICAOAtmosphere(object):

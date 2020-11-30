@@ -13,9 +13,6 @@ History
 # =============================================================================
 # Imports
 # =============================================================================
-import numpy
-import warnings
-from .ICAOAtmosphere import ICAOAtmosphere
 
 
 class CaseInsensitiveDict(dict):
