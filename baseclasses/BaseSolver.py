@@ -1,6 +1,5 @@
 from pprint import pprint as pp
 
-# !/usr/local/bin/python
 """
 BaseSolver
 
