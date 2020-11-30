@@ -14,7 +14,6 @@ History
 # =============================================================================
 # Imports
 # =============================================================================
-import numpy
 import warnings
 from .ICAOAtmosphere import ICAOAtmosphere
 from .FluidProperties import FluidProperties
@@ -208,9 +207,6 @@ class FieldPerformanceProblem(object):
             warnings.warn("funcs should **not** be an argument. Use 'evalFuncs'" "instead.")
             self.evalFuncs = set(kwargs["funcs"])
 
-        # turn the kwargs into a set
-        keys = set(kwargs.keys())
-
         # Specify the set of possible design variables:
         varFuncs = [
             "TOW",
@@ -354,7 +350,7 @@ class FieldPerformanceProblem(object):
                 setattr(self, key, x[dvName] + self.DVs[dvName].dvOffset)
                 try:  # To set in the DV as well if the DV exists:
                     self.DVs[dvName].value = x[dvName]
-                except:
+                except:  # noqa
                     pass  # DV doesn't exist
 
     def addVariablesPyOpt(self, optProb):

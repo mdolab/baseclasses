@@ -646,7 +646,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
                 try:  # To set in the DV as well if the DV exists:
                     self.DVs[dvName].value = x[dvName]
-                except:
+                except:  # noqa
                     pass  # DV doesn't exist
 
     def addVariablesPyOpt(self, optProb):

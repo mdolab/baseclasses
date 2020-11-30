@@ -3,7 +3,7 @@ pyWeight_problem
 
 Holds the weightProblem class for weightandbalance solvers.
 
-Copyright (c) 2015 by Dr. Charles A. Mader 
+Copyright (c) 2015 by Dr. Charles A. Mader
 All rights reserved. Not to be used for commercial purposes.
 Revision: 1.0   $Date: 16/08/2015 21:00$
 
@@ -14,16 +14,16 @@ Developers:
 
 History
 -------
-	v. 1.0 - Initial Class Creation (CM, 2015)
+    v. 1.0 - Initial Class Creation (CM, 2015)
 
 """
 
-import sys, numpy, copy
-import warnings
+import numpy
+import copy
 
 try:
     from pygeo import geo_utils
-except:
+except ImportError:
     print("Warning: unable to find pygeo module, some functionality in pyWeight_problem will be unavailable")
 
 
@@ -383,7 +383,7 @@ class WeightProblem(object):
         for case in self.fuelcases:
             conName = self.name + "_" + case + "_MTOW"
             optProb.addCon(conName, upper=0.0)  # , wrt=[]) figure out the wrt...
-            evalFuncs.add(conName)
+            self.evalFuncs.add(conName)
 
         return constraints
 
@@ -476,7 +476,7 @@ class WeightProblem(object):
 
         weightKeys = set(self.components.keys())
 
-        if includeType != None:
+        if includeType is not None:
             # Specified a list of component types to include
             if type(includeType) == str:
                 includeType = [includeType]
@@ -486,21 +486,21 @@ class WeightProblem(object):
                     weightKeysTmp.add(key)
             weightKeys = weightKeysTmp
 
-        if include != None:
+        if include is not None:
             # Specified a list of compoents to include
             if type(include) == str:
                 include = [include]
             include = set(include)
             weightKeys.intersection_update(include)
 
-        if exclude != None:
+        if exclude is not None:
             # Specified a list of components to exclude
             if type(exclude) == str:
                 exclude = [exclude]
             exclude = set(exclude)
             weightKeys.difference_update(exclude)
 
-        if excludeType != None:
+        if excludeType is not None:
             # Specified a list of compoent types to exclude
             if type(excludeType) == str:
                 excludeType = [excludeType]

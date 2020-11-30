@@ -10,7 +10,6 @@ History
 -------
     v. 0.1    - Create FluidProperties base class (NPB, 2018)
 """
-import numpy
 import warnings
 
 

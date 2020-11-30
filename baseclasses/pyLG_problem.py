@@ -2,14 +2,14 @@
 pyLG_problem
 
 Holds the information to setup a single LG problem.
-Right now this is a relatively simple class that computes the load conditions at 
+Right now this is a relatively simple class that computes the load conditions at
 the wheel for the main landing gear and an effective max-g load for further structural
 computation. Nothing in this computation can be a design variable right now because
 the beam model setup in TACS has no provision for changing the load as a design variable.
 We will assume a fixed aircraft mass and LG characteristics. The output load can change as a
 function of the LG geometry if necessary.
 
-Copyright (c) 2019 by Dr. Charles A. Mader 
+Copyright (c) 2019 by Dr. Charles A. Mader
 All rights reserved. Not to be used for commercial purposes.
 Revision: 1.0   $Date: 12/02/2019 21:00$
 
@@ -20,12 +20,11 @@ Developers:
 
 History
 -------
-	v. 1.0 - Initial Class Creation (CM, 2019)
+    v. 1.0 - Initial Class Creation (CM, 2019)
 
 """
 
-import sys, numpy, copy
-import warnings
+import numpy
 
 # from pygeo import geo_utils
 
