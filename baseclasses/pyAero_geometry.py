@@ -66,7 +66,7 @@ class Geometry(object):
         yRootec=0.0,
         zRootec=0.0,
         *args,
-        **kwargs
+        **kwargs,
     ):
 
         """
