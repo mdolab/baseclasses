@@ -1,4 +1,4 @@
-__version__ = '1.2.2'
+__version__ = "1.2.2"
 
 from .pyAero_problem import AeroProblem
 from .pyTransi_problem import TransiProblem
