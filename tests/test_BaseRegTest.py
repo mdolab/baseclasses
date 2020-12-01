@@ -23,30 +23,7 @@ par_vals = {
 }
 
 
-def regression_test_root(handler):
-    """
-    This function adds values for the root proc
-    """
-    for key, val in root_vals.items():
-        if isinstance(val, dict):
-            handler.root_add_dict(key, val)
-        elif isinstance(val, (float, int)):
-            handler.root_add_val(key, val)
-
-
-def regression_test_par(handler):
-    """
-    This function adds values in parallel
-    """
-    val = comm.rank + 0.5
-    handler.par_add_val("par val", val)
-    handler.par_add_sum("par sum", val)
-    handler.par_add_norm("par norm", val)
-
-
-class TestBaseRegTest(unittest.TestCase):
-    N_PROCS = 2
-
+class TestGetTol(unittest.TestCase):
     def test_tol(self):
         """
         Test that the getTol function is returning the appropriate values
@@ -68,30 +45,74 @@ class TestBaseRegTest(unittest.TestCase):
         self.assertEqual(a, c)
         self.assertEqual(r, c)
 
+
+class TestBaseRegTest(unittest.TestCase):
+    N_PROCS = 2
+
+    def regression_test_root(self, handler):
+        """
+        This function adds values for the root proc
+        """
+        for key, val in root_vals.items():
+            if isinstance(val, dict):
+                handler.root_add_dict(key, val)
+            elif isinstance(val, (float, int)):
+                handler.root_add_val(key, val)
+
+        if handler.train:
+            # check non-unique training value will throw ValueError
+            # due to context manager, need to check for the generic Exception rather than specific ValueError
+            with self.assertRaises(Exception):
+                handler.root_add_val("scalar", 2.0)
+            with self.assertRaises(Exception):
+                handler.root_add_val("simple dictionary", {"c": -1})
+        else:
+            with self.assertRaises(Exception):
+                handler.root_add_val("nonexisting dictionary", {"c": -1})
+
+        # check if the compare argument works in training mode
+        handler.root_add_val("scalar", 1.0, compare=True)
+        with self.assertRaises(Exception):
+            handler.root_add_val("scalar", 2.0, compare=True)
+
+    def regression_test_par(self, handler):
+        """
+        This function adds values in parallel
+        """
+        val = comm.rank + 0.5
+        handler.par_add_val("par val", val)
+        handler.par_add_sum("par sum", val)
+        handler.par_add_norm("par norm", val)
+
     def test_train_then_test_root(self):
         """
         Test for adding values to the root, both in training and in testing
         Also tests read/write in the process
         """
-        fileName = os.path.join(baseDir, "test_root.ref")
-        handler = BaseRegTest(fileName, train=True)
-        regression_test_root(handler)
-        handler.writeRef()
+        self.ref_file = os.path.join(baseDir, "test_root.ref")
+        with BaseRegTest(self.ref_file, train=True) as handler:
+            self.regression_test_root(handler)
         test_vals = handler.readRef()
+        # check the two values match
         self.assertEqual(test_vals, root_vals)
-        handler = BaseRegTest(fileName, train=False)
-        regression_test_root(handler)
+
+        # test train=False
+        handler = BaseRegTest(self.ref_file, train=False)
+        self.regression_test_root(handler)
 
     def test_train_then_test_par(self):
         """
         Test for adding values in parallel, both in training and in testing
         Also tests read/write in the process
         """
-        fileName = os.path.join(baseDir, "test_par.ref")
-        handler = BaseRegTest(fileName, train=True)
-        regression_test_par(handler)
-        handler.writeRef()
+        self.ref_file = os.path.join(baseDir, "test_par.ref")
+        with BaseRegTest(self.ref_file, train=True) as handler:
+            self.regression_test_par(handler)
         test_vals = handler.readRef()
         self.assertEqual(test_vals, par_vals)
-        handler = BaseRegTest(fileName, train=False)
-        regression_test_par(handler)
+        with BaseRegTest(self.ref_file, train=False) as handler:
+            self.regression_test_par(handler)
+
+    def tearDown(self):
+        if comm.rank == 0:
+            os.remove(self.ref_file)
