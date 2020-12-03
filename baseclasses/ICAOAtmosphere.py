@@ -1,15 +1,3 @@
-"""
-ICAOAtmosphere.py
-
-Developers:
------------
-- Dr. Gaetan K. W. Kenway (GKWK)
-- Dr. Charles A. Mader (CAM)
-
-History
--------
-    v. 0.1    - Split atmosphere out of AeroProblem (CAM, 2014)
-"""
 import numpy
 
 

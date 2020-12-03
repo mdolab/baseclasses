@@ -1,15 +1,3 @@
-"""
-FluidProperties.py
-
-Developers:
------------
-- Nicolas P. Bons (NPB)
-- Dr. Charles A. Mader (CAM)
-
-History
--------
-    v. 0.1    - Create FluidProperties base class (NPB, 2018)
-"""
 import warnings
 
 

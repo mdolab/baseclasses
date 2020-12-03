@@ -2,21 +2,6 @@
 pyMission_problem
 
 Holds the Segment, Profile and Problem classes for the mission solvers.
-
-Copyright (c) 2014 by Dr. Charles A. Mader and Dr. Gaetan Kenway
-All rights reserved. Not to be used for commercial purposes.
-Revision: 1.0   $Date: 10/03/2014 21:00$
-
-
-Developers:
------------
-- Dr. Charles A. Mader (CM)
-- Dr. Gaetan Kenway (GK)
-
-History
--------
-    v. 1.0 - Initial Class Creation (CM,GK, 2014)
-
 """
 
 import sys
@@ -25,27 +10,7 @@ import copy
 
 from .ICAOAtmosphere import ICAOAtmosphere
 from .FluidProperties import FluidProperties
-
-
-class Error(Exception):
-    """
-    Format the error message in a box to make it clear this
-    was a expliclty raised exception.
-    """
-
-    def __init__(self, message):
-        msg = "\n+" + "-" * 78 + "+" + "\n" + "| MissionProblem Error: "
-        i = 23
-        for word in message.split():
-            if len(word) + i + 1 > 78:  # Finish line and start new one
-                msg += " " * (78 - i) + "|\n| " + word + " "
-                i = 1 + len(word) + 1
-            else:
-                msg += word + " "
-                i += len(word) + 1
-        msg += " " * (78 - i) + "|\n" + "+" + "-" * 78 + "+" + "\n"
-        print(msg)
-        Exception.__init__(self)
+from .utils import Error
 
 
 class MissionProblem(object):
