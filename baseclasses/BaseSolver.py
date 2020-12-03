@@ -80,7 +80,6 @@ class BaseSolver(object):
         Documentation last updated:
         """
 
-        #
         self.name = name
         self.category = category
         self.options = CaseInsensitiveDict()
@@ -89,8 +88,13 @@ class BaseSolver(object):
         self.imOptions = {}
 
         # Initialize Options
-        for key in self.defaultOptions:
-            self.setOption(key, self.defaultOptions[key][1])
+        for key, value in self.defaultOptions.items():
+            # Check if the default is given in a list of possible values
+            if isinstance(value[1], list) and value[0] is not list:
+                # Default is the first element of the list
+                self.setOption(key, value[1][0])
+            else:
+                self.setOption(key, value[1])
 
         koptions = kwargs.pop("options", CaseInsensitiveDict())
         for key in koptions:
@@ -115,14 +119,16 @@ class BaseSolver(object):
         Parameters
         ----------
         name : str
-           Name of option to set. Not case sensitive
+           Name of option to set. Not case sensitive.
         value : varies
            Value to set. Type is checked for consistency.
 
         """
         name = name.lower()
+
+        # Check if the option exists
         try:
-            self.defaultOptions[name]
+            default = self.defaultOptions[name]
         except KeyError:
             Error("Option '%-30s' is not a valid %s option." % (name, self.name))
 
@@ -131,16 +137,26 @@ class BaseSolver(object):
         if self.solverCreated and name in self.imOptions:
             raise Error("Option '%-35s' cannot be modified after the solver " "is created." % name)
 
-        # Now we know the option exists, lets check if the type is ok:
-        if isinstance(value, self.defaultOptions[name][0]):
-            # Just set:
-            self.options[name] = [type(value), value]
+        # If the default provides a list of acceptable values, check whether the value is valid
+        if isinstance(default[1], list) and default[0] is not list:
+            if value in default[1]:
+                self.options[name] = [type(value), value]
+            else:
+                raise Error(
+                    f"Value for option {name} is not valid. "
+                    f"Value must be one of {default[1]} with data type {default[0]}. "
+                    f"Received value is {value} with data type {type(value)}."
+                )
         else:
-            raise Error(
-                "Datatype for Option %-35s was not valid \n "
-                "Expected data type is %-47s \n "
-                "Received data type is %-47s" % (name, self.defaultOptions[name][0], type(value))
-            )
+            # If a list is not provided, check just the type
+            if isinstance(value, default[0]):
+                self.options[name] = [type(value), value]
+            else:
+                raise Error(
+                    f"Datatype for option {name} is not valid. "
+                    f"Expected data type {default[0]}. "
+                    f"Received data type is {type(value)}."
+                )
 
     def getOption(self, name):
         """
