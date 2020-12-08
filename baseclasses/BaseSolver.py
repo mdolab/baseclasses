@@ -14,7 +14,7 @@ class BaseSolver(object):
     Abstract Class for a basic Solver Object
     """
 
-    def __init__(self, name, category={}, def_options={}, **kwargs):
+    def __init__(self, name, category={}, def_options={}, options={}):
         """
         Solver Class Initialization
         """
@@ -22,7 +22,7 @@ class BaseSolver(object):
         self.name = name
         self.category = category
         self.options = CaseInsensitiveDict()
-        self.defaultOptions = def_options
+        self.defaultOptions = CaseInsensitiveDict(def_options)
         self.solverCreated = False
         self.imOptions = {}
 
@@ -35,9 +35,8 @@ class BaseSolver(object):
             else:
                 self.setOption(key, value[1])
 
-        koptions = kwargs.pop("options", CaseInsensitiveDict())
-        for key in koptions:
-            self.setOption(key, koptions[key])
+        for key in options:
+            self.setOption(key, options[key])
 
         self.solverCreated = True
 
@@ -61,8 +60,6 @@ class BaseSolver(object):
            Value to set. Type is checked for consistency.
 
         """
-        name = name.lower()
-
         # Check if the option exists
         try:
             default = self.defaultOptions[name]
@@ -80,9 +77,11 @@ class BaseSolver(object):
                 self.options[name] = [type(value), value]
             else:
                 raise Error(
-                    f"Value for option {name} is not valid. "
-                    f"Value must be one of {default[1]} with data type {default[0]}. "
-                    f"Received value is {value} with data type {type(value)}."
+                    (
+                        f"Value for option {name} is not valid. "
+                        + f"Value must be one of {default[1]} with data type {default[0]}. "
+                        + f"Received value is {value} with data type {type(value)}."
+                    )
                 )
         else:
             # If a list is not provided, check just the type
@@ -90,9 +89,11 @@ class BaseSolver(object):
                 self.options[name] = [type(value), value]
             else:
                 raise Error(
-                    f"Datatype for option {name} is not valid. "
-                    f"Expected data type {default[0]}. "
-                    f"Received data type is {type(value)}."
+                    (
+                        f"Datatype for option {name} is not valid. "
+                        + f"Expected data type {default[0]}. "
+                        + f"Received data type is {type(value)}."
+                    )
                 )
 
     def getOption(self, name):
@@ -110,8 +111,8 @@ class BaseSolver(object):
            Return the current value of the option.
         """
 
-        if name.lower() in self.defaultOptions:
-            return self.options[name.lower()][1]
+        if name in self.defaultOptions:
+            return self.options[name][1]
         else:
             raise Error("%s is not a valid option name." % name)
 

@@ -33,7 +33,7 @@ class EngineProblem(AeroProblem):
 
     def __init__(self, name, throttle=1.0, ISA=0.0, **kwargs):
         # Initialize AeroProblem
-        super().__init__(self, name, **kwargs)
+        super().__init__(name, **kwargs)
 
         # Set initial throttle or ISA
         self.throttle = throttle

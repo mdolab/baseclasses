@@ -26,13 +26,13 @@ class AeroSolver(BaseSolver):
     Abstract Class for Aerodynamic Solver Object
     """
 
-    def __init__(self, name, category={}, def_options={}, informs={}, options={}, **kwargs):
+    def __init__(self, name, category={}, def_options={}, informs={}, options={}):
 
         """
         AeroSolver Class Initialization
         """
         # Setup option info
-        super().__init__(self, name, category=category, def_options=def_options, options=options, **kwargs)
+        super().__init__(name, category=category, def_options=def_options, options=options)
         self.families = CaseInsensitiveDict()
         self._updateGeomInfo = False
 
@@ -277,7 +277,7 @@ class AeroSolver(BaseSolver):
         # in families may already be a group added in a previous call.
         indices = []
         for fam in families:
-            if fam.lower() not in self.families:
+            if fam not in self.families:
                 raise Error(
                     "The specified family '%s' for group '%s', does "
                     "not exist in the cgns file or has "

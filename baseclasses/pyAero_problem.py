@@ -204,7 +204,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     def __init__(self, name, **kwargs):
 
         # Set basic fluid properties
-        super().__init__(self, **kwargs)
+        super().__init__(**kwargs)
 
         # Always have to have the name
         self.name = name

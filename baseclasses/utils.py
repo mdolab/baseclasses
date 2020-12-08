@@ -16,7 +16,7 @@ class Error(Exception):
     """
 
     def __init__(self, message):
-        msg = "\n+" + "-" * 78 + "+" + "\n" + "| AeroSolver Error: "
+        msg = "\n+" + "-" * 78 + "+" + "\n" + "| Error: "
         i = 19
         for word in message.split():
             if len(word) + i + 1 > 78:  # Finish line and start new one
@@ -27,4 +27,4 @@ class Error(Exception):
                 i += len(word) + 1
         msg += " " * (78 - i) + "|\n" + "+" + "-" * 78 + "+" + "\n"
         print(msg)
-        super().__init__(self)
+        super().__init__()
