@@ -17,7 +17,7 @@ class Error(Exception):
 
     def __init__(self, message):
         msg = "\n+" + "-" * 78 + "+" + "\n" + "| Error: "
-        i = 19
+        i = 8
         for word in message.split():
             if len(word) + i + 1 > 78:  # Finish line and start new one
                 msg += " " * (78 - i) + "|\n| " + word + " "
