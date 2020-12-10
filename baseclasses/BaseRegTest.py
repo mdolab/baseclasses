@@ -230,7 +230,7 @@ def writeRefJSON(file_name, ref):
                     obj = numpy.ascontiguousarray(obj)
                     assert obj.flags["C_CONTIGUOUS"]
                 if obj.size == 1:
-                    return numpy.asscalar(obj)
+                    return obj.item()
                 else:
                     return dict(__ndarray__=obj.tolist(), dtype=str(obj.dtype), shape=obj.shape)
             elif isinstance(obj, numpy.integer):
