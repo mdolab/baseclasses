@@ -28,12 +28,15 @@ class BaseSolver(object):
 
         # Initialize Options
         for key, value in self.defaultOptions.items():
+            # Unpack value
+            optionType, optionValue = value
+
             # Check if the default is given in a list of possible values
-            if isinstance(value[1], list) and value[0] is not list:
+            if isinstance(optionValue, list) and optionType is not list:
                 # Default is the first element of the list
-                self.setOption(key, value[1][0])
+                self.setOption(key, optionValue[0])
             else:
-                self.setOption(key, value[1])
+                self.setOption(key, optionValue)
 
         for key in options:
             self.setOption(key, options[key])
