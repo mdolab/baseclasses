@@ -24,7 +24,7 @@ class BaseSolver(object):
         self.options = CaseInsensitiveDict()
         self.defaultOptions = CaseInsensitiveDict(def_options)
         self.solverCreated = False
-        self.imOptions = {}
+        self.imOptions = CaseInsensitiveDict()
 
         # Initialize Options
         for key, value in self.defaultOptions.items():
