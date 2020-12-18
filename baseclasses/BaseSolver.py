@@ -63,7 +63,7 @@ class BaseSolver(object):
         """
         # Check if the option exists
         try:
-            default = self.defaultOptions[name]
+            defaultType, defaultValue = self.defaultOptions[name]
         except KeyError:
             Error("Option '%-30s' is not a valid %s option." % (name, self.name))
 
@@ -73,26 +73,26 @@ class BaseSolver(object):
             raise Error("Option '%-35s' cannot be modified after the solver " "is created." % name)
 
         # If the default provides a list of acceptable values, check whether the value is valid
-        if isinstance(default[1], list) and default[0] is not list:
-            if value in default[1]:
+        if isinstance(defaultValue, list) and defaultType is not list:
+            if value in defaultValue:
                 self.options[name] = [type(value), value]
             else:
                 raise Error(
                     (
                         f"Value for option {name} is not valid. "
-                        + f"Value must be one of {default[1]} with data type {default[0]}. "
+                        + f"Value must be one of {defaultValue} with data type {defaultType}. "
                         + f"Received value is {value} with data type {type(value)}."
                     )
                 )
         else:
             # If a list is not provided, check just the type
-            if isinstance(value, default[0]):
+            if isinstance(value, defaultType):
                 self.options[name] = [type(value), value]
             else:
                 raise Error(
                     (
                         f"Datatype for option {name} is not valid. "
-                        + f"Expected data type {default[0]}. "
+                        + f"Expected data type {defaultType}. "
                         + f"Received data type is {type(value)}."
                     )
                 )
