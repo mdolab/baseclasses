@@ -27,9 +27,7 @@ class BaseSolver(object):
         self.imOptions = CaseInsensitiveDict()
 
         # Initialize Options
-        for key, value in self.defaultOptions.items():
-            # Unpack value
-            optionType, optionValue = value
+        for key, (optionType, optionValue) in self.defaultOptions.items():
 
             # Check if the default is given in a list of possible values
             if isinstance(optionValue, list) and optionType is not list:
