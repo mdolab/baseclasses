@@ -60,7 +60,11 @@ class TestOptions(unittest.TestCase):
         # test Errors
         with self.assertRaises(Error):
             solver.getOption("invalidOption")  # test name checking
+        with self.assertRaises(Error):
             solver.setOption("intOption", 4)  # test value not in list
+        with self.assertRaises(Error):
             solver.setOption("intOption", "3")  # test type checking with list
+        with self.assertRaises(Error):
             solver.setOption("floatOption", 4)  # test type checking without list
+        with self.assertRaises(Error):
             solver.setOption("strOption", "str2")  # test imOptions
