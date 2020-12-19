@@ -78,11 +78,9 @@ class BaseSolver(object):
                 self.options[name] = value
             else:
                 raise Error(
-                    (
-                        f"Value for option {name} is not valid. "
-                        + f"Value must be one of {defaultValue} with data type {defaultType}. "
-                        + f"Received value is {value} with data type {type(value)}."
-                    )
+                    f"Value for option {name} is not valid. "
+                    + f"Value must be one of {defaultValue} with data type {defaultType}. "
+                    + f"Received value is {value} with data type {type(value)}."
                 )
         else:
             # If a list is not provided, check just the type
@@ -90,11 +88,9 @@ class BaseSolver(object):
                 self.options[name] = value
             else:
                 raise Error(
-                    (
-                        f"Datatype for option {name} is not valid. "
-                        + f"Expected data type {defaultType}. "
-                        + f"Received data type is {type(value)}."
-                    )
+                    f"Datatype for option {name} is not valid. "
+                    + f"Expected data type {defaultType}. "
+                    + f"Received data type is {type(value)}."
                 )
 
     def getOption(self, name):
