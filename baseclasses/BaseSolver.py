@@ -75,7 +75,7 @@ class BaseSolver(object):
         # If the default provides a list of acceptable values, check whether the value is valid
         if isinstance(defaultValue, list) and defaultType is not list:
             if value in defaultValue:
-                self.options[name] = [type(value), value]
+                self.options[name] = value
             else:
                 raise Error(
                     (
@@ -87,7 +87,7 @@ class BaseSolver(object):
         else:
             # If a list is not provided, check just the type
             if isinstance(value, defaultType):
-                self.options[name] = [type(value), value]
+                self.options[name] = value
             else:
                 raise Error(
                     (
@@ -113,7 +113,7 @@ class BaseSolver(object):
         """
 
         if name in self.defaultOptions:
-            return self.options[name][1]
+            return self.options[name]
         else:
             raise Error("%s is not a valid option name." % name)
 
