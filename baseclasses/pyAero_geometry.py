@@ -2,45 +2,7 @@
 pyAero_geometry
 
 Holds the Python Aerodynamic Analysis Classes (base and inherited).
-
-Copyright (c) 2008 by Dr. Ruben E. Perez
-All rights reserved. Not to be used for commercial purposes.
-Revision: 1.1   $Date: 21/05/2008 21:00$
-
-
-Developers:
------------
-- Dr. Ruben E. Perez (RP)
-
-History
--------
-    v. 1.0    - Initial Class Creation (RP, 2008)
 """
-
-__version__ = "$Revision: $"
-
-"""
-To Do:
-    -
-"""
-
-# =============================================================================
-# Standard Python modules
-# =============================================================================
-
-# =============================================================================
-# External Python modules
-# =============================================================================
-
-# =============================================================================
-# Extension modules
-# =============================================================================
-
-
-# =============================================================================
-# Misc Definitions
-# =============================================================================
-
 
 # =============================================================================
 # Geometry Class
@@ -78,9 +40,6 @@ class Geometry(object):
 
         Attributes:
         -----------
-
-
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
         """
 
         #
@@ -101,8 +60,6 @@ class Geometry(object):
 
         """
         Print Structured Attributes List
-
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
         """
 
         ListAttributes(self)
@@ -111,8 +68,6 @@ class Geometry(object):
 
         """
         Print Structured List of Variable
-
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
         """
 
         return "name    \n" + "     " + str(self.name).center(9)
@@ -125,8 +80,6 @@ def ListAttributes(self):
 
     """
     Print Structured Attributes List
-
-    Documentation last updated:  March. 24, 2008 - Ruben E. Perez
     """
 
     print("\n")

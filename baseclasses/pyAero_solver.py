@@ -2,23 +2,6 @@
 pyAero_solver
 
 Holds the Python Aerodynamic Analysis Classes (base).
-
-Copyright (c) 2012 by Charles A. Mader and Gaetan K.W. Kenway
-All rights reserved. Not to be used for commercial purposes.
-Revision: 2.0   $Date: 24/08/2016 21:00$
-
-
-Developers:
------------
-- Ruben E. Perez (RP)
-- Dr. Charles A. Mader (CM)
-- Dr. Gaetan K.W. Kenway (GK)
-
-History
--------
-    v. 1.0    - Initial Class Creation (RP, 2008)
-    v. 2.0    - Major addition of functionality to the base class (CM,2016)
-    v. 2.1    - Shifted the inherited object to be BaseSolver (CM,2017)
 """
 
 # =============================================================================
@@ -27,51 +10,10 @@ History
 import numpy
 
 # =============================================================================
-# External Python modules
-# =============================================================================
-# import external
-
-# =============================================================================
 # Extension modules
 # =============================================================================
 from .BaseSolver import BaseSolver
-
-# =============================================================================
-# Misc Definitions
-# =============================================================================
-
-
-class CaseInsensitiveDict(dict):
-    def __setitem__(self, key, value):
-        super(CaseInsensitiveDict, self).__setitem__(key.lower(), value)
-
-    def __getitem__(self, key):
-        return super(CaseInsensitiveDict, self).__getitem__(key.lower())
-
-    def __contains__(self, key):
-        return super(CaseInsensitiveDict, self).__contains__(key.lower())
-
-
-class Error(Exception):
-    """
-    Format the error message in a box to make it clear this
-    was a expliclty raised exception.
-    """
-
-    def __init__(self, message):
-        msg = "\n+" + "-" * 78 + "+" + "\n" + "| AeroSolver Error: "
-        i = 19
-        for word in message.split():
-            if len(word) + i + 1 > 78:  # Finish line and start new one
-                msg += " " * (78 - i) + "|\n| " + word + " "
-                i = 1 + len(word) + 1
-            else:
-                msg += word + " "
-                i += len(word) + 1
-        msg += " " * (78 - i) + "|\n" + "+" + "-" * 78 + "+" + "\n"
-        print(msg)
-        Exception.__init__(self)
-
+from .utils import CaseInsensitiveDict, Error
 
 # =============================================================================
 # AeroSolver Class
@@ -84,19 +26,14 @@ class AeroSolver(BaseSolver):
     Abstract Class for Aerodynamic Solver Object
     """
 
-    def __init__(self, name, category={}, def_options={}, informs={}, options={}, **kwargs):
+    def __init__(self, name, category={}, def_options={}, informs={}, options={}):
 
         """
         AeroSolver Class Initialization
-
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
         """
-
-        self.families = CaseInsensitiveDict()
-
         # Setup option info
-        BaseSolver.__init__(self, name, category=category, def_options=def_options, options=options, **kwargs)
-
+        super().__init__(name, category=category, def_options=def_options, options=options)
+        self.families = CaseInsensitiveDict()
         self._updateGeomInfo = False
 
     def setMesh(self, mesh):
@@ -340,7 +277,7 @@ class AeroSolver(BaseSolver):
         # in families may already be a group added in a previous call.
         indices = []
         for fam in families:
-            if fam.lower() not in self.families:
+            if fam not in self.families:
                 raise Error(
                     "The specified family '%s' for group '%s', does "
                     "not exist in the cgns file or has "

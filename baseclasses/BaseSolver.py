@@ -1,108 +1,49 @@
-from pprint import pprint as pp
-
 """
 BaseSolver
 
 Holds a basic Python Analysis Classes (base and inherited).
-
-Copyright (c) 2017 by Dr. Charles A. Mader
-All rights reserved. Not to be used for commercial purposes.
-Revision: 1.0   $Date: 01/06/2017 15:00$
-
-
-Developers:
------------
-- Dr. Charles A. Mader (CAM)
-
-History
--------
-    v. 1.0    - Initial Class Creation (CAM, 2013)
-    v. 2.0    - Major update to options implementation (CAM,2017)
 """
-
-__version__ = "$Revision: $"
-
-
-# =============================================================================
-# Standard Python modules
-# =============================================================================
-
-# =============================================================================
-# Misc Definitions
-# =============================================================================
-
-
-class CaseInsensitiveDict(dict):
-    def __setitem__(self, key, value):
-        super(CaseInsensitiveDict, self).__setitem__(key.lower(), value)
-
-    def __getitem__(self, key):
-        return super(CaseInsensitiveDict, self).__getitem__(key.lower())
-
-    def __contains__(self, key):
-        return super(CaseInsensitiveDict, self).__contains__(key.lower())
-
-
-class Error(Exception):
-    """
-    Format the error message in a box to make it clear this
-    was a explicitly raised exception.
-    """
-
-    def __init__(self, message):
-        msg = "\n+" + "-" * 78 + "+" + "\n" + "| BaseSolver Error: "
-        i = 19
-        for word in message.split():
-            if len(word) + i + 1 > 78:  # Finish line and start new one
-                msg += " " * (78 - i) + "|\n| " + word + " "
-                i = 1 + len(word) + 1
-            else:
-                msg += word + " "
-                i += len(word) + 1
-        msg += " " * (78 - i) + "|\n" + "+" + "-" * 78 + "+" + "\n"
-        print(msg)
-        Exception.__init__(self)
-
+from pprint import pprint as pp
+from .utils import CaseInsensitiveDict, Error
 
 # =============================================================================
 # BaseSolver Class
 # =============================================================================
 class BaseSolver(object):
-
     """
     Abstract Class for a basic Solver Object
     """
 
-    def __init__(self, name, category={}, def_options={}, **kwargs):
+    def __init__(self, name, category={}, def_options={}, options={}):
         """
         Solver Class Initialization
-
-        Documentation last updated:
         """
 
-        #
         self.name = name
         self.category = category
         self.options = CaseInsensitiveDict()
-        self.defaultOptions = def_options
+        self.defaultOptions = CaseInsensitiveDict(def_options)
         self.solverCreated = False
-        self.imOptions = {}
+        self.imOptions = CaseInsensitiveDict()
 
         # Initialize Options
-        for key in self.defaultOptions:
-            self.setOption(key, self.defaultOptions[key][1])
+        for key, (optionType, optionValue) in self.defaultOptions.items():
 
-        koptions = kwargs.pop("options", CaseInsensitiveDict())
-        for key in koptions:
-            self.setOption(key, koptions[key])
+            # Check if the default is given in a list of possible values
+            if isinstance(optionValue, list) and optionType is not list:
+                # Default is the first element of the list
+                self.setOption(key, optionValue[0])
+            else:
+                self.setOption(key, optionValue)
+
+        for key in options:
+            self.setOption(key, options[key])
 
         self.solverCreated = True
 
     def __call__(self, *args, **kwargs):
         """
         Run Analyzer (Calling Routine)
-
-        Documentation last updated:
         """
 
         # Checks
@@ -115,14 +56,14 @@ class BaseSolver(object):
         Parameters
         ----------
         name : str
-           Name of option to set. Not case sensitive
+           Name of option to set. Not case sensitive.
         value : varies
            Value to set. Type is checked for consistency.
 
         """
-        name = name.lower()
+        # Check if the option exists
         try:
-            self.defaultOptions[name]
+            defaultType, defaultValue = self.defaultOptions[name]
         except KeyError:
             Error("Option '%-30s' is not a valid %s option." % (name, self.name))
 
@@ -131,16 +72,26 @@ class BaseSolver(object):
         if self.solverCreated and name in self.imOptions:
             raise Error("Option '%-35s' cannot be modified after the solver " "is created." % name)
 
-        # Now we know the option exists, lets check if the type is ok:
-        if isinstance(value, self.defaultOptions[name][0]):
-            # Just set:
-            self.options[name] = [type(value), value]
+        # If the default provides a list of acceptable values, check whether the value is valid
+        if isinstance(defaultValue, list) and defaultType is not list:
+            if value in defaultValue:
+                self.options[name] = value
+            else:
+                raise Error(
+                    f"Value for option {name} is not valid. "
+                    + f"Value must be one of {defaultValue} with data type {defaultType}. "
+                    + f"Received value is {value} with data type {type(value)}."
+                )
         else:
-            raise Error(
-                "Datatype for Option %-35s was not valid \n "
-                "Expected data type is %-47s \n "
-                "Received data type is %-47s" % (name, self.defaultOptions[name][0], type(value))
-            )
+            # If a list is not provided, check just the type
+            if isinstance(value, defaultType):
+                self.options[name] = value
+            else:
+                raise Error(
+                    f"Datatype for option {name} is not valid. "
+                    + f"Expected data type {defaultType}. "
+                    + f"Received data type is {type(value)}."
+                )
 
     def getOption(self, name):
         """
@@ -157,8 +108,8 @@ class BaseSolver(object):
            Return the current value of the option.
         """
 
-        if name.lower() in self.defaultOptions:
-            return self.options[name.lower()][1]
+        if name in self.defaultOptions:
+            return self.options[name]
         else:
             raise Error("%s is not a valid option name." % name)
 

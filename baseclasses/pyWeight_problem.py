@@ -2,20 +2,6 @@
 pyWeight_problem
 
 Holds the weightProblem class for weightandbalance solvers.
-
-Copyright (c) 2015 by Dr. Charles A. Mader
-All rights reserved. Not to be used for commercial purposes.
-Revision: 1.0   $Date: 16/08/2015 21:00$
-
-
-Developers:
------------
-- Dr. Charles A. Mader (CM)
-
-History
--------
-    v. 1.0 - Initial Class Creation (CM, 2015)
-
 """
 
 import numpy
@@ -25,27 +11,7 @@ try:
     from pygeo import geo_utils
 except ImportError:
     print("Warning: unable to find pygeo module, some functionality in pyWeight_problem will be unavailable")
-
-
-class Error(Exception):
-    """
-    Format the error message in a box to make it clear this
-    was a expliclty raised exception.
-    """
-
-    def __init__(self, message):
-        msg = "\n+" + "-" * 78 + "+" + "\n" + "| WeightProblem Error: "
-        i = 23
-        for word in message.split():
-            if len(word) + i + 1 > 78:  # Finish line and start new one
-                msg += " " * (78 - i) + "|\n| " + word + " "
-                i = 1 + len(word) + 1
-            else:
-                msg += word + " "
-                i += len(word) + 1
-        msg += " " * (78 - i) + "|\n" + "+" + "-" * 78 + "+" + "\n"
-        print(msg)
-        Exception.__init__(self)
+from .utils import Error
 
 
 class WeightProblem(object):
