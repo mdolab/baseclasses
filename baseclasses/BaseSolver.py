@@ -4,7 +4,7 @@ BaseSolver
 Holds a basic Python Analysis Classes (base and inherited).
 """
 from pprint import pprint as pp
-from .utils import CaseInsensitiveDict, Error
+from .utils import CaseInsensitiveDict, CaseInsensitiveSet, Error
 
 # =============================================================================
 # BaseSolver Class
@@ -14,7 +14,7 @@ class BaseSolver(object):
     Abstract Class for a basic Solver Object
     """
 
-    def __init__(self, name, category={}, def_options={}, options={}):
+    def __init__(self, name, category={}, def_options={}, options={}, imOptions=set(), depOptions={}):
         """
         Solver Class Initialization
         """
@@ -23,8 +23,9 @@ class BaseSolver(object):
         self.category = category
         self.options = CaseInsensitiveDict()
         self.defaultOptions = CaseInsensitiveDict(def_options)
+        self.imOptions = CaseInsensitiveSet(imOptions)
+        self.deprecatedOptions = CaseInsensitiveDict(depOptions)
         self.solverCreated = False
-        self.imOptions = CaseInsensitiveDict()
 
         # Initialize Options
         for key, (optionType, optionValue) in self.defaultOptions.items():
@@ -65,7 +66,10 @@ class BaseSolver(object):
         try:
             defaultType, defaultValue = self.defaultOptions[name]
         except KeyError:
-            Error("Option '%-30s' is not a valid %s option." % (name, self.name))
+            raise Error(f"Option {name} is not a valid {self.name} option.")
+
+        if name in self.deprecatedOptions:
+            raise Error(f"Option {name} is deprecated. {self.deprecatedOptions[name]}")
 
         # Make sure we are not trying to change an immutable option if
         # we are not allowed to.

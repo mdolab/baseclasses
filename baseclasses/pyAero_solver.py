@@ -26,13 +26,13 @@ class AeroSolver(BaseSolver):
     Abstract Class for Aerodynamic Solver Object
     """
 
-    def __init__(self, name, category={}, def_options={}, informs={}, options={}):
+    def __init__(self, name, *args, **kwargs):
 
         """
         AeroSolver Class Initialization
         """
         # Setup option info
-        super().__init__(name, category=category, def_options=def_options, options=options)
+        super().__init__(name, *args, **kwargs)
         self.families = CaseInsensitiveDict()
         self._updateGeomInfo = False
 
