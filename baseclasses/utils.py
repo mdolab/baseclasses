@@ -1,4 +1,12 @@
 class CaseInsensitiveDict(dict):
+    """
+    Python dictionary where the keys are case-insensitive.
+    Note that this assumes the keys are strings, and indeed will fail if you try to
+    create an instance where keys are not strings.
+    All common Python dictionary operations are supported, and additional operations
+    can be added easily.
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # convert keys to lower case
@@ -26,6 +34,14 @@ class CaseInsensitiveDict(dict):
 
 
 class CaseInsensitiveSet(set):
+    """
+    Python set where the elements are case-insensitive.
+    Note that this assumes the elements are strings, and indeed will fail if you try to
+    create an instance where elements are not strings.
+    All common Python set operations are supported, and additional operations
+    can be added easily.
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # convert entries to lowe case
