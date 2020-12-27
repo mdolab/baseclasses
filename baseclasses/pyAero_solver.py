@@ -162,7 +162,7 @@ class AeroSolver(BaseSolver):
         if self.comm.rank == 0:
             f = open(fileName, "w")
             f.write('TITLE = "%s Surface Mesh"\n' % self.name)
-            f.write('VARIABLES = "CoordinateX" "CoordinateY" "CoordinateZ"\n')
+            f.write('VARIABLES = "CoordinateX CoordinateY CoordinateZ"\n')
             f.write("Zone T=%s\n" % ("surf"))
             f.write("Nodes = %d, Elements = %d ZONETYPE=FETRIANGLE\n" % (len(p0) * 3, len(p0)))
             f.write("DATAPACKING=POINT\n")
@@ -270,7 +270,7 @@ class AeroSolver(BaseSolver):
         # Do some error checking
         if groupName in self.families:
             raise Error(
-                "The specified groupName '%s' already exists in the " "cgns file or has already been added." % groupName
+                "The specified groupName '%s' already exists in the cgns file or has already been added." % groupName
             )
 
         # We can actually allow for nested groups. That is, an entry
@@ -342,7 +342,7 @@ class AeroSolver(BaseSolver):
 
         self._updateGeomInfo = True
         if self.mesh is None:
-            raise Error("Cannot set new surface coordinate locations without a mesh" "warping object present.")
+            raise Error("Cannot set new surface coordinate locations without a mesh warping object present.")
 
         # First get the surface coordinates of the meshFamily in case
         # the groupName is a subset, those values will remain unchanged.

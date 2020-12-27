@@ -264,7 +264,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         if "evalFuncs" in kwargs:
             self.evalFuncs = set(kwargs["evalFuncs"])
         if "funcs" in kwargs:
-            warnings.warn("funcs should **not** be an argument. Use 'evalFuncs'" "instead.")
+            warnings.warn("funcs should **not** be an argument. Use 'evalFuncs' instead.")
             self.evalFuncs = set(kwargs["funcs"])
 
         # we cast the set to a sorted list, so that each proc can loop over in the same order
