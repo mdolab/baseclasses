@@ -16,9 +16,13 @@ class SOLVER(BaseSolver):
             "stroption": [str, ["str1", "str2", "str3"]],
             "listoption": [list, []],
         }
+        imOptions = {"strOption"}
+        depOptions = {
+            "oldOption": "Use boolOption instead.",
+        }
 
         # Initialize the inherited BaseSolver
-        super().__init__(name, category, def_opts, options)
+        super().__init__(name, category, def_opts, options, imOptions=imOptions, depOptions=depOptions)
 
 
 class TestOptions(unittest.TestCase):
@@ -29,7 +33,6 @@ class TestOptions(unittest.TestCase):
         intValue_set = 3
         options = {"floatOption": floatValue_set, "intOption": intValue_set}
         solver = SOLVER("test", options=options)
-        solver.imOptions = {"strOption"}
 
         # test getOption for initialized option
         floatValue_get = solver.getOption("floatOption")
@@ -67,4 +70,6 @@ class TestOptions(unittest.TestCase):
         with self.assertRaises(Error):
             solver.setOption("floatOption", 4)  # test type checking without list
         with self.assertRaises(Error):
-            solver.setOption("strOption", "str2")  # test imOptions
+            solver.setOption("strOPTION", "str2")  # test imOptions
+        with self.assertRaises(Error):
+            solver.setOption("oldoption", 4)  # test depOptions

@@ -66,10 +66,10 @@ class BaseSolver(object):
         try:
             defaultType, defaultValue = self.defaultOptions[name]
         except KeyError:
-            raise Error(f"Option {name} is not a valid {self.name} option.")
-
-        if name in self.deprecatedOptions:
-            raise Error(f"Option {name} is deprecated. {self.deprecatedOptions[name]}")
+            if name in self.deprecatedOptions:
+                raise Error(f"Option {name} is deprecated. {self.deprecatedOptions[name]}")
+            else:
+                raise Error(f"Option {name} is not a valid {self.name} option.")
 
         # Make sure we are not trying to change an immutable option if
         # we are not allowed to.
