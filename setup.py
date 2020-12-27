@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 import os
 import re
 
@@ -21,9 +21,7 @@ setup(
     author_email="",
     url="https://github.com/mdolab/baseclasses",
     license="Apache License Version 2.0",
-    packages=[
-        "baseclasses",
-    ],
+    packages=find_packages(),
     install_requires=[
         "numpy>=1.16",
     ],
