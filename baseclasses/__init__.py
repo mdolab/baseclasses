@@ -25,4 +25,4 @@ from .pyLG_problem import LGProblem
 
 from .py3Util import getPy3SafeString
 from .BaseRegTest import BaseRegTest
-from .utils import CaseInsensitiveDict, Error
+from .utils import CaseInsensitiveDict, CaseInsensitiveSet, Error

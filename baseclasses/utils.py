@@ -1,4 +1,11 @@
 class CaseInsensitiveDict(dict):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # convert keys to lower case
+        for k in list(self.keys()):
+            v = super().pop(k)
+            self.__setitem__(k, v)
+
     def __setitem__(self, key, value):
         super().__setitem__(key.lower(), value)
 
@@ -7,6 +14,30 @@ class CaseInsensitiveDict(dict):
 
     def __contains__(self, key):
         return super().__contains__(key.lower())
+
+    def __delitem__(self, key):
+        super().__delitem__(key.lower())
+
+    def pop(self, key, *args, **kwargs):
+        super().pop(key.lower(), *args, **kwargs)
+
+    def get(self, key, *args, **kwargs):
+        return super().get(key.lower(), *args, **kwargs)
+
+
+class CaseInsensitiveSet(set):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # convert entries to lowe case
+        for k in self:
+            super().remove(k)
+            self.add(k)
+
+    def add(self, item):
+        super().add(item.lower())
+
+    def __contains__(self, item):
+        return super().__contains__(item.lower())
 
 
 class Error(Exception):
