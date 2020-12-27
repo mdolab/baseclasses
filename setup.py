@@ -1,4 +1,5 @@
 from setuptools import setup
+import os
 import re
 
 __version__ = re.findall(
@@ -6,21 +7,16 @@ __version__ = re.findall(
     open("baseclasses/__init__.py").read(),
 )[0]
 
+this_directory = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(this_directory, "README.md"), encoding="utf-8") as f:
+    long_description = f.read()
+
 setup(
-    name="baseclasses",
+    name="mdolab-baseclasses",
     version=__version__,
-    description="baseclasses contains base classes that are used together with the rest of MDO lab tools.",
-    long_description="""
-      baseclasses contains, well, base classes that are used together with the rest of MDO lab tools. It includes the various problems to be defined by the user in order to perform some analyses, such as
-
-          AeroProblem
-          StructProblem
-          AeroStructProblem
-
-      It also contains some class definitions shared by various solvers, such as AeroSolver. Finally, it also contains a class, BaseRegTest, which is used as part of the testing toolchain.
-      """,
+    description="base classes that are used together with the rest of MDO Lab tools.",
+    long_description=long_description,
     long_description_content_type="text/markdown",
-    keywords="optimization shape-optimization multi-disciplinary",
     author="",
     author_email="",
     url="https://github.com/mdolab/baseclasses",
@@ -31,5 +27,9 @@ setup(
     install_requires=[
         "numpy>=1.16",
     ],
-    classifiers=["Operating System :: OS Independent", "Programming Language :: Python"],
+    classifiers=[
+        "Operating System :: OS Independent",
+        "Topic :: Scientific/Engineering",
+        "Programming Language :: Python",
+    ],
 )
