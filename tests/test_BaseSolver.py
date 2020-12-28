@@ -16,13 +16,15 @@ class SOLVER(BaseSolver):
             "stroption": [str, ["str1", "str2", "str3"]],
             "listoption": [list, []],
         }
-        imOptions = {"strOption"}
-        depOptions = {
+        immutableOptions = {"strOption"}
+        deprecatedOptions = {
             "oldOption": "Use boolOption instead.",
         }
 
         # Initialize the inherited BaseSolver
-        super().__init__(name, category, def_opts, options, imOptions=imOptions, depOptions=depOptions)
+        super().__init__(
+            name, category, def_opts, options, immutableOptions=immutableOptions, deprecatedOptions=deprecatedOptions
+        )
 
 
 class TestOptions(unittest.TestCase):
@@ -70,6 +72,6 @@ class TestOptions(unittest.TestCase):
         with self.assertRaises(Error):
             solver.setOption("floatOption", 4)  # test type checking without list
         with self.assertRaises(Error):
-            solver.setOption("strOPTION", "str2")  # test imOptions
+            solver.setOption("strOPTION", "str2")  # test  immutableOptions
         with self.assertRaises(Error):
-            solver.setOption("oldoption", 4)  # test depOptions
+            solver.setOption("oldoption", 4)  # test deprecatedOptions

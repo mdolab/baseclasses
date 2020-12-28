@@ -14,7 +14,7 @@ class BaseSolver(object):
     Abstract Class for a basic Solver Object
     """
 
-    def __init__(self, name, category={}, def_options={}, options={}, imOptions=set(), depOptions={}):
+    def __init__(self, name, category={}, def_options={}, options={}, immutableOptions=set(), deprecatedOptions={}):
         """
         Solver Class Initialization
         """
@@ -23,8 +23,8 @@ class BaseSolver(object):
         self.category = category
         self.options = CaseInsensitiveDict()
         self.defaultOptions = CaseInsensitiveDict(def_options)
-        self.imOptions = CaseInsensitiveSet(imOptions)
-        self.deprecatedOptions = CaseInsensitiveDict(depOptions)
+        self.immutableOptions = CaseInsensitiveSet(immutableOptions)
+        self.deprecatedOptions = CaseInsensitiveDict(deprecatedOptions)
         self.solverCreated = False
 
         # Initialize Options
@@ -73,7 +73,7 @@ class BaseSolver(object):
 
         # Make sure we are not trying to change an immutable option if
         # we are not allowed to.
-        if self.solverCreated and name in self.imOptions:
+        if self.solverCreated and name in self.immutableOptions:
             raise Error(f"Option {name} cannot be modified after the solver is created.")
 
         # If the default provides a list of acceptable values, check whether the value is valid
