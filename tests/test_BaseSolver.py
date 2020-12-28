@@ -1,5 +1,6 @@
 import unittest
-from baseclasses import BaseSolver, Error
+from baseclasses import BaseSolver
+from baseclasses.utils import Error
 
 
 class SOLVER(BaseSolver):

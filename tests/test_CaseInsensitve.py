@@ -1,5 +1,5 @@
 import unittest
-from baseclasses import CaseInsensitiveDict, CaseInsensitiveSet
+from baseclasses.utils import CaseInsensitiveDict, CaseInsensitiveSet
 
 
 class TestCaseInsensitiveClasses(unittest.TestCase):
