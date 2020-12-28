@@ -162,7 +162,7 @@ class AeroSolver(BaseSolver):
         if self.comm.rank == 0:
             f = open(fileName, "w")
             f.write('TITLE = "%s Surface Mesh"\n' % self.name)
-            f.write('VARIABLES = "CoordinateX CoordinateY CoordinateZ"\n')
+            f.write('VARIABLES = "CoordinateX" "CoordinateY" "CoordinateZ"\n')
             f.write("Zone T=%s\n" % ("surf"))
             f.write("Nodes = %d, Elements = %d ZONETYPE=FETRIANGLE\n" % (len(p0) * 3, len(p0)))
             f.write("DATAPACKING=POINT\n")
