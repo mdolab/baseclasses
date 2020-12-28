@@ -26,13 +26,22 @@ class AeroSolver(BaseSolver):
     Abstract Class for Aerodynamic Solver Object
     """
 
-    def __init__(self, name, *args, **kwargs):
+    def __init__(
+        self, name, category={}, def_options={}, informs={}, options={}, immutableOptions=set(), deprecatedOptions={}
+    ):
 
         """
         AeroSolver Class Initialization
         """
         # Setup option info
-        super().__init__(name, *args, **kwargs)
+        super().__init__(
+            name,
+            category=category,
+            def_options=def_options,
+            options=options,
+            immutableOptions=immutableOptions,
+            deprecatedOptions=deprecatedOptions,
+        )
         self.families = CaseInsensitiveDict()
         self._updateGeomInfo = False
 
@@ -270,7 +279,7 @@ class AeroSolver(BaseSolver):
         # Do some error checking
         if groupName in self.families:
             raise Error(
-                "The specified groupName '%s' already exists in the cgns file or has already been added." % groupName
+                "The specified groupName '%s' already exists in the " "cgns file or has already been added." % groupName
             )
 
         # We can actually allow for nested groups. That is, an entry
@@ -342,7 +351,7 @@ class AeroSolver(BaseSolver):
 
         self._updateGeomInfo = True
         if self.mesh is None:
-            raise Error("Cannot set new surface coordinate locations without a mesh warping object present.")
+            raise Error("Cannot set new surface coordinate locations without a mesh" "warping object present.")
 
         # First get the surface coordinates of the meshFamily in case
         # the groupName is a subset, those values will remain unchanged.
