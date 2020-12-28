@@ -1,4 +1,19 @@
 class CaseInsensitiveDict(dict):
+    """
+    Python dictionary where the keys are case-insensitive.
+    Note that this assumes the keys are strings, and indeed will fail if you try to
+    create an instance where keys are not strings.
+    All common Python dictionary operations are supported, and additional operations
+    can be added easily.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # convert keys to lower case
+        for k in list(self.keys()):
+            v = super().pop(k)
+            self.__setitem__(k, v)
+
     def __setitem__(self, key, value):
         super().__setitem__(key.lower(), value)
 
@@ -7,6 +22,38 @@ class CaseInsensitiveDict(dict):
 
     def __contains__(self, key):
         return super().__contains__(key.lower())
+
+    def __delitem__(self, key):
+        super().__delitem__(key.lower())
+
+    def pop(self, key, *args, **kwargs):
+        super().pop(key.lower(), *args, **kwargs)
+
+    def get(self, key, *args, **kwargs):
+        return super().get(key.lower(), *args, **kwargs)
+
+
+class CaseInsensitiveSet(set):
+    """
+    Python set where the elements are case-insensitive.
+    Note that this assumes the elements are strings, and indeed will fail if you try to
+    create an instance where elements are not strings.
+    All common Python set operations are supported, and additional operations
+    can be added easily.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # convert entries to lowe case
+        for k in self:
+            super().remove(k)
+            self.add(k)
+
+    def add(self, item):
+        super().add(item.lower())
+
+    def __contains__(self, item):
+        return super().__contains__(item.lower())
 
 
 class Error(Exception):

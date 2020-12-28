@@ -4,7 +4,7 @@ BaseSolver
 Holds a basic Python Analysis Classes (base and inherited).
 """
 from pprint import pprint as pp
-from .utils import CaseInsensitiveDict, Error
+from .utils import CaseInsensitiveDict, CaseInsensitiveSet, Error
 
 # =============================================================================
 # BaseSolver Class
@@ -14,7 +14,7 @@ class BaseSolver(object):
     Abstract Class for a basic Solver Object
     """
 
-    def __init__(self, name, category={}, def_options={}, options={}):
+    def __init__(self, name, category={}, def_options={}, options={}, immutableOptions=set(), deprecatedOptions={}):
         """
         Solver Class Initialization
         """
@@ -23,8 +23,9 @@ class BaseSolver(object):
         self.category = category
         self.options = CaseInsensitiveDict()
         self.defaultOptions = CaseInsensitiveDict(def_options)
+        self.immutableOptions = CaseInsensitiveSet(immutableOptions)
+        self.deprecatedOptions = CaseInsensitiveDict(deprecatedOptions)
         self.solverCreated = False
-        self.imOptions = CaseInsensitiveDict()
 
         # Initialize Options
         for key, (optionType, optionValue) in self.defaultOptions.items():
@@ -65,12 +66,15 @@ class BaseSolver(object):
         try:
             defaultType, defaultValue = self.defaultOptions[name]
         except KeyError:
-            Error("Option '%-30s' is not a valid %s option." % (name, self.name))
+            if name in self.deprecatedOptions:
+                raise Error(f"Option {name} is deprecated. {self.deprecatedOptions[name]}")
+            else:
+                raise Error(f"Option {name} is not a valid {self.name} option.")
 
         # Make sure we are not trying to change an immutable option if
         # we are not allowed to.
-        if self.solverCreated and name in self.imOptions:
-            raise Error("Option '%-35s' cannot be modified after the solver " "is created." % name)
+        if self.solverCreated and name in self.immutableOptions:
+            raise Error(f"Option {name} cannot be modified after the solver is created.")
 
         # If the default provides a list of acceptable values, check whether the value is valid
         if isinstance(defaultValue, list) and defaultType is not list:
@@ -111,16 +115,16 @@ class BaseSolver(object):
         if name in self.defaultOptions:
             return self.options[name]
         else:
-            raise Error("%s is not a valid option name." % name)
+            raise Error(f"{name} is not a valid option name.")
 
     def printCurrentOptions(self):
         """
         Prints a nicely formatted dictionary of all the current solver
         options to the stdout on the root processor"""
         if self.comm.rank == 0:
-            print("+---------------------------------------+")
-            print("|          All %s Options:          |" % self.name)
-            print("+---------------------------------------+")
+            print("+----------------------------------------+")
+            print("|" + f"All {self.name} Options:".center(40) + "|")
+            print("+----------------------------------------+")
             # Need to assemble a temporary dictionary
             tmpDict = {}
             for key in self.options:
@@ -133,9 +137,9 @@ class BaseSolver(object):
         options that have been modified from the defaults to the root
         processor"""
         if self.comm.rank == 0:
-            print("+---------------------------------------+")
-            print("|      All Modified %s Options:     |" % self.name)
-            print("+---------------------------------------+")
+            print("+----------------------------------------+")
+            print("|" + f"All Modified {self.name} Options:".center(40) + "|")
+            print("+----------------------------------------+")
             # Need to assemble a temporary dictionary
             tmpDict = {}
             for key in self.options:

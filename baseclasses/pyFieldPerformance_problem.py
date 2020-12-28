@@ -167,7 +167,7 @@ class FieldPerformanceProblem(object):
         if "evalFuncs" in kwargs:
             self.evalFuncs = set(kwargs["evalFuncs"])
         if "funcs" in kwargs:
-            warnings.warn("funcs should **not** be an argument. Use 'evalFuncs'" "instead.")
+            warnings.warn("funcs should **not** be an argument. Use 'evalFuncs' instead.")
             self.evalFuncs = set(kwargs["funcs"])
 
         # Specify the set of possible design variables:
