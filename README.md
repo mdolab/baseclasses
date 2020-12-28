@@ -1,9 +1,10 @@
 # baseclasses
+![PyPI](https://img.shields.io/pypi/v/mdolab-baseclasses)
 [![Build Status](https://travis-ci.com/mdolab/baseclasses.svg?branch=master)](https://travis-ci.com/mdolab/baseclasses)
 [![Documentation Status](https://readthedocs.com/projects/mdolab-baseclasses/badge/?version=latest)](https://mdolab-baseclasses.readthedocs-hosted.com/?badge=latest)
 
-`baseclasses` contains, well, base classes that are used together with the rest of MDO lab tools.
-It includes the various `problems` to be defined by the user in order to perform some analyses, such as
+`baseclasses` contains, well, base classes that are used together with the rest of MDO Lab tools.
+It includes the various `problems` to be defined by the user in order to perform certain analyses, such as
 - `AeroProblem`
 - `StructProblem`
 - `AeroStructProblem`
