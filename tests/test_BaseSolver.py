@@ -8,14 +8,14 @@ class SOLVER(BaseSolver):
 
         """Create an artificial class for testing"""
 
-        name = name
         category = "Solver for testing BaseSolver"
         def_opts = {
-            "booloption": [bool, True],
-            "floatoption": [float, 10.0],
-            "intoption": [int, [1, 2, 3]],
-            "stroption": [str, ["str1", "str2", "str3"]],
-            "listoption": [list, []],
+            "boolOption": [bool, True],
+            "floatOption": [float, 10.0],
+            "intOption": [int, [1, 2, 3]],
+            "strOption": [str, ["str1", "str2", "str3"]],
+            "listOption": [list, []],
+            "multiOption": [(str, dict), {}],
         }
         immutableOptions = {"strOption"}
         deprecatedOptions = {
@@ -64,6 +64,13 @@ class TestOptions(unittest.TestCase):
         listValue_get = solver.getOption("listOption")
         self.assertEqual(listValue_set, listValue_get)
         solver.printModifiedOptions()
+
+        # test options that accept multiple types
+        testValues = ["value", {"key": "value"}]
+        for multiValue_set in testValues:
+            solver.setOption("multiOption", multiValue_set)
+            multiValue_get = solver.getOption("multiOption")
+            self.assertEqual(multiValue_set, multiValue_get)
 
         # test Errors
         with self.assertRaises(Error):
