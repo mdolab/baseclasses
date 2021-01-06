@@ -3,7 +3,7 @@ BaseSolver
 
 Holds a basic Python Analysis Classes (base and inherited).
 """
-from pprint import pprint as pp
+from pprint import pprint
 from .utils import CaseInsensitiveDict, CaseInsensitiveSet, Error
 
 # =============================================================================
@@ -26,6 +26,7 @@ class BaseSolver(object):
         self.immutableOptions = CaseInsensitiveSet(immutableOptions)
         self.deprecatedOptions = CaseInsensitiveDict(deprecatedOptions)
         self.solverCreated = False
+        self.comm = None
 
         # Initialize Options
         for key, (optionType, optionValue) in self.defaultOptions.items():
@@ -120,41 +121,47 @@ class BaseSolver(object):
     def printCurrentOptions(self):
         """
         Prints a nicely formatted dictionary of all the current solver
-        options to the stdout on the root processor"""
-        if self.comm.rank == 0:
-            print("+----------------------------------------+")
-            print("|" + f"All {self.name} Options:".center(40) + "|")
-            print("+----------------------------------------+")
-            # Need to assemble a temporary dictionary
-            tmpDict = {}
-            for key in self.options:
-                tmpDict[key] = self.getOption(key)
-            pp(tmpDict)
+        options to the stdout on the root processor
+        """
+
+        self.pp("+----------------------------------------+")
+        self.pp("|" + f"All {self.name} Options:".center(40) + "|")
+        self.pp("+----------------------------------------+")
+        # Need to assemble a temporary dictionary
+        tmpDict = {}
+        for key in self.options:
+            tmpDict[key] = self.getOption(key)
+        self.pp(tmpDict)
 
     def printModifiedOptions(self):
         """
         Prints a nicely formatted dictionary of all the current solver
         options that have been modified from the defaults to the root
-        processor"""
-        if self.comm.rank == 0:
-            print("+----------------------------------------+")
-            print("|" + f"All Modified {self.name} Options:".center(40) + "|")
-            print("+----------------------------------------+")
-            # Need to assemble a temporary dictionary
-            tmpDict = {}
-            for key in self.options:
-                if self.getOption(key) != self.defaultOptions[key][1]:
-                    tmpDict[key] = self.getOption(key)
-            pp(tmpDict)
+        processor
+        """
+        self.pp("+----------------------------------------+")
+        self.pp("|" + f"All Modified {self.name} Options:".center(40) + "|")
+        self.pp("+----------------------------------------+")
+        # Need to assemble a temporary dictionary
+        tmpDict = {}
+        for key in self.options:
+            defaultType, defaultValue = self.defaultOptions[key]
+            if defaultType == list and not isinstance(defaultValue, list):
+                defaultValue = defaultValue[0]
+            optionValue = self.getOption(key)
+            if optionValue != defaultValue:
+                tmpDict[key] = optionValue
+        self.pp(tmpDict)
 
+    def pp(self, obj):
+        """
+        This method prints ``obj`` (via pprint) on the root proc of ``self.comm`` if it exists.
+        Otherswise it will just print ``obj``.
 
-# ==============================================================================
-# Optimizer Test
-# ==============================================================================
-if __name__ == "__main__":
-
-    print("Testing ...")
-
-    # Test Optimizer
-    azr = BaseSolver("Test")
-    dir(azr)
+        Parameters
+        ----------
+        obj : object
+            any Python object to be printed
+        """
+        if (self.comm is not None and self.comm.rank == 0) or self.comm is None:
+            pprint(obj)

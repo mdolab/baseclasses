@@ -36,6 +36,7 @@ class TestOptions(unittest.TestCase):
         intValue_set = 3
         options = {"floatOption": floatValue_set, "intOption": intValue_set}
         solver = SOLVER("test", options=options)
+        solver.printCurrentOptions()
 
         # test getOption for initialized option
         floatValue_get = solver.getOption("floatOption")
@@ -62,6 +63,7 @@ class TestOptions(unittest.TestCase):
         solver.setOption("listOption", listValue_set)
         listValue_get = solver.getOption("listOption")
         self.assertEqual(listValue_set, listValue_get)
+        solver.printModifiedOptions()
 
         # test options that accept multiple types
         testValues = ["value", {"key": "value"}]
