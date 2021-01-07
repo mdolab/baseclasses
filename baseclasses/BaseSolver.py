@@ -14,7 +14,7 @@ class BaseSolver(object):
     Abstract Class for a basic Solver Object
     """
 
-    def __init__(self, name, category={}, def_options={}, options={}, immutableOptions=set(), deprecatedOptions={}):
+    def __init__(self, name, category={}, def_options={}, options={}, immutableOptions=set(), deprecatedOptions={}, comm=None):
         """
         Solver Class Initialization
         """
@@ -26,7 +26,7 @@ class BaseSolver(object):
         self.immutableOptions = CaseInsensitiveSet(immutableOptions)
         self.deprecatedOptions = CaseInsensitiveDict(deprecatedOptions)
         self.solverCreated = False
-        self.comm = None
+        self.comm = comm
 
         # Initialize Options
         for key, (optionType, optionValue) in self.defaultOptions.items():
@@ -146,7 +146,7 @@ class BaseSolver(object):
         tmpDict = {}
         for key in self.options:
             defaultType, defaultValue = self.defaultOptions[key]
-            if defaultType == list and not isinstance(defaultValue, list):
+            if defaultType is list and not isinstance(defaultValue, list):
                 defaultValue = defaultValue[0]
             optionValue = self.getOption(key)
             if optionValue != defaultValue:
@@ -156,7 +156,7 @@ class BaseSolver(object):
     def pp(self, obj):
         """
         This method prints ``obj`` (via pprint) on the root proc of ``self.comm`` if it exists.
-        Otherswise it will just print ``obj``.
+        Otherwise it will just print ``obj``.
 
         Parameters
         ----------
