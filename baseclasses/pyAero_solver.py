@@ -27,7 +27,15 @@ class AeroSolver(BaseSolver):
     """
 
     def __init__(
-        self, name, category={}, def_options={}, informs={}, options={}, immutableOptions=set(), deprecatedOptions={}
+        self,
+        name,
+        category={},
+        def_options={},
+        informs={},
+        options={},
+        immutableOptions=set(),
+        deprecatedOptions={},
+        comm=None,
     ):
 
         """
@@ -41,6 +49,7 @@ class AeroSolver(BaseSolver):
             options=options,
             immutableOptions=immutableOptions,
             deprecatedOptions=deprecatedOptions,
+            comm=comm,
         )
         self.families = CaseInsensitiveDict()
         self._updateGeomInfo = False
