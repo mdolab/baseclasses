@@ -14,7 +14,9 @@ class BaseSolver(object):
     Abstract Class for a basic Solver Object
     """
 
-    def __init__(self, name, category={}, def_options={}, options={}, immutableOptions=set(), deprecatedOptions={}, comm=None):
+    def __init__(
+        self, name, category={}, def_options={}, options={}, immutableOptions=set(), deprecatedOptions={}, comm=None
+    ):
         """
         Solver Class Initialization
         """
