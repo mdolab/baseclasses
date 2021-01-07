@@ -41,6 +41,7 @@ class AeroSolver(BaseSolver):
             options=options,
             immutableOptions=immutableOptions,
             deprecatedOptions=deprecatedOptions,
+            informs=informs,
         )
         self.families = CaseInsensitiveDict()
         self._updateGeomInfo = False

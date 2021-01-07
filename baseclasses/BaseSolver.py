@@ -14,7 +14,9 @@ class BaseSolver(object):
     Abstract Class for a basic Solver Object
     """
 
-    def __init__(self, name, category={}, def_options={}, options={}, immutableOptions=set(), deprecatedOptions={}):
+    def __init__(
+        self, name, category={}, def_options={}, options={}, immutableOptions=set(), deprecatedOptions={}, informs={}
+    ):
         """
         Solver Class Initialization
         """
@@ -27,6 +29,7 @@ class BaseSolver(object):
         self.deprecatedOptions = CaseInsensitiveDict(deprecatedOptions)
         self.solverCreated = False
         self.comm = None
+        self.informs = informs
 
         # Initialize Options
         for key, (optionType, optionValue) in self.defaultOptions.items():
