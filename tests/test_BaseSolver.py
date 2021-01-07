@@ -1,4 +1,3 @@
-
 try:
     from mpi4py import MPI
 except ImportError:
@@ -28,15 +27,22 @@ class SOLVER(BaseSolver):
             "oldOption": "Use boolOption instead.",
         }
 
+        informs = {
+            -1: "Failure -1",
+            0: "Success",
+            1: "Failure 1",
+        }
+
         # Initialize the inherited BaseSolver
         super().__init__(
             name,
             category,
-            defaultOptions,
+            defaultOptions=defaultOptions,
             options=options,
             immutableOptions=immutableOptions,
             deprecatedOptions=deprecatedOptions,
             comm=comm,
+            informs=informs,
         )
 
 
@@ -98,6 +104,7 @@ class TestOptions(unittest.TestCase):
         with self.assertRaises(Error):
             solver.setOption("oldoption", 4)  # test deprecatedOptions
 
+
 class TestComm(unittest.TestCase):
 
     N_PROCS = 2
@@ -114,3 +121,9 @@ class TestComm(unittest.TestCase):
         solver = SOLVER("testComm", comm=None)
         self.assertTrue(solver.comm is None)
         solver.printCurrentOptions()
+
+
+class TestInforms(unittest.TestCase):
+    def test_informs(self):
+        solver = SOLVER("testInforms")
+        self.assertEqual(solver.informs[0], "Success")

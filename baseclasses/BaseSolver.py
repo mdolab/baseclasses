@@ -15,7 +15,7 @@ class BaseSolver(object):
     """
 
     def __init__(
-        self, name, category={}, def_options={}, options={}, immutableOptions=set(), deprecatedOptions={}, comm=None
+        self, name, category, defaultOptions={}, options={}, immutableOptions=set(), deprecatedOptions={}, comm=None, informs={}
     ):
         """
         Solver Class Initialization
@@ -24,11 +24,12 @@ class BaseSolver(object):
         self.name = name
         self.category = category
         self.options = CaseInsensitiveDict()
-        self.defaultOptions = CaseInsensitiveDict(def_options)
+        self.defaultOptions = CaseInsensitiveDict(defaultOptions)
         self.immutableOptions = CaseInsensitiveSet(immutableOptions)
         self.deprecatedOptions = CaseInsensitiveDict(deprecatedOptions)
-        self.solverCreated = False
         self.comm = comm
+        self.informs = informs
+        self.solverCreated = False
 
         # Initialize Options
         for key, (optionType, optionValue) in self.defaultOptions.items():

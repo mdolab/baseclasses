@@ -29,13 +29,13 @@ class AeroSolver(BaseSolver):
     def __init__(
         self,
         name,
-        category={},
-        def_options={},
-        informs={},
+        category,
+        defaultOptions={},
         options={},
         immutableOptions=set(),
         deprecatedOptions={},
         comm=None,
+        informs={},
     ):
 
         """
@@ -45,11 +45,12 @@ class AeroSolver(BaseSolver):
         super().__init__(
             name,
             category=category,
-            def_options=def_options,
+            defaultOptions=defaultOptions,
             options=options,
             immutableOptions=immutableOptions,
             deprecatedOptions=deprecatedOptions,
             comm=comm,
+            informs=informs,
         )
         self.families = CaseInsensitiveDict()
         self._updateGeomInfo = False
