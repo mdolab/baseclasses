@@ -15,7 +15,15 @@ class BaseSolver(object):
     """
 
     def __init__(
-        self, name, category={}, def_options={}, options={}, immutableOptions=set(), deprecatedOptions={}, informs={}
+        self,
+        name,
+        category={},
+        def_options={},
+        options={},
+        immutableOptions=set(),
+        deprecatedOptions={},
+        informs={},
+        checkDefaultOptions=True,
     ):
         """
         Solver Class Initialization
@@ -30,10 +38,10 @@ class BaseSolver(object):
         self.solverCreated = False
         self.comm = None
         self.informs = informs
+        self.checkDefaultOptions = checkDefaultOptions
 
         # Initialize Options
         for key, (optionType, optionValue) in self.defaultOptions.items():
-
             # Check if the default is given in a list of possible values
             if isinstance(optionValue, list) and optionType is not list:
                 # Default is the first element of the list
@@ -67,39 +75,43 @@ class BaseSolver(object):
 
         """
         # Check if the option exists
-        try:
-            defaultType, defaultValue = self.defaultOptions[name]
-        except KeyError:
-            if name in self.deprecatedOptions:
-                raise Error(f"Option {name} is deprecated. {self.deprecatedOptions[name]}")
-            else:
-                raise Error(f"Option {name} is not a valid {self.name} option.")
+        if self.checkDefaultOptions:
+            try:
+                defaultType, defaultValue = self.defaultOptions[name]
+            except KeyError:
+                if name in self.deprecatedOptions:
+                    raise Error(f"Option {name} is deprecated. {self.deprecatedOptions[name]}")
+                else:
+                    raise Error(f"Option {name} is not a valid {self.name} option.")
 
         # Make sure we are not trying to change an immutable option if
         # we are not allowed to.
         if self.solverCreated and name in self.immutableOptions:
             raise Error(f"Option {name} cannot be modified after the solver is created.")
 
-        # If the default provides a list of acceptable values, check whether the value is valid
-        if isinstance(defaultValue, list) and defaultType is not list:
-            if value in defaultValue:
-                self.options[name] = value
+        if self.checkDefaultOptions:
+            # If the default provides a list of acceptable values, check whether the value is valid
+            if isinstance(defaultValue, list) and defaultType is not list:
+                if value in defaultValue:
+                    self.options[name] = value
+                else:
+                    raise Error(
+                        f"Value for option {name} is not valid. "
+                        + f"Value must be one of {defaultValue} with data type {defaultType}. "
+                        + f"Received value is {value} with data type {type(value)}."
+                    )
             else:
-                raise Error(
-                    f"Value for option {name} is not valid. "
-                    + f"Value must be one of {defaultValue} with data type {defaultType}. "
-                    + f"Received value is {value} with data type {type(value)}."
-                )
+                # If a list is not provided, check just the type
+                if isinstance(value, defaultType):
+                    self.options[name] = value
+                else:
+                    raise Error(
+                        f"Datatype for option {name} is not valid. "
+                        + f"Expected data type {defaultType}. "
+                        + f"Received data type is {type(value)}."
+                    )
         else:
-            # If a list is not provided, check just the type
-            if isinstance(value, defaultType):
-                self.options[name] = value
-            else:
-                raise Error(
-                    f"Datatype for option {name} is not valid. "
-                    + f"Expected data type {defaultType}. "
-                    + f"Received data type is {type(value)}."
-                )
+            self.options[name] = value
 
     def getOption(self, name):
         """
