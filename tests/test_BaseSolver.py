@@ -9,7 +9,7 @@ from baseclasses.utils import Error
 
 
 class SOLVER(BaseSolver):
-    def __init__(self, name, options={}, comm=None, *args, **kwargs):
+    def __init__(self, name, options={}, comm=None):
 
         """Create an artificial class for testing"""
 
