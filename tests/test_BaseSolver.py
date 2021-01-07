@@ -1,15 +1,20 @@
+try:
+    from mpi4py import MPI
+except ImportError:
+    MPI = None
+
 import unittest
 from baseclasses import BaseSolver
 from baseclasses.utils import Error
 
 
 class SOLVER(BaseSolver):
-    def __init__(self, name, options=None, *args, **kwargs):
+    def __init__(self, name, options={}, comm=None):
 
         """Create an artificial class for testing"""
 
         category = "Solver for testing BaseSolver"
-        def_opts = {
+        defaultOptions = {
             "boolOption": [bool, True],
             "floatOption": [float, 10.0],
             "intOption": [int, [1, 2, 3]],
@@ -22,9 +27,22 @@ class SOLVER(BaseSolver):
             "oldOption": "Use boolOption instead.",
         }
 
+        informs = {
+            -1: "Failure -1",
+            0: "Success",
+            1: "Failure 1",
+        }
+
         # Initialize the inherited BaseSolver
         super().__init__(
-            name, category, def_opts, options, immutableOptions=immutableOptions, deprecatedOptions=deprecatedOptions
+            name,
+            category,
+            defaultOptions=defaultOptions,
+            options=options,
+            immutableOptions=immutableOptions,
+            deprecatedOptions=deprecatedOptions,
+            comm=comm,
+            informs=informs,
         )
 
 
@@ -85,3 +103,27 @@ class TestOptions(unittest.TestCase):
             solver.setOption("strOPTION", "str2")  # test  immutableOptions
         with self.assertRaises(Error):
             solver.setOption("oldoption", 4)  # test deprecatedOptions
+
+
+class TestComm(unittest.TestCase):
+
+    N_PROCS = 2
+
+    @unittest.skipIf(MPI is None, "mpi4py not imported")
+    def test_comm_with_mpi(self):
+        # initialize solver
+        solver = SOLVER("testComm", comm=MPI.COMM_WORLD)
+        self.assertFalse(solver.comm is None)
+        solver.printCurrentOptions()
+
+    def test_comm_without_mpi(self):
+        # initialize solver
+        solver = SOLVER("testComm", comm=None)
+        self.assertTrue(solver.comm is None)
+        solver.printCurrentOptions()
+
+
+class TestInforms(unittest.TestCase):
+    def test_informs(self):
+        solver = SOLVER("testInforms")
+        self.assertEqual(solver.informs[0], "Success")
