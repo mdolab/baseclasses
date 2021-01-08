@@ -154,7 +154,7 @@ class BaseSolver(object):
            Return the current value of the option.
         """
 
-        if name in self.defaultOptions:
+        if name in self.defaultOptions or not self.checkDefaultOptions:
             return self.options[name]
         else:
             raise Error(f"{name} is not a valid option name.")
