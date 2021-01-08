@@ -25,6 +25,7 @@ class BaseSolver(object):
         comm=None,
         informs={},
         checkDefaultOptions=True,
+        caseInsensitive=True,
     ):
         """
         Solver Class Initialization
@@ -56,10 +57,16 @@ class BaseSolver(object):
 
         self.name = name
         self.category = category
-        self.options = CaseInsensitiveDict()
-        self.defaultOptions = CaseInsensitiveDict(defaultOptions)
-        self.immutableOptions = CaseInsensitiveSet(immutableOptions)
-        self.deprecatedOptions = CaseInsensitiveDict(deprecatedOptions)
+        if caseInsensitive:
+            self.options = CaseInsensitiveDict()
+            self.defaultOptions = CaseInsensitiveDict(defaultOptions)
+            self.immutableOptions = CaseInsensitiveSet(immutableOptions)
+            self.deprecatedOptions = CaseInsensitiveDict(deprecatedOptions)
+        else:
+            self.options = {}
+            self.defaultOptions = defaultOptions
+            self.immutableOptions = immutableOptions
+            self.deprecatedOptions = deprecatedOptions
         self.comm = comm
         self.informs = informs
         self.solverCreated = False
