@@ -17,7 +17,7 @@ class BaseSolver(object):
     def __init__(
         self,
         name,
-        category={},
+        category,
         defaultOptions={},
         options={},
         immutableOptions=set(),
@@ -28,6 +28,30 @@ class BaseSolver(object):
     ):
         """
         Solver Class Initialization
+
+        Parameters
+        ----------
+        name : str
+            The name of the solver
+        category : dict
+            The category of the solver
+        defaultOptions : dict, optional
+            The default options dictionary
+        options : dict, optional
+            The user-supplied options dictionary
+        immutableOptions : set of strings, optional
+            A set of immutable option names, which cannot be modified after solver creation.
+        deprecatedOptions : dict, optional
+            A dictionary containing deprecated option names, and a message to display if they were used.
+        comm : MPI Communicator, optional
+            The comm object to be used. If none, serial execution is assumed.
+        informs : dict, optional
+            A dictionary of exit code: exit message mappings.
+        checkDefaultOptions : bool, optional
+            A flag to specify whether the default options should be used for error checking.
+            This is used in cases where the default options is not the complete set, which is common for external solvers.
+            In such cases, no error checking is done when calling ``setOption``, but the default options are still set as options
+            upon solver creation.
         """
 
         self.name = name
@@ -112,6 +136,7 @@ class BaseSolver(object):
                         + f"Received data type is {type(value)}."
                     )
         else:
+            # no error checking
             self.options[name] = value
 
     def getOption(self, name):
