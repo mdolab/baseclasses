@@ -18,10 +18,11 @@ class BaseSolver(object):
         self,
         name,
         category={},
-        def_options={},
+        defaultOptions={},
         options={},
         immutableOptions=set(),
         deprecatedOptions={},
+        comm=None,
         informs={},
         checkDefaultOptions=True,
     ):
@@ -32,12 +33,12 @@ class BaseSolver(object):
         self.name = name
         self.category = category
         self.options = CaseInsensitiveDict()
-        self.defaultOptions = CaseInsensitiveDict(def_options)
+        self.defaultOptions = CaseInsensitiveDict(defaultOptions)
         self.immutableOptions = CaseInsensitiveSet(immutableOptions)
         self.deprecatedOptions = CaseInsensitiveDict(deprecatedOptions)
-        self.solverCreated = False
-        self.comm = None
+        self.comm = comm
         self.informs = informs
+        self.solverCreated = False
         self.checkDefaultOptions = checkDefaultOptions
 
         # Initialize Options
@@ -161,7 +162,7 @@ class BaseSolver(object):
         tmpDict = {}
         for key in self.options:
             defaultType, defaultValue = self.defaultOptions[key]
-            if defaultType == list and not isinstance(defaultValue, list):
+            if defaultType is list and not isinstance(defaultValue, list):
                 defaultValue = defaultValue[0]
             optionValue = self.getOption(key)
             if optionValue != defaultValue:
@@ -171,7 +172,7 @@ class BaseSolver(object):
     def pp(self, obj):
         """
         This method prints ``obj`` (via pprint) on the root proc of ``self.comm`` if it exists.
-        Otherswise it will just print ``obj``.
+        Otherwise it will just print ``obj``.
 
         Parameters
         ----------
