@@ -25,7 +25,7 @@ class BaseSolver(object):
         comm=None,
         informs={},
         checkDefaultOptions=True,
-        caseInsensitive=True,
+        caseSensitiveOptions=False,
     ):
         """
         Solver Class Initialization
@@ -53,11 +53,13 @@ class BaseSolver(object):
             This is used in cases where the default options is not the complete set, which is common for external solvers.
             In such cases, no error checking is done when calling ``setOption``, but the default options are still set as options
             upon solver creation.
+        caseSensitiveOptions : bool, optional
+            A flag to specify whether the options are case sensitive or insensitive.
         """
 
         self.name = name
         self.category = category
-        if caseInsensitive:
+        if not caseSensitiveOptions:
             self.options = CaseInsensitiveDict()
             self.defaultOptions = CaseInsensitiveDict(defaultOptions)
             self.immutableOptions = CaseInsensitiveSet(immutableOptions)

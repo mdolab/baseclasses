@@ -9,7 +9,7 @@ from baseclasses.utils import Error
 
 
 class SOLVER(BaseSolver):
-    def __init__(self, name, options={}, comm=None, checkDefaultOptions=True, caseInsensitive=True):
+    def __init__(self, name, options={}, comm=None, checkDefaultOptions=True, caseSensitiveOptions=False):
 
         """Create an artificial class for testing"""
 
@@ -44,7 +44,7 @@ class SOLVER(BaseSolver):
             comm=comm,
             informs=informs,
             checkDefaultOptions=checkDefaultOptions,
-            caseInsensitive=caseInsensitive,
+            caseSensitiveOptions=caseSensitiveOptions,
         )
 
 
@@ -114,7 +114,7 @@ class TestOptions(unittest.TestCase):
 
     def test_caseSensitive(self):
         # initialize solver
-        solver = SOLVER("test", caseInsensitive=False)
+        solver = SOLVER("test", caseSensitiveOptions=True)
         with self.assertRaises(Error):
             solver.getOption("booloption")  # test that this name should be rejected
 
