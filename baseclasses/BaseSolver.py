@@ -50,11 +50,11 @@ class BaseSolver(object):
             A dictionary of exit code: exit message mappings.
         checkDefaultOptions : bool, optional
             A flag to specify whether the default options should be used for error checking.
-            This is used in cases where the default options is not the complete set, which is common for external solvers.
+            This is used in cases where the default options are not the complete set, which is common for external solvers.
             In such cases, no error checking is done when calling ``setOption``, but the default options are still set as options
             upon solver creation.
         caseSensitiveOptions : bool, optional
-            A flag to specify whether the options are case sensitive or insensitive.
+            A flag to specify whether the option names are case sensitive or insensitive.
         """
 
         self.name = name
@@ -164,7 +164,13 @@ class BaseSolver(object):
         """
 
         if name in self.defaultOptions or not self.checkDefaultOptions:
-            return self.options[name]
+            if name in self.options:
+                return self.options[name]
+            else:
+                raise Error(
+                    f"Option {name} was not found. "
+                    + "Because options checking has been disabled, make sure the option has been set first."
+                )
         else:
             raise Error(f"{name} is not a valid option name.")
 

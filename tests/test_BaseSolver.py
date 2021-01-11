@@ -111,6 +111,8 @@ class TestOptions(unittest.TestCase):
         solver = SOLVER("test", checkDefaultOptions=False)
         solver.setOption("newOption", 1)
         self.assertEqual(solver.getOption("newOption"), 1)
+        with self.assertRaises(Error):
+            solver.getOption("nonexistant option")  # test that this name should be rejected
 
     def test_caseSensitive(self):
         # initialize solver
