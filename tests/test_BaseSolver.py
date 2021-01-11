@@ -9,7 +9,7 @@ from baseclasses.utils import Error
 
 
 class SOLVER(BaseSolver):
-    def __init__(self, name, options={}, comm=None):
+    def __init__(self, name, options={}, comm=None, checkDefaultOptions=True, caseSensitiveOptions=False):
 
         """Create an artificial class for testing"""
 
@@ -43,6 +43,8 @@ class SOLVER(BaseSolver):
             deprecatedOptions=deprecatedOptions,
             comm=comm,
             informs=informs,
+            checkDefaultOptions=checkDefaultOptions,
+            caseSensitiveOptions=caseSensitiveOptions,
         )
 
 
@@ -103,6 +105,20 @@ class TestOptions(unittest.TestCase):
             solver.setOption("strOPTION", "str2")  # test  immutableOptions
         with self.assertRaises(Error):
             solver.setOption("oldoption", 4)  # test deprecatedOptions
+
+    def test_checkDefaultOptions(self):
+        # initialize solver
+        solver = SOLVER("test", checkDefaultOptions=False)
+        solver.setOption("newOption", 1)
+        self.assertEqual(solver.getOption("newOption"), 1)
+        with self.assertRaises(Error):
+            solver.getOption("nonexistant option")  # test that this name should be rejected
+
+    def test_caseSensitive(self):
+        # initialize solver
+        solver = SOLVER("test", caseSensitiveOptions=True)
+        with self.assertRaises(Error):
+            solver.getOption("booloption")  # test that this name should be rejected
 
 
 class TestComm(unittest.TestCase):
