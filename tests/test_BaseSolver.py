@@ -96,6 +96,8 @@ class TestOptions(unittest.TestCase):
         with self.assertRaises(Error):
             solver.getOption("invalidOption")  # test name checking
         with self.assertRaises(Error):
+            solver.setOption("invalidOption", 1)  # test name checking
+        with self.assertRaises(Error):
             solver.setOption("intOption", 4)  # test value not in list
         with self.assertRaises(Error):
             solver.setOption("intOption", "3")  # test type checking with list

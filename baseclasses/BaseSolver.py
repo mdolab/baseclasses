@@ -3,6 +3,7 @@ BaseSolver
 
 Holds a basic Python Analysis Classes (base and inherited).
 """
+from difflib import get_close_matches
 from pprint import pprint
 from .utils import CaseInsensitiveDict, CaseInsensitiveSet, Error
 
@@ -116,7 +117,8 @@ class BaseSolver(object):
                 if name in self.deprecatedOptions:
                     raise Error(f"Option {name} is deprecated. {self.deprecatedOptions[name]}")
                 else:
-                    raise Error(f"Option {name} is not a valid {self.name} option.")
+                    guess = get_close_matches(name, list(self.defaultOptions.keys()), n=1, cutoff=0.0)[0]
+                    raise Error(f"Option {name} is not a valid {self.name} option. Perhaps you meant {guess}?")
 
         # Make sure we are not trying to change an immutable option if
         # we are not allowed to.
@@ -172,7 +174,8 @@ class BaseSolver(object):
                     + "Because options checking has been disabled, make sure the option has been set first."
                 )
         else:
-            raise Error(f"{name} is not a valid option name.")
+            guess = get_close_matches(name, list(self.defaultOptions.keys()), n=1, cutoff=0.0)[0]
+            raise Error(f"{name} is not a valid option name. Perhaps you meant {guess}?")
 
     def printCurrentOptions(self):
         """
