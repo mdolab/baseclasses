@@ -59,10 +59,11 @@ class CaseInsensitiveSet(set):
 class Error(Exception):
     """
     Format the error message in a box to make it clear this
-    was a expliclty raised exception.
+    was a explicitly raised exception.
     """
 
     def __init__(self, message):
+        self.message = message
         msg = "\n+" + "-" * 78 + "+" + "\n" + "| Error: "
         i = 8
         for word in message.split():
@@ -73,5 +74,4 @@ class Error(Exception):
                 msg += word + " "
                 i += len(word) + 1
         msg += " " * (78 - i) + "|\n" + "+" + "-" * 78 + "+" + "\n"
-        print(msg)
-        super().__init__()
+        super().__init__(msg)
