@@ -93,10 +93,12 @@ class TestOptions(unittest.TestCase):
             self.assertEqual(multiValue_set, multiValue_get)
 
         # test Errors
-        with self.assertRaises(Error):
-            solver.getOption("invalidOption")  # test name checking
-        with self.assertRaises(Error):
-            solver.setOption("invalidOption", 1)  # test name checking
+        with self.assertRaises(Error) as context:
+            solver.getOption("invalidOption")  # test invalid option in getOption
+        self.assertTrue("intoption" in context.exception.message)  # check that intoption is offered as a suggestion
+        with self.assertRaises(Error) as context:
+            solver.setOption("invalidOption", 1)  # test invalid option in setOption
+        self.assertTrue("intoption" in context.exception.message)  # check that intoption is offered as a suggestion
         with self.assertRaises(Error):
             solver.setOption("intOption", 4)  # test value not in list
         with self.assertRaises(Error):
