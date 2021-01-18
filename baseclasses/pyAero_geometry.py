@@ -4,7 +4,6 @@ pyAero_geometry
 Holds the Python Aerodynamic Analysis Classes (base and inherited).
 """
 
-
 # =============================================================================
 # Geometry Class
 # =============================================================================
@@ -29,7 +28,7 @@ class Geometry(object):
         yRootec=0.0,
         zRootec=0.0,
         *args,
-        **kwargs
+        **kwargs,
     ):
 
         """
@@ -41,9 +40,6 @@ class Geometry(object):
 
         Attributes:
         -----------
-
-
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
         """
 
         #
@@ -64,8 +60,6 @@ class Geometry(object):
 
         """
         Print Structured Attributes List
-
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
         """
 
         ListAttributes(self)
@@ -74,8 +68,6 @@ class Geometry(object):
 
         """
         Print Structured List of Variable
-
-        Documentation last updated:  May. 21, 2008 - Ruben E. Perez
         """
 
         return "name    \n" + "     " + str(self.name).center(9)
@@ -88,8 +80,6 @@ def ListAttributes(self):
 
     """
     Print Structured Attributes List
-
-    Documentation last updated:  March. 24, 2008 - Ruben E. Perez
     """
 
     print("\n")
