@@ -1,13 +1,5 @@
 """
 pyAero_problem
-
-Developers:
------------
-- Dr. Gaetan K. W. Kenway (GKWK)
-
-History
--------
-    v. 0.1    - Complete overall of AeroProblem (GKWK, 2014)
 """
 
 # =============================================================================
@@ -17,37 +9,7 @@ import numpy
 import warnings
 from .ICAOAtmosphere import ICAOAtmosphere
 from .FluidProperties import FluidProperties
-import copy
-
-from collections import defaultdict
-
-class CaseInsensitiveDict(dict):
-    def __setitem__(self, key, value):
-        super(CaseInsensitiveDict, self).__setitem__(key.lower(), value)
-
-    def __getitem__(self, key):
-        return super(CaseInsensitiveDict, self).__getitem__(key.lower())
-
-
-class Error(Exception):
-    """
-    Format the error message in a box to make it clear this
-    was a expliclty raised exception.
-    """
-
-    def __init__(self, message):
-        msg = '\n+' + '-' * 78 + '+' + '\n' + '| AeroProblem Error: '
-        i = 20
-        for word in message.split():
-            if len(word) + i + 1 > 78:  # Finish line and start new one
-                msg += ' ' * (78 - i) + '|\n| ' + word + ' '
-                i = 1 + len(word) + 1
-            else:
-                msg += word + ' '
-                i += len(word) + 1
-        msg += ' ' * (78 - i) + '|\n' + '+' + '-' * 78 + '+' + '\n'
-        print(msg)
-        Exception.__init__(self)
+from .utils import CaseInsensitiveDict, Error
 
 
 class AeroProblem(FluidProperties):
@@ -242,34 +204,55 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     def __init__(self, name, **kwargs):
 
         # Set basic fluid properties
-        FluidProperties.__init__(self, **kwargs)
+        super().__init__(**kwargs)
 
         # Always have to have the name
         self.name = name
 
         # These are the parameters that can be simply set directly in
         # the class.
-        paras = set(('alpha', 'beta', 'areaRef', 'chordRef', 'spanRef',
-                     'xRef', 'yRef', 'zRef', 'xRot', 'yRot', 'zRot',
-                     'phat', 'qhat', 'rhat', 'momentAxis',
-                     'degreePol', 'coefPol', 'degreeFourier', 'omegaFourier',
-                     'cosCoefFourier', 'sinCoefFourier',
-                     'machRef', 'machGrid'))
+        paras = set(
+            (
+                "alpha",
+                "beta",
+                "areaRef",
+                "chordRef",
+                "spanRef",
+                "xRef",
+                "yRef",
+                "zRef",
+                "xRot",
+                "yRot",
+                "zRot",
+                "phat",
+                "qhat",
+                "rhat",
+                "momentAxis",
+                "degreePol",
+                "coefPol",
+                "degreeFourier",
+                "omegaFourier",
+                "cosCoefFourier",
+                "sinCoefFourier",
+                "machRef",
+                "machGrid",
+            )
+        )
 
         # By default everything is None
         for para in paras:
             setattr(self, para, None)
 
         # create an internal instance of the atmosphere to use
-        if 'altitude' in kwargs:
+        if "altitude" in kwargs:
             self.atm = ICAOAtmosphere(englishUnits=self.englishUnits)
 
         # Set or create an empty dictionary for additional solver
         # options
         self.solverOptions = CaseInsensitiveDict({})
-        if 'solverOptions' in kwargs:
-            for key in kwargs['solverOptions']:
-                self.solverOptions[key] = kwargs['solverOptions'][key]
+        if "solverOptions" in kwargs:
+            for key in kwargs["solverOptions"]:
+                self.solverOptions[key] = kwargs["solverOptions"][key]
 
         # Any matching key from kwargs that is in 'paras'
         for key in kwargs:
@@ -278,19 +261,17 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
         # Check for function list:
         self.evalFuncs = set()
-        if 'evalFuncs' in kwargs:
-            self.evalFuncs = set(kwargs['evalFuncs'])
-        if 'funcs' in kwargs:
-            warnings.warn("funcs should **not** be an argument. Use 'evalFuncs'"
-                          "instead.")
-            self.evalFuncs = set(kwargs['funcs'])
+        if "evalFuncs" in kwargs:
+            self.evalFuncs = set(kwargs["evalFuncs"])
+        if "funcs" in kwargs:
+            warnings.warn("funcs should **not** be an argument. Use 'evalFuncs' instead.")
+            self.evalFuncs = set(kwargs["funcs"])
 
         # we cast the set to a sorted list, so that each proc can loop over in the same order
         self.evalFuncs = sorted(list(self.evalFuncs))
 
         # these are the possible input values
-        possibleInputStates = set(['mach', 'V', 'P', 'T', 'rho', 'altitude', 'reynolds',
-                                   'reynoldsLength'])
+        possibleInputStates = set(["mach", "V", "P", "T", "rho", "altitude", "reynolds", "reynoldsLength"])
 
         # turn the kwargs into a set
         keys = set(kwargs.keys())
@@ -302,32 +283,67 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                 self.inputs[key] = kwargs[key]
 
         # full list of states in the class
-        self.fullState = set(['mach', 'V', 'P', 'T', 'rho', 'mu', 'nu', 'a',
-                              'q', 'altitude', 're', 'reynolds', 'reynoldsLength'])
+        self.fullState = set(
+            ["mach", "V", "P", "T", "rho", "mu", "nu", "a", "q", "altitude", "re", "reynolds", "reynoldsLength"]
+        )
 
         # now call the routine to setup the states
         self._setStates(self.inputs)
 
         # Specify the set of possible design variables:
-        self.allVarFuncs = ['alpha', 'beta', 'areaRef', 'chordRef', 'spanRef',
-                            'xRef', 'yRef', 'zRef', 'xRot', 'yRot', 'zRot', 'momentAxis',
-                            'phat', 'qhat', 'rhat', 'mach', 'altitude', 'P', 'T',
-                            'reynolds', 'reynoldsLength']
+        self.allVarFuncs = [
+            "alpha",
+            "beta",
+            "areaRef",
+            "chordRef",
+            "spanRef",
+            "xRef",
+            "yRef",
+            "zRef",
+            "xRot",
+            "yRot",
+            "zRot",
+            "momentAxis",
+            "phat",
+            "qhat",
+            "rhat",
+            "mach",
+            "altitude",
+            "P",
+            "T",
+            "reynolds",
+            "reynoldsLength",
+        ]
 
         self.possibleDVs = set()
         for var in self.allVarFuncs:
             if getattr(self, var) is not None:
                 self.possibleDVs.add(var)
 
-        BCVarFuncs = \
-        ['Temperature', 'Pressure', 'Density', \
-         'TemperatureStagnation', 'PressureStagnation',  'DensityStagnation', \
-         'VelocityX', 'VelocityY', 'VelocityZ',  'VelocityR', 'VelocityTheta', \
-         'VelocityUnitVectorX', 'VelocityUnitVectorY', 'VelocityUnitVectorZ', 'VelocityUnitVectorR', 'VelocityUnitVectorTheta', \
-         'VelocityAngleX', 'VelocityAngleY', 'VelocityAngleZ']
+        BCVarFuncs = [
+            "Temperature",
+            "Pressure",
+            "Density",
+            "TemperatureStagnation",
+            "PressureStagnation",
+            "DensityStagnation",
+            "VelocityX",
+            "VelocityY",
+            "VelocityZ",
+            "VelocityR",
+            "VelocityTheta",
+            "VelocityUnitVectorX",
+            "VelocityUnitVectorY",
+            "VelocityUnitVectorZ",
+            "VelocityUnitVectorR",
+            "VelocityUnitVectorTheta",
+            "VelocityAngleX",
+            "VelocityAngleY",
+            "VelocityAngleZ",
+        ]
         self.possibleBCDVs = set(BCVarFuncs)
 
-        actuatorFuncs = ['Thrust', 'Torque']
+        actuatorFuncs = ["Thrust", "Torque"]
         self.possibleActuatorDVs = set(actuatorFuncs)
 
         # Now determine the possible functions. Any possible design
@@ -352,9 +368,9 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         self.actuatorData = {}
 
     def _setStates(self, inputDict):
-        '''
+        """
         Take in a dictionary and set up the full set of states.
-        '''
+        """
 
         # Now we can do the name matching for the data for the
         # thermodynamic condition. We actually can work backwards from
@@ -371,87 +387,91 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             if key in self.inputs.keys():
                 pass
             else:
-                validKeys = ''
+                validKeys = ""
                 for vkey in self.inputs:
-                    validKeys += vkey + ', '
+                    validKeys += vkey + ", "
 
-                raise Error('Invalid input parameter: %s . Only values initially specifed'
-                            ' as inputs may be modifed. valid inputs include: %s' % (key, validKeys))
+                raise Error(
+                    "Invalid input parameter: %s . Only values initially specifed"
+                    " as inputs may be modifed. valid inputs include: %s" % (key, validKeys)
+                )
         # now we know our inputs are valid. update self.Input and update states
         for key in inputDict:
             self.inputs[key] = inputDict[key]
 
-        if set(('mach', 'T', 'P')) <= inKeys:
-            self.__dict__['mach'] = self.inputs['mach']
-            self.__dict__['T'] = self.inputs['T']
-            self.__dict__['P'] = self.inputs['P']
-            self.__dict__['rho'] = self.P / (self.R * self.T)
+        if set(("mach", "T", "P")) <= inKeys:
+            self.__dict__["mach"] = self.inputs["mach"]
+            self.__dict__["T"] = self.inputs["T"]
+            self.__dict__["P"] = self.inputs["P"]
+            self.__dict__["rho"] = self.P / (self.R * self.T)
             # now calculate remaining states
             self._updateFromM()
-        elif set(('mach', 'T', 'rho')) <= inKeys:
-            self.__dict__['mach'] = self.inputs['mach']
-            self.__dict__['T'] = self.inputs['T']
-            self.__dict__['rho'] = self.inputs['rho']
-            self.__dict__['P'] = self.rho * self.R * self.T
+        elif set(("mach", "T", "rho")) <= inKeys:
+            self.__dict__["mach"] = self.inputs["mach"]
+            self.__dict__["T"] = self.inputs["T"]
+            self.__dict__["rho"] = self.inputs["rho"]
+            self.__dict__["P"] = self.rho * self.R * self.T
             # now calculate remaining states
             self._updateFromM()
-        elif set(('mach', 'P', 'rho')) <= inKeys:
-            self.__dict__['mach'] = self.inputs['mach']
-            self.__dict__['rho'] = self.inputs['rho']
-            self.__dict__['P'] = self.inputs['P']
-            self.__dict__['T'] = self.P / (self.rho * self.R)
+        elif set(("mach", "P", "rho")) <= inKeys:
+            self.__dict__["mach"] = self.inputs["mach"]
+            self.__dict__["rho"] = self.inputs["rho"]
+            self.__dict__["P"] = self.inputs["P"]
+            self.__dict__["T"] = self.P / (self.rho * self.R)
             # now calculate remaining states
             self._updateFromM()
-        elif set(('mach', 'reynolds', 'reynoldsLength', 'T')) <= inKeys:
-            self.__dict__['mach'] = self.inputs['mach']
-            self.__dict__['T'] = self.inputs['T']
-            self.__dict__['re'] = self.inputs['reynolds'] / self.inputs['reynoldsLength']
-            self.__dict__['reynolds'] = self.inputs['reynolds']
-            self.__dict__['reynoldsLength'] = self.inputs['reynoldsLength']
+        elif set(("mach", "reynolds", "reynoldsLength", "T")) <= inKeys:
+            self.__dict__["mach"] = self.inputs["mach"]
+            self.__dict__["T"] = self.inputs["T"]
+            self.__dict__["re"] = self.inputs["reynolds"] / self.inputs["reynoldsLength"]
+            self.__dict__["reynolds"] = self.inputs["reynolds"]
+            self.__dict__["reynoldsLength"] = self.inputs["reynoldsLength"]
             # now calculate remaining states
             self._updateFromRe()
-        elif set(('V', 'reynolds', 'reynoldsLength', 'T')) <= inKeys:
-            self.__dict__['V'] = self.inputs['V']
-            self.__dict__['T'] = self.inputs['T']
-            self.__dict__['re'] = self.inputs['reynolds'] / self.inputs['reynoldsLength']
-            self.__dict__['reynolds'] = self.inputs['reynolds']
-            self.__dict__['reynoldsLength'] = self.inputs['reynoldsLength']
+        elif set(("V", "reynolds", "reynoldsLength", "T")) <= inKeys:
+            self.__dict__["V"] = self.inputs["V"]
+            self.__dict__["T"] = self.inputs["T"]
+            self.__dict__["re"] = self.inputs["reynolds"] / self.inputs["reynoldsLength"]
+            self.__dict__["reynolds"] = self.inputs["reynolds"]
+            self.__dict__["reynoldsLength"] = self.inputs["reynoldsLength"]
             # now calculate remaining states
             self._updateFromRe()
-        elif set(('mach', 'altitude')) <= inKeys:
-            self.__dict__['mach'] = self.inputs['mach']
-            self.__dict__['altitude'] = self.inputs['altitude']
-            P, T = self.atm(self.inputs['altitude'])
-            self.__dict__['T'] = T
-            self.__dict__['P'] = P
-            self.__dict__['rho'] = self.P / (self.R * self.T)
+        elif set(("mach", "altitude")) <= inKeys:
+            self.__dict__["mach"] = self.inputs["mach"]
+            self.__dict__["altitude"] = self.inputs["altitude"]
+            P, T = self.atm(self.inputs["altitude"])
+            self.__dict__["T"] = T
+            self.__dict__["P"] = P
+            self.__dict__["rho"] = self.P / (self.R * self.T)
             self._updateFromM()
-        elif set(('V', 'rho', 'T')) <= inKeys:
-            self.__dict__['V'] = self.inputs['V']
-            self.__dict__['rho'] = self.inputs['rho']
-            self.__dict__['T'] = self.inputs['T']
+        elif set(("V", "rho", "T")) <= inKeys:
+            self.__dict__["V"] = self.inputs["V"]
+            self.__dict__["rho"] = self.inputs["rho"]
+            self.__dict__["T"] = self.inputs["T"]
             # calculate pressure
-            self.__dict__['P'] = self.rho * self.R * self.T
+            self.__dict__["P"] = self.rho * self.R * self.T
             self._updateFromV()
-        elif set(('V', 'rho', 'P')) <= inKeys:
-            self.__dict__['V'] = self.inputs['V']
-            self.__dict__['rho'] = self.inputs['rho']
-            self.__dict__['P'] = self.inputs['P']
+        elif set(("V", "rho", "P")) <= inKeys:
+            self.__dict__["V"] = self.inputs["V"]
+            self.__dict__["rho"] = self.inputs["rho"]
+            self.__dict__["P"] = self.inputs["P"]
             # start by calculating the T
-            self.__dict__['T'] = self.P / (self.rho * self.R)
+            self.__dict__["T"] = self.P / (self.rho * self.R)
             self._updateFromV()
-        elif set(('V', 'T', 'P')) <= inKeys:
-            self.__dict__['V'] = self.inputs['V']
-            self.__dict__['T'] = self.inputs['T']
-            self.__dict__['P'] = self.inputs['P']
+        elif set(("V", "T", "P")) <= inKeys:
+            self.__dict__["V"] = self.inputs["V"]
+            self.__dict__["T"] = self.inputs["T"]
+            self.__dict__["P"] = self.inputs["P"]
             # start by calculating the T
-            self.__dict__['rho'] = self.P / (self.R * self.T)
+            self.__dict__["rho"] = self.P / (self.R * self.T)
             self._updateFromV()
         else:
-            raise Error('There was not sufficient information to form '
-                        'an aerodynamic state. See AeroProblem documentation '
-                        'in for pyAero_problem.py for information on how '
-                        'to correctly specify the aerodynamic state')
+            raise Error(
+                "There was not sufficient information to form "
+                "an aerodynamic state. See AeroProblem documentation "
+                "in for pyAero_problem.py for information on how "
+                "to correctly specify the aerodynamic state"
+            )
 
     def setBCVar(self, varName, value, groupName):
         """
@@ -473,7 +493,6 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     #     else:
     #         self.BCData[groupName][varName][patch] = dataArray
 
-
     def setActuatorVar(self, varName, value, groupName):
         if not groupName in self.actuatorData.keys():
             self.actuatorData[groupName] = {}
@@ -490,10 +509,8 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     #     add a set of bcdata was a design variable
     #     """
 
-
     #     if bc_var not in self.possibleBCDVs:
     #         raise ValueError('%s is not a valid design variable' % key)
-
 
     #         # get a numpy array by appliying thee filters to the bc data
     #     data = self.bc_data.getBCArraysFlatData( bc_var, familyGroup=familyGroup)
@@ -503,8 +520,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     #     else:
     #         dvName = name
 
-  
-    #     # combine the data 
+    #     # combine the data
 
     #     if value is None:
     #         value = data
@@ -515,15 +531,24 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     #             raise Error('give value for {} is not ht right size, {} given {} expected'.format(bc_var, value.size, data.size))
 
     #     dv = aeroDV(bc_var, value, lower, upper, scale, offset,
-    #                             dvOffset, addToPyOpt, familyGroup, units)                
+    #                             dvOffset, addToPyOpt, familyGroup, units)
     #     self.DVs[dvName] = dv
     #     return
 
-
-
-    def addDV(self, key, value=None, lower=None, upper=None, scale=1.0,
-              name=None, offset=0.0, dvOffset=0.0, addToPyOpt=True, familyGroup=None,
-              units=None):
+    def addDV(
+        self,
+        key,
+        value=None,
+        lower=None,
+        upper=None,
+        scale=1.0,
+        name=None,
+        offset=0.0,
+        dvOffset=0.0,
+        addToPyOpt=True,
+        familyGroup=None,
+        units=None,
+    ):
         """
         Add one of the class attributes as an 'aerodynamic' design
         variable. Typical variables are alpha, mach, altitude,
@@ -592,46 +617,48 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         >>> ap.addDV('alpha', value=2.5, lower=0.0, upper=10.0, scale=0.1)
         """
 
-        if (key not in self.allVarFuncs) and (key not in self.possibleBCDVs) and \
-            (key not in self.possibleActuatorDVs):
-            raise ValueError('%s is not a valid design variable' % key)
+        if (key not in self.allVarFuncs) and (key not in self.possibleBCDVs) and (key not in self.possibleActuatorDVs):
+            raise ValueError("%s is not a valid design variable" % key)
 
         # First check if we are allowed to add the DV:
         elif (key not in self.possibleDVs) and (key in self.allVarFuncs):
-            raise Error("The DV '%s' could not be added. Potential DVs MUST "
-                        "be specified when the aeroProblem class is created. "
-                        "For example, if you want alpha as a design variable "
-                        "(...,alpha=value, ...) must be given. The list of "
-                        "possible DVs are: %s." % (key, repr(self.possibleDVs)))
+            raise Error(
+                "The DV '%s' could not be added. Potential DVs MUST "
+                "be specified when the aeroProblem class is created. "
+                "For example, if you want alpha as a design variable "
+                "(...,alpha=value, ...) must be given. The list of "
+                "possible DVs are: %s." % (key, repr(self.possibleDVs))
+            )
 
         if key in self.possibleBCDVs or key in self.possibleActuatorDVs:
             if familyGroup is None:
-                raise Error("The familyGroup must be given for BC or actuator\
-                             design variables")
+                raise Error(
+                    "The familyGroup must be given for BC or actuator\
+                             design variables"
+                )
 
             if name is None:
-                dvName = '%s_%s_%s' % (key, familyGroup, self.name)
+                dvName = "%s_%s_%s" % (key, familyGroup, self.name)
             else:
                 dvName = name
 
-            
             if value is None:
                 if key in self.possibleBCDVs:
                     try:
                         value = self.bc_data[familyGroup][key]
-                    except KeyError :
+                    except KeyError:
                         raise Error("The value must be given or set using the setBCVar routine")
-                else: 
+                else:
                     try:
                         value = self.actuatorData[familyGroup][key]
-                    except KeyError :
+                    except KeyError:
                         raise Error("The value must be given or set using the setActuatorVar routine")
 
             # # the value of the BCData[familyGroup][key] maybe a dictionary of data for each patch
             # # to accomadate this we will add a variable for each entry in the dictionary
             # if isinstance(value, dict) and  key in self.possibleBCDVs:
-                
-            #     # use a little bit o recursion 
+
+            #     # use a little bit o recursion
             #     for dict_key in value:
             #         dict_key_name = str(dict_key).replace(" ", "")
             #         dict_dvName = '%s_%s' % (dvName , dict_key_name)
@@ -639,38 +666,37 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             #         if isinstance(lower, dict):
             #             lower_val = lower[dict_key]
             #         else:
-            #             lower_val = lower    
+            #             lower_val = lower
             #         if isinstance(upper, dict):
             #             upper_val = upper[dict_key]
             #         else:
-            #             upper_val = upper    
+            #             upper_val = upper
             #         if isinstance(scale, dict):
             #             scale_val = scale[dict_key]
             #         else:
-            #             scale_val = scale    
+            #             scale_val = scale
             #         if isinstance(offset, dict):
             #             offset_val = offset[dict_key]
             #         else:
-            #             offset_val = offset    
+            #             offset_val = offset
             #         if isinstance(dvOffset, dict):
             #             dvOffset_val = dvOffset[dict_key]
             #         else:
-            #             dvOffset_val = dvOffset    
+            #             dvOffset_val = dvOffset
 
-
-            #         # self.addDV(key, , lower_val, upper_val, scale_val, dvName, 
+            #         # self.addDV(key, , lower_val, upper_val, scale_val, dvName,
             #         #      offset_val, dvOffset_val, addToPyOpt, familyGroup,
             #         #     units)
 
             #         self.DVs[dict_dvName] = aeroDV(key, value[dict_key], lower_val, upper_val, scale_val, offset_val,
-            #                                 dvOffset_val, addToPyOpt, familyGroup, units)                
+            #                                 dvOffset_val, addToPyOpt, familyGroup, units)
             #         self.DVs[dict_dvName].dict_key = dict_key
-                
+
             #     return
 
         else:
             if name is None:
-                dvName = key + '_%s' % self.name
+                dvName = key + "_%s" % self.name
             else:
                 dvName = name
 
@@ -678,8 +704,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                 value = getattr(self, key)
             familyGroup = None
 
-        self.DVs[dvName] = aeroDV(key, value, lower, upper, scale, offset,
-                                dvOffset, addToPyOpt, familyGroup, units)
+        self.DVs[dvName] = aeroDV(key, value, lower, upper, scale, offset, dvOffset, addToPyOpt, familyGroup, units)
 
     def updateInternalDVs(self):
         """
@@ -701,8 +726,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         x : dict
             Dictionary of variables which may or may not contain the
             design variable names this object needs
-            """
-
+        """
 
         for dvName in self.DVs:
             if dvName in x:
@@ -711,20 +735,19 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                 family = dv.family
                 value = x[dvName] + dv.offset
                 if key in self.possibleBCDVs:
-                    self.bc_data[family][key] = value               
+                    self.bc_data[family][key] = value
 
                 elif key in self.possibleActuatorDVs:
-                    self.actuatorData[family][key] = value               
+                    self.actuatorData[family][key] = value
                 else:
                     setattr(self, key, value)
 
                 dv.value = x[dvName]
-                # try:  # To set in the DV as well if the DV exists:
-                # except:
-                #     # DV doesn't exist
-                #     warnings.warn("Design variable, {}, not present in self.DVs,\
-                #                    but was give".format(dvName))
 
+                # try:  # To set in the DV as well if the DV exists:
+                #     self.DVs[dvName].value = x[dvName]
+                # except:  # noqa
+                #     pass  # DV doesn't exist
 
     def addVariablesPyOpt(self, optProb):
         """
@@ -734,30 +757,45 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         ----------
         optProb : pyOpt_optimization class
             Optimization problem definition to which variables are added
-            """
+        """
 
         for dvName in self.DVs:
             dv = self.DVs[dvName]
             if dv.addToPyOpt:
                 if type(dv.value) == numpy.ndarray:
-                    optProb.addVarGroup(dvName, dv.value.size, 'c', value=dv.value, lower=dv.lower,
-                                upper=dv.upper, scale=dv.scale,
-                                offset=dv.dvOffset, units=dv.units)
+                    optProb.addVarGroup(
+                        dvName,
+                        dv.value.size,
+                        "c",
+                        value=dv.value,
+                        lower=dv.lower,
+                        upper=dv.upper,
+                        scale=dv.scale,
+                        offset=dv.dvOffset,
+                        units=dv.units,
+                    )
                 else:
-                    optProb.addVar(dvName, 'c', value=dv.value, lower=dv.lower,
-                                upper=dv.upper, scale=dv.scale,
-                                offset=dv.dvOffset, units=dv.units)
-
+                    optProb.addVar(
+                        dvName,
+                        "c",
+                        value=dv.value,
+                        lower=dv.lower,
+                        upper=dv.upper,
+                        scale=dv.scale,
+                        offset=dv.dvOffset,
+                        units=dv.units,
+                    )
 
     def __getitem__(self, key):
 
         return self.funcNames[key]
 
     def __str__(self):
-        output_str = ''
+        output_str = ""
         for key, val in self.__dict__.items():
             output_str += "{0:20} : {1:<16}\n".format(key, val)
         return output_str
+
     def evalFunctions(self, funcs, evalFuncs, ignoreMissing=False):
         """
         Evaluate the desired aerodynamic functions. It may seem
@@ -791,20 +829,21 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             Dictionary into which the functions are save
         evalFuncs : iterable object containing strings
             The functions that the user wants evaluated
-            """
+        """
 
         if set(evalFuncs) <= self.possibleFunctions:
             # All the functions are ok:
             for f in evalFuncs:
                 # Save the key into funcNames
-                key = self.name + '_%s' % f
+                key = self.name + "_%s" % f
                 self.funcNames[f] = key
                 funcs[key] = getattr(self, f)
         else:
             if not ignoreMissing:
-                raise Error("One of the functions in 'evalFunctionsSens' was "
-                            "not valid. The valid list of functions is: %s." % (
-                                repr(self.possibleFunctions)))
+                raise Error(
+                    "One of the functions in 'evalFunctionsSens' was "
+                    "not valid. The valid list of functions is: %s." % (repr(self.possibleFunctions))
+                )
 
     def evalFunctionsSens(self, funcsSens, evalFuncs, ignoreMissing=True):
         """
@@ -828,9 +867,10 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                 funcsSens[self.funcNames[f]] = self._getDVSens(f)
         else:
             if not ignoreMissing:
-                raise Error("One of the functions in 'evalFunctionsSens' was "
-                            "not valid. The valid list of functions is: %s." % (
-                                repr(self.possibleFunctions)))
+                raise Error(
+                    "One of the functions in 'evalFunctionsSens' was "
+                    "not valid. The valid list of functions is: %s." % (repr(self.possibleFunctions))
+                )
 
     def _set_aeroDV_val(self, key, value):
         # Find the DV matching this value. This is inefficient, but
@@ -841,80 +881,80 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
     @property
     def mach(self):
-        return self.__dict__['mach']
+        return self.__dict__["mach"]
 
     @mach.setter
     def mach(self, value):
-        self._setStates({'mach': value})
-        self._set_aeroDV_val('mach', value)
+        self._setStates({"mach": value})
+        self._set_aeroDV_val("mach", value)
 
     @property
     def T(self):
-        return self.__dict__['T']
+        return self.__dict__["T"]
 
     @T.setter
     def T(self, value):
-        self._setStates({'T': value})
-        self._set_aeroDV_val('T', value)
+        self._setStates({"T": value})
+        self._set_aeroDV_val("T", value)
 
     @property
     def P(self):
-        return self.__dict__['P']
+        return self.__dict__["P"]
 
     @P.setter
     def P(self, value):
-        self._setStates({'P': value})
-        self._set_aeroDV_val('P', value)
+        self._setStates({"P": value})
+        self._set_aeroDV_val("P", value)
 
     @property
     def rho(self):
-        return self.__dict__['rho']
+        return self.__dict__["rho"]
 
     @rho.setter
     def rho(self, value):
-        self._setStates({'rho': value})
-        self._set_aeroDV_val('rho', value)
+        self._setStates({"rho": value})
+        self._set_aeroDV_val("rho", value)
 
     @property
     def re(self):
-        return self.__dict__['re']
+        return self.__dict__["re"]
 
     @re.setter
     def re(self, value):
-        self._setStates({'re': value})
-        self._set_aeroDV_val('re', value)
+        self._setStates({"re": value})
+        self._set_aeroDV_val("re", value)
 
     @property
     def reynolds(self):
-        return self.__dict__['reynolds']
+        return self.__dict__["reynolds"]
 
     @reynolds.setter
     def reynolds(self, value):
-        self._setStates({'reynolds': value})
-        self._set_aeroDV_val('reynolds', value)
+        self._setStates({"reynolds": value})
+        self._set_aeroDV_val("reynolds", value)
 
     @property
     def reynoldsLength(self):
-        return self.__dict__['reynoldsLength']
+        return self.__dict__["reynoldsLength"]
 
     @reynoldsLength.setter
     def reynoldsLength(self, value):
-        self._setStates({'reynoldsLength': value})
-        self._set_aeroDV_val('reynoldsLength', value)
+        self._setStates({"reynoldsLength": value})
+        self._set_aeroDV_val("reynoldsLength", value)
 
     @property
     def altitude(self):
-        return self.__dict__['altitude']
+        return self.__dict__["altitude"]
 
     @altitude.setter
     def altitude(self, value):
-        self._setStates({'altitude': value})
-        self._set_aeroDV_val('altitude', value)
+        self._setStates({"altitude": value})
+        self._set_aeroDV_val("altitude", value)
 
     def _updateFromRe(self):
-        '''
+        """
         update the full set of states from M,T,P
-        '''
+        """
         # calculate the speed of sound
         self.a = numpy.sqrt(self.gamma * self.R * self.T)
 
@@ -925,23 +965,23 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         if self.V is None:
             self.V = self.mach * self.a
         else:
-            self.__dict__['mach'] = self.V / self.a
+            self.__dict__["mach"] = self.V / self.a
 
         # calculate density
-        self.__dict__['rho'] = self.re * self.mu / self.V
+        self.__dict__["rho"] = self.re * self.mu / self.V
         # calculate pressure
-        self.__dict__['P'] = self.rho * self.R * self.T
+        self.__dict__["P"] = self.rho * self.R * self.T
 
         # calculate kinematic viscosity
         self.nu = self.mu / self.rho
 
         # calculate dynamic pressure
-        self.q = 0.5 * self.rho * self.V**2
+        self.q = 0.5 * self.rho * self.V ** 2
 
     def _updateFromM(self):
-        '''
+        """
         update the full set of states from M,T,P, Rho
-        '''
+        """
         # calculate the speed of sound
         self.a = numpy.sqrt(self.gamma * self.R * self.T)
 
@@ -952,18 +992,18 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         self.V = self.mach * self.a
 
         # calulate reynolds per length
-        self.__dict__['re'] = self.rho * self.V / self.mu
+        self.__dict__["re"] = self.rho * self.V / self.mu
 
         # calculate kinematic viscosity
         self.nu = self.mu / self.rho
 
         # calculate dynamic pressure
-        self.q = 0.5 * self.rho * self.V**2
+        self.q = 0.5 * self.rho * self.V ** 2
 
     def _updateFromV(self):
-        '''
+        """
         update the full set of states from V,T,P, Rho
-        '''
+        """
         # calculate the speed of sound
         self.a = numpy.sqrt(self.gamma * self.R * self.T)
 
@@ -974,13 +1014,13 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         self.nu = self.mu / self.rho
 
         # calculate dynamic pressure
-        self.q = 0.5 * self.rho * self.V**2
+        self.q = 0.5 * self.rho * self.V ** 2
 
         # calculate Mach Number
-        self.__dict__['mach'] = self.V / self.a
+        self.__dict__["mach"] = self.V / self.a
 
         # calulate reynolds per length
-        self.__dict__['re'] = self.rho * self.V / self.mu
+        self.__dict__["re"] = self.rho * self.V / self.mu
 
     def _getDVSens(self, func):
         """
@@ -1016,15 +1056,14 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                 value = xDvDot[dvName]
 
                 if key in self.possibleBCDVs:
-                    bcDvsDot[family][key] = value               
+                    bcDvsDot[family][key] = value
 
                 elif key in self.possibleActuatorDVs:
-                    actDvsDot[family][key] = value               
+                    actDvsDot[family][key] = value
                 else:
                     aeroDvsDot[key] = value
 
         return aeroDvsDot, bcDvsDot, actDvsDot
-
 
     def evalDVsSensBwd(self, aeroDvBar, BCDataBar, actDataBar):
         """This internal furncion is used to convert the raw array output from
@@ -1036,28 +1075,27 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             key = self.DVs[dvName].key.lower()
 
             tmp = {}
-            if key == 'altitude':
+            if key == "altitude":
                 # This design variable is special. It combines changes
                 # in temperature, pressure and density into a single
                 # variable. Since we have derivatives for T, P and
                 # rho, we simply chain rule it back to the the
                 # altitude variable.
-                self.evalFunctionsSens(tmp, ['P', 'T', 'rho'])
- 
+                self.evalFunctionsSens(tmp, ["P", "T", "rho"])
+
                 # Extract the derivatives wrt the independent
                 # parameters in ADflow
-                dIdP = aeroDvBar['p']
-                dIdT = aeroDvBar['t']
-                dIdrho = aeroDvBar['rho']
- 
+                dIdP = aeroDvBar["p"]
+                dIdT = aeroDvBar["t"]
+                dIdrho = aeroDvBar["rho"]
+
                 # Chain-rule to get the final derivative:
                 DVbar[dvName] = (
-                    tmp[self['P']][dvName]*dIdP +
-                    tmp[self['T']][dvName]*dIdT +
-                    tmp[self['rho']][dvName]*dIdrho)
+                    tmp[self["P"]][dvName] * dIdP + tmp[self["T"]][dvName] * dIdT + tmp[self["rho"]][dvName] * dIdrho
+                )
 
-            elif key == 'mach':
-                self.evalFunctionsSens(tmp, ['P', 'rho'])
+            elif key == "mach":
+                self.evalFunctionsSens(tmp, ["P", "rho"])
                 # Simular story for Mach: It is technically possible
                 # to use a mach number for a fixed RE simulation. For
                 # the RE to stay fixed and change the mach number, the
@@ -1066,20 +1104,17 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                 # derivative. When Mach number is used with altitude
                 # or P and T, this calc is unnecessary, but won't do
                 # any harm.
-                dIdP = aeroDvBar['p']
-                dIdrho = aeroDvBar['rho']
- 
+                dIdP = aeroDvBar["p"]
+                dIdrho = aeroDvBar["rho"]
+
                 # Chain-rule to get the final derivative:
-                DVbar[dvName] = (
-                    tmp[self['P']][dvName]*dIdP +
-                    tmp[self['rho']][dvName]*dIdrho +
-                    aeroDvBar['mach'])
+                DVbar[dvName] = tmp[self["P"]][dvName] * dIdP + tmp[self["rho"]][dvName] * dIdrho + aeroDvBar["mach"]
             # if the variable is an BC DV, get the data from the BCDataBar
             # dict for each patch
             elif key in [k.lower() for k in self.possibleBCDVs]:
                 fam = self.DVs[dvName].family
                 dv_key = self.DVs[dvName].key
-            
+
                 DVbar[dvName] = BCDataBar[fam][dv_key]
 
             # if the variable is an actuator DV, get the data from the actDataBar
@@ -1088,17 +1123,11 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                 dv_key = self.DVs[dvName].key
                 DVbar[dvName] = actDataBar[fam][dv_key]
 
- 
             else:
                 DVbar[dvName] = aeroDvBar[key]
 
- 
-
-               
         return DVbar
 
-
-               
     #     return DVbar
 
 
@@ -1107,8 +1136,7 @@ class aeroDV(object):
     A container storing information regarding an 'aerodynamic' variable.
     """
 
-    def __init__(self, key, value, lower, upper, scale, offset, dvOffset,
-                 addToPyOpt, family, units):
+    def __init__(self, key, value, lower, upper, scale, offset, dvOffset, addToPyOpt, family, units):
         self.key = key
         self.value = value
         self.lower = lower
@@ -1120,17 +1148,16 @@ class aeroDV(object):
         self.family = family
         self.units = units
 
-
         if isinstance(value, float):
             self.size = 1
         elif isinstance(value, numpy.ndarray):
             self.size = value.size
         else:
             size = None
-            #TODO raise an error?
-        
+            # TODO raise an error?
+
     def __repr__(self):
-        '''Returns representation of the object'''
+        """Returns representation of the object"""
         msg = "{}({!r}) {}".format(self.__class__.__name__, self.key, self.value)
         if self.units is not None:
             msg += self.units

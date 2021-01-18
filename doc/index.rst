@@ -14,10 +14,15 @@ aerodynamic, structural and aerostructural solvers, as well as classes
 defining standard ways of describing aerodynamic, structural and
 aerostructural problems for use in those classes.
 
-The classes that the user will interact with are:
+To install, first clone the repo, then go into the root directory and type::
+
+   pip install .
+
+For stability we recommend cloning or checking out a tagged release.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
+   :caption: Problem Classes
 
    pyAero_problem
    pyStruct_problem
@@ -25,18 +30,10 @@ The classes that the user will interact with are:
    pyMission_problem
    pyWeight_problem
 
-The remainder of the documentation for the solver base classes can be
-found on the full API documentation page:
 
 .. toctree::
    :maxdepth: 1
+   :caption: Solver Classes
 
-   API
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+   BaseSolver
+   pyAero_solver

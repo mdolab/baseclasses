@@ -3,7 +3,7 @@
 pyAeroStruct_problem
 --------------------
 
-.. currentmodule:: python.pyAeroStruct_problem
+.. currentmodule:: baseclasses.pyAeroStruct_problem
 
 .. autoclass:: AeroStructProblem
     :members:

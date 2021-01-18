@@ -1,34 +1,33 @@
-from setuptools import setup
+from setuptools import setup, find_packages
+import os
 import re
 
 __version__ = re.findall(
     r"""__version__ = ["']+([0-9\.]*)["']+""",
-    open('baseclasses/__init__.py').read(),
+    open("baseclasses/__init__.py").read(),
 )[0]
 
-setup(name='baseclasses',
-      version=__version__,
-      description="baseclasses contains base classes that are used together with the rest of MDO lab tools.",
-      long_description="""
-      baseclasses contains, well, base classes that are used together with the rest of MDO lab tools. It includes the various problems to be defined by the user in order to perform some analyses, such as
+this_directory = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(this_directory, "README.md"), encoding="utf-8") as f:
+    long_description = f.read()
 
-          AeroProblem
-          StructProblem
-          AeroStructProblem
-
-      It also contains some class definitions shared by various solvers, such as AeroSolver. Finally, it also contains a class, BaseRegTest, which is used as part of the testing toolchain.
-      """,
-      long_description_content_type="text/markdown",
-      keywords='optimization shape-optimization multi-disciplinary',
-      author='',
-      author_email='',
-      url='https://github.com/mdolab/baseclasses',
-      license='Apache License Version 2.0',
-      packages=[
-          'baseclasses',
-      ],
-      classifiers=[
+setup(
+    name="mdolab-baseclasses",
+    version=__version__,
+    description="base classes that are used together with the rest of MDO Lab tools.",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    author="",
+    author_email="",
+    url="https://github.com/mdolab/baseclasses",
+    license="Apache License Version 2.0",
+    packages=find_packages(),
+    install_requires=[
+        "numpy>=1.16",
+    ],
+    classifiers=[
         "Operating System :: OS Independent",
-        "Programming Language :: Python"]
-      )
-
+        "Topic :: Scientific/Engineering",
+        "Programming Language :: Python",
+    ],
+)

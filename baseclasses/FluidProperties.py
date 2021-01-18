@@ -1,17 +1,5 @@
-"""
-FluidProperties.py
-
-Developers:
------------
-- Nicolas P. Bons (NPB)
-- Dr. Charles A. Mader (CAM)
-
-History
--------
-    v. 0.1    - Create FluidProperties base class (NPB, 2018)
-"""
-import numpy
 import warnings
+
 
 class FluidProperties(object):
     """
@@ -38,66 +26,68 @@ class FluidProperties(object):
 
         # Check if we have english units:
         self.englishUnits = False
-        if 'englishUnits' in kwargs:
-            self.englishUnits = kwargs['englishUnits']
+        if "englishUnits" in kwargs:
+            self.englishUnits = kwargs["englishUnits"]
 
         # Check if 'R' is given....if not we assume air
-        if 'R' in kwargs:
-            self.R = kwargs['R']
+        if "R" in kwargs:
+            self.R = kwargs["R"]
         else:
             # Universal gas constant
             # (https://physics.nist.gov/cuu/Constants/)
-            R_universal = 8.3144598     # J / mol / K
+            R_universal = 8.3144598  # J / mol / K
 
             # Molecular mass of air
             # (https://www.engineeringtoolbox.com/molecular-mass-air-d_679.html)
-            M_air = 28.9647     # g / mol
+            M_air = 28.9647  # g / mol
 
             # Specific gas constant of air in S.I. units
-            R_air = R_universal / M_air * 1000.0     # J / kg / K
+            R_air = R_universal / M_air * 1000.0  # J / kg / K
 
             # Conversion from S.I. to english. Basically the S.I. units are
             # m^2 / s^2 / K so we need to convert meters to feet and Kelvin to
             # Rankine
-            m2ft = 0.3048   # official conversion from meters to feet
-            Ra2K = 1.8      # official conversion from Rankine to Kelvin
+            m2ft = 0.3048  # official conversion from meters to feet
+            Ra2K = 1.8  # official conversion from Rankine to Kelvin
 
             if self.englishUnits:
-                self.R = R_air / Ra2K / m2ft**2  # 1716.574 ft-lbf / slug / R
+                self.R = R_air / Ra2K / m2ft ** 2  # 1716.574 ft-lbf / slug / R
             else:
                 self.R = R_air  # 287.055 J / kg / K
 
         # Check if 'gamma' is given....if not we assume air
-        if 'gamma' in kwargs:
-            self.gamma = kwargs['gamma']
+        if "gamma" in kwargs:
+            self.gamma = kwargs["gamma"]
         else:
             self.gamma = 1.4
 
         # Check if 'Pr' is given....if not we assume air
-        if 'Pr' in kwargs:
-            self.Pr = kwargs['Pr']
+        if "Pr" in kwargs:
+            self.Pr = kwargs["Pr"]
         else:
             self.Pr = 0.72
 
         # Sutherland's Law Constants
         # (https://www.cfd-online.com/Wiki/Sutherland's_law)
-        if 'SSuthDim' in kwargs or 'muSuthDim' in kwargs or 'TSuthDim' in kwargs:
-            if not all(name in kwargs for name in ('muSuthDim','muSuthDim','TSuthDim')):
-                warnings.warn("One or more constant for Sutherlands law might be missing!\
-                Make sure to provide all three!")
+        if "SSuthDim" in kwargs or "muSuthDim" in kwargs or "TSuthDim" in kwargs:
+            if not all(name in kwargs for name in ("muSuthDim", "muSuthDim", "TSuthDim")):
+                warnings.warn(
+                    "One or more constant for Sutherlands law might be missing!\
+                Make sure to provide all three!"
+                )
 
-        if 'SSuthDim' in kwargs:
-            self.SSuthDim = kwargs['SSuthDim']
+        if "SSuthDim" in kwargs:
+            self.SSuthDim = kwargs["SSuthDim"]
         else:
             self.SSuthDim = 110.55
 
-        if 'muSuthDim' in kwargs:
-            self.muSuthDim = kwargs['muSuthDim']
+        if "muSuthDim" in kwargs:
+            self.muSuthDim = kwargs["muSuthDim"]
         else:
             self.muSuthDim = 1.716e-5
 
-        if 'TSuthDim' in kwargs:
-            self.TSuthDim = kwargs['TSuthDim']
+        if "TSuthDim" in kwargs:
+            self.TSuthDim = kwargs["TSuthDim"]
         else:
             self.TSuthDim = 273.15
 
@@ -110,8 +100,7 @@ class FluidProperties(object):
         if self.englishUnits:
             T /= 1.8
 
-        self.mu = self.muSuthDim * (T/self.TSuthDim)**1.5 * \
-            (self.TSuthDim + self.SSuthDim) / (T + self.SSuthDim)
+        self.mu = self.muSuthDim * (T / self.TSuthDim) ** 1.5 * (self.TSuthDim + self.SSuthDim) / (T + self.SSuthDim)
 
         if self.englishUnits:
             self.mu /= 47.9
