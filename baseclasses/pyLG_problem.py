@@ -8,8 +8,8 @@ computation. Nothing in this computation can be a design variable right now beca
 the beam model setup in TACS has no provision for changing the load as a design variable.
 We will assume a fixed aircraft mass and LG characteristics. The output load can change as a
 function of the LG geometry if necessary.
-
 """
+
 import numpy
 
 
@@ -41,7 +41,18 @@ class LGProblem(object):
 
         # These are the parameters that can be simply set directly in
         # the class.
-        paras = set(("aircraftMass", "tireEff", "tireDef", "shockEff", "shockDef", "weightCondition", "loadCaseType"))
+        paras = set(
+            (
+                "aircraftMass",
+                "tireEff",
+                "tireDef",
+                "shockEff",
+                "shockDef",
+                "weightCondition",
+                "loadCaseType",
+                "loadFrac",
+            )
+        )
 
         self.g = 9.81  # (m/s)
         self.nMainGear = 2
@@ -57,14 +68,34 @@ class LGProblem(object):
         # for key in paras:
         #     print(key,getattr(self,key))
 
-        if self.weightCondition.lower() == "mtow":
+        if self.weightCondition.lower() == "mlw":
             self.V_vert = 3.048  # m/s or 10 fps
-        elif self.weightCondition.lower() == "mlw":
+        elif self.weightCondition.lower() == "mtow":
             self.V_vert = 1.83  # m/s or 6 fps
         else:
             print("Unrecognized weightCondition:", self.weightCondition)
 
+        if self.loadCaseType.lower() == "braking":
+            self.nCondition = 2
+            self.nameList = ["Braked rolling", "Reversed Braking"]
+        elif self.loadCaseType.lower() == "landing":
+            self.nCondition = 7
+            self.nameList = [
+                "Drag and side load",
+                "Drag and side load",
+                "Drag and side load",
+                "Side load",
+                "Side load",
+                "High drag and spring-back",
+                "High drag and spring-back",
+            ]
+
+        else:
+            print("Unrecognized loadCaseType:", self.loadCaseType)
+
         self.name += "_" + self.loadCaseType + "_" + self.weightCondition
+
+        self.nameList = None
 
         # Check for function list:
         self.evalFuncs = set()
@@ -76,22 +107,25 @@ class LGProblem(object):
 
         f_stat = self.aircraftMass * self.g / self.nMainGear
 
-        g_load = self.V_vert ** 2 / (
-            self.nMainGear * self.g * (self.tireEff * self.tireDef + self.shockEff * self.shockDef)
+        g_load = (self.V_vert ** 2 + (2 * self.g * (1 - self.loadFrac) * (self.tireDef + self.shockDef))) / (
+            2.0 * self.g * (self.tireEff * self.tireDef + self.shockEff * self.shockDef)
         )
-
+        # print('gload',self.V_vert**2,(2*self.g*(1-self.loadFrac)*(self.tireDef+self.shockDef)),2.0 , self.g,self.tireEff * self.tireDef,self.shockEff * self.shockDef,self.V_vert**2 /(2.0 * self.g ),  (self.tireEff * self.tireDef + self.shockEff * self.shockDef))
         # f_dyn =  self.aircraftMass * self.V_vert**2 /\
         #          (4.0 * (self.tireEff * self.tireDef + self.shockEff * self.shockDef))
 
         f_dyn = (1.0 / self.nMainGear) * g_load * self.aircraftMass * self.g
 
-        return f_stat, f_dyn, g_load
+        f_sb = f_dyn
+
+        # print('fdyn',f_stat,f_dyn,f_sb,g_load)
+        return f_stat, f_dyn, f_sb, g_load
 
     def getLoadFactor(self):
         """
         return the load factor for this load case
         """
-        f_stat, f_dyn, g_load = self._computeLGForces()
+        f_stat, f_dyn, f_sb, g_load = self._computeLGForces()
         if self.loadCaseType.lower() == "braking":
             loadFactor = 1.0
         elif self.loadCaseType.lower() == "landing":
@@ -103,60 +137,117 @@ class LGProblem(object):
 
     def getLoadCaseArrays(self):
 
-        f_stat, f_dyn, g_load = self._computeLGForces()
+        f_stat, f_dyn, f_sb, g_load = self._computeLGForces()
 
         if self.loadCaseType.lower() == "braking":
-            nCondition = 2
+
             if self.weightCondition.lower() == "mlw":
-                fVert = numpy.zeros(nCondition)
-                fVert[0] = 0.6 * f_stat
-                fVert[1] = 0.6 * f_stat
+                fVert = numpy.zeros(self.nCondition)
+                fVert[0] = 1.2 * f_stat
+                fVert[1] = 1.2 * f_stat
 
-                fDrag = numpy.zeros(nCondition)
-                fDrag[0] = 0.48 * f_stat
-                fDrag[1] = -0.33 * f_stat
+                fDrag = numpy.zeros(self.nCondition)
+                fDrag[0] = 0.96 * f_stat
+                fDrag[1] = -0.66 * f_stat
 
-                fSide = numpy.zeros(nCondition)
+                fSide = numpy.zeros(self.nCondition)
+
+                closure = numpy.zeros(self.nCondition)
+                closure[0] = 0.75 * self.shockDef
+                closure[1] = 0.75 * self.shockDef
+
+                gload = numpy.zeros(self.nCondition)
+                gload[:] = g_load
 
             elif self.weightCondition.lower() == "mtow":
-                fVert = numpy.zeros(nCondition)
-                fVert[0] = 0.5 * f_stat
-                fVert[1] = 0.5 * f_stat
+                fVert = numpy.zeros(self.nCondition)
+                fVert[0] = 1.0 * f_stat
+                fVert[1] = 1.0 * f_stat
 
-                fDrag = numpy.zeros(nCondition)
-                fDrag[0] = 0.4 * f_stat
-                fDrag[1] = -0.275 * f_stat
+                fDrag = numpy.zeros(self.nCondition)
+                fDrag[0] = 0.8 * f_stat
+                fDrag[1] = -0.55 * f_stat
 
-                fSide = numpy.zeros(nCondition)
+                fSide = numpy.zeros(self.nCondition)
+
+                closure = numpy.zeros(self.nCondition)
+                closure[0] = 0.75 * self.shockDef
+                closure[1] = 0.75 * self.shockDef
+
+                gload = numpy.zeros(self.nCondition)
+                gload[:] = g_load
 
             else:
                 print("Unrecognized weightCondition:", self.weightCondition)
 
         elif self.loadCaseType.lower() == "landing":
-            nCondition = 5
-            fVert = numpy.zeros(nCondition)
+            fVert = numpy.zeros(self.nCondition)
             fVert[0] = f_dyn
             fVert[1] = 0.75 * f_dyn
             fVert[2] = 0.75 * f_dyn
             fVert[3] = 0.5 * f_dyn
             fVert[4] = 0.5 * f_dyn
+            fVert[5] = 0.8 * f_sb
+            fVert[6] = 0.8 * f_sb
 
-            fDrag = numpy.zeros(nCondition)
+            fDrag = numpy.zeros(self.nCondition)
             fDrag[0] = 0.25 * f_dyn
             fDrag[1] = 0.4 * f_dyn
             fDrag[2] = 0.4 * f_dyn
             fDrag[3] = 0.0
             fDrag[4] = 0.0
+            fDrag[5] = 0.64 * f_sb
+            fDrag[6] = -0.64 * f_sb
 
             # sign convention here is that negative is inboard facing
-            fSide = numpy.zeros(nCondition)
+            fSide = numpy.zeros(self.nCondition)
             fSide[0] = 0
             fSide[1] = -0.25 * f_dyn
             fSide[2] = 0.25 * f_dyn
             fSide[3] = -0.4 * f_dyn
             fSide[4] = 0.3 * f_dyn
+            fSide[5] = 0.0
+            fSide[6] = 0.0
+
+            closure = numpy.zeros(self.nCondition)
+            closure[0] = 0.5 * self.shockDef
+            closure[1] = 0.25 * self.shockDef
+            closure[2] = 0.25 * self.shockDef
+            closure[3] = 0.5 * self.shockDef
+            closure[4] = 0.5 * self.shockDef
+            closure[5] = 0.15 * self.shockDef
+            closure[6] = 0.15 * self.shockDef
+
+            gload = numpy.zeros(self.nCondition)
+            gload[:] = g_load
 
         else:
             print("Unrecognized loadCaseType:", self.loadCaseType)
 
-        return fVert, fDrag, fSide
+        closure = self.shockDef - closure
+
+        return fVert, fDrag, fSide, closure, gload
+
+    def writeLoadData(self, fileName):
+        """
+        write a table based on the weight condition
+        """
+
+        f_stat, f_dyn, f_sb, g_load = self._computeLGForces()
+
+        caseType = self.weightCondition.upper()
+        f = open(fileName, "w")
+        f.write("\\begin{tabular}{lr}\n")
+        f.write("\\toprule\n")
+        f.write("Parameter & Value \\\\\n")
+        f.write(" \\midrule\n")
+        f.write(" %s $F_\\text{stat}$ (N) &$ %10.0f$ \\\\\n" % (caseType, f_stat))
+        f.write(" %s $F_\\text{dyn}$ (N) &$ %10.0f$\\\\\n" % (caseType, f_dyn))
+        f.write(" %s Load Factor & %6.3f\\\\\n" % (caseType, g_load))
+        f.write("\\bottomrule\n")
+        f.write("\\end{tabular}\n")
+
+        f.close()
+
+
+# create a dump loads table function
