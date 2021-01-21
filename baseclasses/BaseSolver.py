@@ -186,11 +186,25 @@ class BaseSolver(object):
         self.pp("+----------------------------------------+")
         self.pp("|" + f"All {self.name} Options:".center(40) + "|")
         self.pp("+----------------------------------------+")
-        # Need to assemble a temporary dictionary
-        tmpDict = {}
-        for key in self.options:
-            tmpDict[key] = self.getOption(key)
-        self.pp(tmpDict)
+        options = self.getAllOptions()
+        self.pp(options)
+
+    def getAllOptions(self):
+        options = {}
+        for key in self.options.keys():
+            options[key] = self.getOption(key)
+        return options
+
+    def getModifiedOptions(self):
+        modifiedOptions = {}
+        for key in self.options.keys():
+            defaultType, defaultValue = self.defaultOptions[key]
+            if defaultType is list and not isinstance(defaultValue, list):
+                defaultValue = defaultValue[0]
+            optionValue = self.getOption(key)
+            if optionValue != defaultValue:
+                modifiedOptions[key] = optionValue
+        return modifiedOptions
 
     def printModifiedOptions(self):
         """
@@ -201,16 +215,8 @@ class BaseSolver(object):
         self.pp("+----------------------------------------+")
         self.pp("|" + f"All Modified {self.name} Options:".center(40) + "|")
         self.pp("+----------------------------------------+")
-        # Need to assemble a temporary dictionary
-        tmpDict = {}
-        for key in self.options:
-            defaultType, defaultValue = self.defaultOptions[key]
-            if defaultType is list and not isinstance(defaultValue, list):
-                defaultValue = defaultValue[0]
-            optionValue = self.getOption(key)
-            if optionValue != defaultValue:
-                tmpDict[key] = optionValue
-        self.pp(tmpDict)
+        modifiedOptions = self.getModifiedOptions()
+        self.pp(modifiedOptions)
 
     def pp(self, obj):
         """
