@@ -94,6 +94,9 @@ class TestBaseRegTest(unittest.TestCase):
         with BaseRegTest(self.ref_file, train=True) as handler:
             self.regression_test_root(handler)
             handler.add_metadata(metadata)
+            # More added at later stage, like version
+            metadata["version"] = "1.2.3"
+            handler.add_metadata(metadata)
         test_vals = handler.readRef()
         # check the two values match
         self.assertEqual(test_vals, root_vals)

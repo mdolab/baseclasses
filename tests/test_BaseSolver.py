@@ -140,7 +140,7 @@ class TestComm(unittest.TestCase):
         # initialize solver
         solver = SOLVER("testComm", comm=None)
         self.assertTrue(solver.comm is None)
-        solver.printCurrentOptions()  # this should print current options twice since comm is not set
+        solver.printCurrentOptions()  # this should print current options twice since comm is not set and N_PROCS=2
 
 
 class TestInforms(unittest.TestCase):

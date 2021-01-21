@@ -5,6 +5,7 @@ Holds a basic Python Analysis Classes (base and inherited).
 """
 from difflib import get_close_matches
 from pprint import pprint
+import copy
 from .utils import CaseInsensitiveDict, CaseInsensitiveSet, Error
 
 # =============================================================================
@@ -182,7 +183,6 @@ class BaseSolver(object):
         Prints a nicely formatted dictionary of all the current solver
         options to the stdout on the root processor
         """
-
         self.pp("+----------------------------------------+")
         self.pp("|" + f"All {self.name} Options:".center(40) + "|")
         self.pp("+----------------------------------------+")
@@ -190,12 +190,13 @@ class BaseSolver(object):
         self.pp(options)
 
     def getAllOptions(self):
-        options = {}
-        for key in self.options.keys():
-            options[key] = self.getOption(key)
-        return options
+        return copy.copy(self.options)
 
     def getModifiedOptions(self):
+        """
+        Prints a nicely formatted dictionary of all the modified solver
+        options to the stdout on the root processor
+        """
         modifiedOptions = {}
         for key in self.options.keys():
             defaultType, defaultValue = self.defaultOptions[key]
