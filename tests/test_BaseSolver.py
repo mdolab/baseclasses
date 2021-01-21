@@ -56,7 +56,7 @@ class TestOptions(unittest.TestCase):
         intValue_set = 3
         options = {"floatOption": floatValue_set, "intOption": intValue_set}
         solver = SOLVER("test", options=options)
-        solver.printCurrentOptions()
+        solver.printOptions()
 
         # test getOption for initialized option
         floatValue_get = solver.getOption("floatOption")
@@ -134,13 +134,13 @@ class TestComm(unittest.TestCase):
         # initialize solver
         solver = SOLVER("testComm", comm=MPI.COMM_WORLD)
         self.assertFalse(solver.comm is None)
-        solver.printCurrentOptions()
+        solver.printOptions()
 
     def test_comm_without_mpi(self):
         # initialize solver
         solver = SOLVER("testComm", comm=None)
         self.assertTrue(solver.comm is None)
-        solver.printCurrentOptions()  # this should print current options twice since comm is not set and N_PROCS=2
+        solver.printOptions()  # this should print current options twice since comm is not set and N_PROCS=2
 
 
 class TestInforms(unittest.TestCase):

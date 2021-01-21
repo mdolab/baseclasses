@@ -6,6 +6,7 @@ Holds a basic Python Analysis Classes (base and inherited).
 from difflib import get_close_matches
 from pprint import pprint
 import copy
+import warnings
 from .utils import CaseInsensitiveDict, CaseInsensitiveSet, Error
 
 # =============================================================================
@@ -179,6 +180,10 @@ class BaseSolver(object):
             raise Error(f"{name} is not a valid option name. Perhaps you meant {guess}?")
 
     def printCurrentOptions(self):
+        self.printOptions()
+        warnings.warn("printCurrentOptions is deprecated. Use printOptions instead.", DeprecationWarning)
+
+    def printOptions(self):
         """
         Prints a nicely formatted dictionary of all the current solver
         options to the stdout on the root processor
