@@ -81,6 +81,7 @@ class BaseRegTest(object):
             else:
                 db = None
             db = self.comm.bcast(db)
+            self.metadata = db.pop("metadata", None)
             return db
 
     def checkPETScArch(self):
@@ -110,6 +111,13 @@ class BaseRegTest(object):
     def root_print(self, s):
         if self.rank == 0:
             print(s)
+
+    def add_metadata(self, metadata):
+        if self.rank == 0:
+            self._add_values("metadata", metadata)
+
+    def get_metadata(self):
+        return self.metadata
 
     # Add values from root only
     def root_add_val(self, name, values, **kwargs):
@@ -172,6 +180,12 @@ class BaseRegTest(object):
         in the database instead of adding the value, even in training mode. This is useful
         for example in dot product tests when comparing two values.
         """
+        # if metadata, only add it to db if train
+        # else do nothing
+        if name == "metadata":
+            if self.train:
+                self.db[name] = values
+            return
         rtol, atol = getTol(**kwargs)
         compare = kwargs["compare"] if "compare" in kwargs else False
         full_name = kwargs["full_name"] if "full_name" in kwargs else None
@@ -241,6 +255,9 @@ class BaseRegTest(object):
                 # Let the base class default method raise the TypeError
                 super(NumpyEncoder, self).default(obj)
 
+        # move metadata to end of db if it exists
+        if "metadata" in ref:
+            ref["metadata"] = ref.pop("metadata")
         with open(file_name, "w") as json_file:
             json.dump(ref, json_file, sort_keys=True, indent=4, separators=(",", ": "), cls=NumpyEncoder)
 
