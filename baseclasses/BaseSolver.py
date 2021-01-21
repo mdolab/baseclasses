@@ -186,10 +186,10 @@ class BaseSolver(object):
         self.pp("+----------------------------------------+")
         self.pp("|" + f"All {self.name} Options:".center(40) + "|")
         self.pp("+----------------------------------------+")
-        options = self.getAllOptions()
+        options = self.getOptions()
         self.pp(options)
 
-    def getAllOptions(self):
+    def getOptions(self):
         return copy.copy(self.options)
 
     def getModifiedOptions(self):
