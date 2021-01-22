@@ -22,7 +22,7 @@ class TestCaseInsensitiveClasses(unittest.TestCase):
         d.pop("Option2")
         self.assertEqual(len(d), 1)
         self.assertEqual(d.get("opTION1"), value2)
-        self.assertEqual(list(d), ["option1"])
+        self.assertEqual(list(d), ["OPtion1"])
         d2 = CaseInsensitiveDict({"OPTION3": value3})
         # test update()
         d.update(d2)

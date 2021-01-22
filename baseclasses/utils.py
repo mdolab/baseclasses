@@ -9,28 +9,79 @@ class CaseInsensitiveDict(dict):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # convert keys to lower case
-        for k in list(self.keys()):
-            v = super().pop(k)
-            self.__setitem__(k, v)
+        self._updateMaps()
+
+    def _updateMaps(self):
+        """
+        This function updates the self.map and self.invMap
+        dictionaries based on self.keys().
+        """
+        self.map = {k: k.lower() for k in self.keys()}
+        self.invMap = {v: k for k, v in self.map.items()}
+
+    def _getKey(self, key):
+        """
+        This function checks if the input key already exists.
+        Note that this check is case insensitive
+
+        Parameters
+        ----------
+        key : str
+            the key to check
+
+        Returns
+        -------
+        str, None
+            Returns the original key if it exists. Otherwise returns None.
+        """
+        if key.lower() in self.invMap:
+            return self.invMap[key.lower()]
+        else:
+            return None
 
     def __setitem__(self, key, value):
-        super().__setitem__(key.lower(), value)
+        existingKey = self._getKey(key)
+        if existingKey:
+            key = existingKey
+        else:
+            self.map[key] = key.lower()
+            self.invMap[key.lower()] = key
+        super().__setitem__(key, value)
 
     def __getitem__(self, key):
-        return super().__getitem__(key.lower())
+        existingKey = self._getKey(key)
+        if existingKey:
+            key = existingKey
+        return super().__getitem__(key)
 
     def __contains__(self, key):
-        return super().__contains__(key.lower())
+        return key.lower() in self.invMap.keys()
 
     def __delitem__(self, key):
-        super().__delitem__(key.lower())
+        existingKey = self._getKey(key)
+        if existingKey:
+            key = existingKey
+            self.map.pop(existingKey)
+            self.invMap.pop(key.lower())
+        super().__delitem__(key)
 
     def pop(self, key, *args, **kwargs):
-        super().pop(key.lower(), *args, **kwargs)
+        existingKey = self._getKey(key)
+        if existingKey:
+            key = existingKey
+            self.map.pop(existingKey)
+            self.invMap.pop(key.lower())
+        super().pop(key, *args, **kwargs)
 
     def get(self, key, *args, **kwargs):
-        return super().get(key.lower(), *args, **kwargs)
+        existingKey = self._getKey(key)
+        if existingKey:
+            key = existingKey
+        return super().get(key, *args, **kwargs)
+
+    def update(self, d, *args, **kwargs):
+        super().update(d, *args, **kwargs)
+        self._updateMaps()
 
 
 class CaseInsensitiveSet(set):
