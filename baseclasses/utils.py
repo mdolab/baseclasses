@@ -95,15 +95,42 @@ class CaseInsensitiveSet(set):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # convert entries to lowe case
-        for k in self:
-            super().remove(k)
-            self.add(k)
+        self._updateMap()
+
+    def _updateMap(self):
+        self.map = {k: k.lower() for k in self.items()}
+        self.invMap = {v: k for k, v in self.map.items()}
+
+    def _getItem(self, item):
+        """
+        This function checks if the input key already exists.
+        Note that this check is case insensitive
+
+        Parameters
+        ----------
+        key : str
+            the item to check
+
+        Returns
+        -------
+        str, None
+            Returns the original item if it exists. Otherwise returns None.
+        """
+        if item.lower() in self.invMap:
+            return self.invMap[item.lower()]
+        else:
+            return None
 
     def add(self, item):
+        existingItem = self._getItem(item)
+        if existingItem:
+            item = existingItem
         super().add(item.lower())
 
     def __contains__(self, item):
+        existingItem = self._getItem(item)
+        if existingItem:
+            item = existingItem
         return super().__contains__(item.lower())
 
 
