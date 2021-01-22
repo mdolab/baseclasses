@@ -72,15 +72,16 @@ class BaseRegTest(object):
     def writeRef(self):
         with multi_proc_exception_check(self.comm):
             if self.rank == 0:
-                writeRefJSON(self.ref_file, self.db)
+                self.writeRefJSON(self.ref_file, self.db)
 
     def readRef(self):
         with multi_proc_exception_check(self.comm):
             if self.rank == 0:
-                db = readRefJSON(self.ref_file)
+                db = self.readRefJSON(self.ref_file)
             else:
                 db = None
             db = self.comm.bcast(db)
+            self.metadata = db.pop("metadata", None)
             return db
 
     def checkPETScArch(self):
@@ -110,6 +111,13 @@ class BaseRegTest(object):
     def root_print(self, s):
         if self.rank == 0:
             print(s)
+
+    def add_metadata(self, metadata):
+        if self.rank == 0:
+            self._add_values("metadata", metadata)
+
+    def get_metadata(self):
+        return self.metadata
 
     # Add values from root only
     def root_add_val(self, name, values, **kwargs):
@@ -172,6 +180,12 @@ class BaseRegTest(object):
         in the database instead of adding the value, even in training mode. This is useful
         for example in dot product tests when comparing two values.
         """
+        # if metadata, only add it to db if train
+        # else do nothing
+        if name == "metadata":
+            if self.train:
+                self.db[name] = values
+            return
         rtol, atol = getTol(**kwargs)
         compare = kwargs["compare"] if "compare" in kwargs else False
         full_name = kwargs["full_name"] if "full_name" in kwargs else None
@@ -211,134 +225,137 @@ class BaseRegTest(object):
             else:
                 self._add_values(key, d[key], rtol=rtol, atol=atol, db=db[dict_name], full_name=full_name)
 
+    # =============================================================================
+    #                         reference files I/O
+    # =============================================================================
+    # based on this stack overflow answer https://stackoverflow.com/questions/3488934/simplejson-and-numpy-array/24375113#24375113
 
-# =============================================================================
-#                         reference files I/O
-# =============================================================================
+    @staticmethod
+    def writeRefJSON(file_name, ref):
+        class NumpyEncoder(json.JSONEncoder):
+            def default(self, obj):
+                """If input object is an ndarray it will be converted into a dict
+                holding dtype, shape and the data, base64 encoded.
+                """
+                if isinstance(obj, numpy.ndarray):
+                    if obj.flags["C_CONTIGUOUS"]:
+                        pass
+                    else:
+                        obj = numpy.ascontiguousarray(obj)
+                        assert obj.flags["C_CONTIGUOUS"]
+                    if obj.size == 1:
+                        return obj.item()
+                    else:
+                        return dict(__ndarray__=obj.tolist(), dtype=str(obj.dtype), shape=obj.shape)
+                elif isinstance(obj, numpy.integer):
+                    return dict(__ndarray__=int(obj), dtype=str(obj.dtype), shape=obj.shape)
+                elif isinstance(obj, numpy.floating):
+                    return dict(__ndarray__=float(obj), dtype=str(obj.dtype), shape=obj.shape)
 
-# based on this stack overflow answer https://stackoverflow.com/questions/3488934/simplejson-and-numpy-array/24375113#24375113
-def writeRefJSON(file_name, ref):
-    class NumpyEncoder(json.JSONEncoder):
-        def default(self, obj):
-            """If input object is an ndarray it will be converted into a dict
-            holding dtype, shape and the data, base64 encoded.
+                # Let the base class default method raise the TypeError
+                super(NumpyEncoder, self).default(obj)
+
+        # move metadata to end of db if it exists
+        if "metadata" in ref:
+            ref["metadata"] = ref.pop("metadata")
+        with open(file_name, "w") as json_file:
+            json.dump(ref, json_file, sort_keys=True, indent=4, separators=(",", ": "), cls=NumpyEncoder)
+
+    # based on this stack overflow answer https://stackoverflow.com/questions/3488934/simplejson-and-numpy-array/24375113#24375113
+    @staticmethod
+    def readRefJSON(file_name):
+        def json_numpy_obj_hook(dct):
+            """Decodes a previously encoded numpy ndarray with proper shape and dtype.
+
+            :param dct: (dict) json encoded ndarray
+            :return: (ndarray) if input was an encoded ndarray
             """
-            if isinstance(obj, numpy.ndarray):
-                if obj.flags["C_CONTIGUOUS"]:
-                    pass
+            if isinstance(dct, dict) and "__ndarray__" in dct:
+                data = dct["__ndarray__"]
+                return numpy.array(data, dct["dtype"]).reshape(dct["shape"])
+            return dct
+
+        with open(file_name, "r") as json_file:
+            data = json.load(json_file, object_hook=json_numpy_obj_hook)
+
+        return data
+
+    @staticmethod
+    def convertRegFileToJSONRegFile(file_name, output_file=None):
+        """ converts from the old format of regression test file to the new JSON format"""
+
+        if output_file is None:
+            output_file = os.path.splitext(file_name)[0] + ".json"
+
+        ref = {}
+        line_history = deque(maxlen=3)
+
+        def saveValueInRef(value, key, mydict):
+            """a helper function to add values to our ref dict"""
+
+            if key in mydict:
+                # turn the value into a numpy array and append or just append if
+                # the value is already an numpy.array
+
+                if isinstance(mydict[key], numpy.ndarray):
+                    mydict[key] = numpy.append(mydict[key], value)
                 else:
-                    obj = numpy.ascontiguousarray(obj)
-                    assert obj.flags["C_CONTIGUOUS"]
-                if obj.size == 1:
-                    return obj.item()
-                else:
-                    return dict(__ndarray__=obj.tolist(), dtype=str(obj.dtype), shape=obj.shape)
-            elif isinstance(obj, numpy.integer):
-                return dict(__ndarray__=int(obj), dtype=str(obj.dtype), shape=obj.shape)
-            elif isinstance(obj, numpy.floating):
-                return dict(__ndarray__=float(obj), dtype=str(obj.dtype), shape=obj.shape)
-
-            # Let the base class default method raise the TypeError
-            super(NumpyEncoder, self).default(obj)
-
-    with open(file_name, "w") as json_file:
-        json.dump(ref, json_file, sort_keys=True, indent=4, separators=(",", ": "), cls=NumpyEncoder)
-
-
-# based on this stack overflow answer https://stackoverflow.com/questions/3488934/simplejson-and-numpy-array/24375113#24375113
-def readRefJSON(file_name):
-    def json_numpy_obj_hook(dct):
-        """Decodes a previously encoded numpy ndarray with proper shape and dtype.
-
-        :param dct: (dict) json encoded ndarray
-        :return: (ndarray) if input was an encoded ndarray
-        """
-        if isinstance(dct, dict) and "__ndarray__" in dct:
-            data = dct["__ndarray__"]
-            return numpy.array(data, dct["dtype"]).reshape(dct["shape"])
-        return dct
-
-    with open(file_name, "r") as json_file:
-        data = json.load(json_file, object_hook=json_numpy_obj_hook)
-
-    return data
-
-
-def convertRegFileToJSONRegFile(file_name, output_file=None):
-    """ converts from the old format of regression test file to the new JSON format"""
-
-    if output_file is None:
-        output_file = os.path.splitext(file_name)[0] + ".json"
-
-    ref = {}
-    line_history = deque(maxlen=3)
-
-    def saveValueInRef(value, key, mydict):
-        """a helper function to add values to our ref dict"""
-
-        if key in mydict:
-            # turn the value into a numpy array and append or just append if
-            # the value is already an numpy.array
-
-            if isinstance(mydict[key], numpy.ndarray):
-                mydict[key] = numpy.append(mydict[key], value)
+                    mydict[key] = numpy.array([mydict[key], value])
             else:
-                mydict[key] = numpy.array([mydict[key], value])
-        else:
-            mydict[key] = value
+                mydict[key] = value
 
-    curr_dict = ref
-    with open(file_name, "r") as fid:
-        for line in fid:
-            # key ideas
-            #    - lines starting with @value aren't added to the queque
+        curr_dict = ref
+        with open(file_name, "r") as fid:
+            for line in fid:
+                # key ideas
+                #    - lines starting with @value aren't added to the queque
 
-            # check to see if it is the start of dictionary of values
-            if "Dictionary Key: " in line:
+                # check to see if it is the start of dictionary of values
+                if "Dictionary Key: " in line:
 
-                # if there are other lines in the queque this isn't following
-                # an @value
-                if len(line_history) > 0:
+                    # if there are other lines in the queque this isn't following
+                    # an @value
+                    if len(line_history) > 0:
 
-                    # We must create a new dictionary and add it to ref
-                    last_line = line_history[-1].rstrip()
-                    if "Dictionary Key: " in last_line:
-                        # this is a nested dict
-                        key = last_line[len("Dictionary Key: ") :]
+                        # We must create a new dictionary and add it to ref
+                        last_line = line_history[-1].rstrip()
+                        if "Dictionary Key: " in last_line:
+                            # this is a nested dict
+                            key = last_line[len("Dictionary Key: ") :]
 
-                        if len(line_history) > 1:
-                            prior_dict = curr_dict
-                            curr_dict[key] = {}
-                            curr_dict = curr_dict[key]
+                            if len(line_history) > 1:
+                                prior_dict = curr_dict
+                                curr_dict[key] = {}
+                                curr_dict = curr_dict[key]
+                            else:
+                                prior_dict[key] = {}
+                                curr_dict = prior_dict[key]
+                            print("nested dict", last_line)
                         else:
-                            prior_dict[key] = {}
-                            curr_dict = prior_dict[key]
-                        print("nested dict", last_line)
-                    else:
-                        print("dict ", last_line)
-                        ref[last_line] = {}
-                        curr_dict = ref[last_line]
+                            print("dict ", last_line)
+                            ref[last_line] = {}
+                            curr_dict = ref[last_line]
 
-            if "@value" in line:
-                # get the value from the ref file
-                value = float(line.split()[1])
+                if "@value" in line:
+                    # get the value from the ref file
+                    value = float(line.split()[1])
 
-                # if a value was not just added
-                if line_history:
-                    # grab the data and use them as the keys for the reference dictionary
-                    key = line_history[-1].rstrip()
-                    if "Dictionary Key: " in key:
-                        key = key[len("Dictionary Key: ") :]
-                    else:
-                        curr_dict = ref
+                    # if a value was not just added
+                    if line_history:
+                        # grab the data and use them as the keys for the reference dictionary
+                        key = line_history[-1].rstrip()
+                        if "Dictionary Key: " in key:
+                            key = key[len("Dictionary Key: ") :]
+                        else:
+                            curr_dict = ref
 
-                saveValueInRef(value, key, curr_dict)
-                line_history.clear()
-            else:
-                # When deque reaches 2 lines, will automatically evict oldest
-                line_history.append(line)
+                    saveValueInRef(value, key, curr_dict)
+                    line_history.clear()
+                else:
+                    # When deque reaches 2 lines, will automatically evict oldest
+                    line_history.append(line)
 
-    writeRefJSON(output_file, ref)
+        BaseRegTest.writeRefJSON(output_file, ref)
 
 
 """This strategy of dealing with error propagation to multiple procs is taken directly form openMDAO.utils;

@@ -90,11 +90,17 @@ class TestBaseRegTest(unittest.TestCase):
         Also tests read/write in the process
         """
         self.ref_file = os.path.join(baseDir, "test_root.ref")
+        metadata = {"options": None}
         with BaseRegTest(self.ref_file, train=True) as handler:
             self.regression_test_root(handler)
+            handler.add_metadata(metadata)
+            # More added at later stage, like version
+            metadata["version"] = "1.2.3"
+            handler.add_metadata(metadata)
         test_vals = handler.readRef()
         # check the two values match
         self.assertEqual(test_vals, root_vals)
+        self.assertEqual(handler.get_metadata(), metadata)
 
         # test train=False
         handler = BaseRegTest(self.ref_file, train=False)
