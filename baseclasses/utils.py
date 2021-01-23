@@ -6,8 +6,8 @@ class CaseInsensitiveDict(dict):
     All common Python dictionary operations are supported, and additional operations
     can be added easily.
     In order to preserve capitalization on key initialization, the implementation relies on storing
-    a dictionary of mappings between the initial capitalization and the lowercase representation.
-    This is stored in self.map, along with the inverse in self.invMap.
+    a dictionary of mappings between the lowercase representation and the initial capitalization,
+    which is stored in self.map.
     By looking up in these mappings, we can check any new keys against existing keys and compare them
     in a case-insensitive fashion.
     """
@@ -18,11 +18,9 @@ class CaseInsensitiveDict(dict):
 
     def _updateMaps(self):
         """
-        This function updates the self.map and self.invMap
-        dictionaries based on self.keys().
+        This function updates self.map based on self.keys().
         """
-        self.map = {k: k.lower() for k in self.keys()}
-        self.invMap = {v: k for k, v in self.map.items()}
+        self.map = {k.lower(): k for k in self.keys()}
 
     def _getKey(self, key):
         """
@@ -39,8 +37,8 @@ class CaseInsensitiveDict(dict):
         str, None
             Returns the original key if it exists. Otherwise returns None.
         """
-        if key.lower() in self.invMap:
-            return self.invMap[key.lower()]
+        if key.lower() in self.map:
+            return self.map[key.lower()]
         else:
             return None
 
@@ -49,8 +47,7 @@ class CaseInsensitiveDict(dict):
         if existingKey:
             key = existingKey
         else:
-            self.map[key] = key.lower()
-            self.invMap[key.lower()] = key
+            self.map[key.lower()] = key
         super().__setitem__(key, value)
 
     def __getitem__(self, key):
@@ -60,22 +57,20 @@ class CaseInsensitiveDict(dict):
         return super().__getitem__(key)
 
     def __contains__(self, key):
-        return key.lower() in self.invMap.keys()
+        return key.lower() in self.map.keys()
 
     def __delitem__(self, key):
         existingKey = self._getKey(key)
         if existingKey:
             key = existingKey
-            self.map.pop(existingKey)
-            self.invMap.pop(key.lower())
+            self.map.pop(key.lower())
         super().__delitem__(key)
 
     def pop(self, key, *args, **kwargs):
         existingKey = self._getKey(key)
         if existingKey:
             key = existingKey
-            self.map.pop(existingKey)
-            self.invMap.pop(key.lower())
+            self.map.pop(key.lower())
         super().pop(key, *args, **kwargs)
 
     def get(self, key, *args, **kwargs):
@@ -97,8 +92,8 @@ class CaseInsensitiveSet(set):
     All common Python set operations are supported, and additional operations
     can be added easily.
     In order to preserve capitalization on key initialization, the implementation relies on storing
-    a dictionary of mappings between the initial capitalization and the lowercase representation.
-    This is stored in self.map, along with the inverse in self.invMap.
+    a dictionary of mappings between the lowercase representation and the initial capitalization,
+    which is stored in self.map.
     By looking up in these mappings, we can check any new keys against existing keys and compare them
     in a case-insensitive fashion.
     """
@@ -108,8 +103,7 @@ class CaseInsensitiveSet(set):
         self._updateMaps()
 
     def _updateMaps(self):
-        self.map = {k: k.lower() for k in list(self)}
-        self.invMap = {v: k for k, v in self.map.items()}
+        self.map = {k.lower(): k for k in list(self)}
 
     def _getItem(self, item):
         """
@@ -126,8 +120,8 @@ class CaseInsensitiveSet(set):
         str, None
             Returns the original item if it exists. Otherwise returns None.
         """
-        if item.lower() in self.invMap:
-            return self.invMap[item.lower()]
+        if item.lower() in self.map:
+            return self.map[item.lower()]
         else:
             return None
 
@@ -136,16 +130,14 @@ class CaseInsensitiveSet(set):
         if existingItem:
             item = existingItem
         else:
-            self.map[item] = item.lower()
-            self.invMap[item.lower()] = item
+            self.map[item.lower()] = item
         super().add(item)
 
     def pop(self, item, *args, **kwargs):
         existingItem = self._getItem(item)
         if existingItem:
             item = existingItem
-            self.map.pop(existingItem)
-            self.invMap.pop(item.lower())
+            self.map.pop(item.lower())
         super().pop(item, *args, **kwargs)
 
     def update(self, d, *args, **kwargs):
@@ -161,12 +153,11 @@ class CaseInsensitiveSet(set):
         existingItem = self._getItem(item)
         if existingItem:
             item = existingItem
-            self.map.pop(existingItem)
-            self.invMap.pop(item.lower())
+            self.map.pop(item.lower())
         super().remove(item)
 
     def __contains__(self, item):
-        return item.lower() in self.invMap.keys()
+        return item.lower() in self.map.keys()
 
     def __eq__(self, other):
         a = set([s.lower() for s in list(self)])
