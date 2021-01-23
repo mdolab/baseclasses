@@ -5,6 +5,11 @@ class CaseInsensitiveDict(dict):
     create an instance where keys are not strings.
     All common Python dictionary operations are supported, and additional operations
     can be added easily.
+    In order to preserve capitalization on key initialization, the implementation relies on storing
+    a dictionary of mappings between the initial capitalization and the lowercase representation.
+    This is stored in self.map, along with the inverse in self.invMap.
+    By looking up in these mappings, we can check any new keys against existing keys and compare them
+    in a case-insensitive fashion.
     """
 
     def __init__(self, *args, **kwargs):
@@ -91,6 +96,11 @@ class CaseInsensitiveSet(set):
     create an instance where elements are not strings.
     All common Python set operations are supported, and additional operations
     can be added easily.
+    In order to preserve capitalization on key initialization, the implementation relies on storing
+    a dictionary of mappings between the initial capitalization and the lowercase representation.
+    This is stored in self.map, along with the inverse in self.invMap.
+    By looking up in these mappings, we can check any new keys against existing keys and compare them
+    in a case-insensitive fashion.
     """
 
     def __init__(self, *args, **kwargs):
