@@ -164,7 +164,6 @@ class CaseInsensitiveSet(set):
             self.map.pop(existingItem)
             self.invMap.pop(item.lower())
         super().remove(item)
-        print(self)
 
     def __contains__(self, item):
         return item.lower() in self.invMap.keys()
