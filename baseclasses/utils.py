@@ -95,20 +95,20 @@ class CaseInsensitiveSet(set):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._updateMap()
+        self._updateMaps()
 
-    def _updateMap(self):
-        self.map = {k: k.lower() for k in self.items()}
+    def _updateMaps(self):
+        self.map = {k: k.lower() for k in list(self)}
         self.invMap = {v: k for k, v in self.map.items()}
 
     def _getItem(self, item):
         """
-        This function checks if the input key already exists.
+        This function checks if the input item already exists.
         Note that this check is case insensitive
 
         Parameters
         ----------
-        key : str
+        item : str
             the item to check
 
         Returns
@@ -125,13 +125,44 @@ class CaseInsensitiveSet(set):
         existingItem = self._getItem(item)
         if existingItem:
             item = existingItem
-        super().add(item.lower())
+        else:
+            self.map[item] = item.lower()
+            self.invMap[item.lower()] = item
+        super().add(item)
 
-    def __contains__(self, item):
+    def pop(self, item, *args, **kwargs):
         existingItem = self._getItem(item)
         if existingItem:
             item = existingItem
-        return super().__contains__(item.lower())
+            self.map.pop(existingItem)
+            self.invMap.pop(item.lower())
+        super().pop(item, *args, **kwargs)
+
+    def update(self, d, *args, **kwargs):
+        super().update(d, *args, **kwargs)
+        self._updateMaps()
+
+    def issubset(self, other):
+        lowerSelf = set([s.lower() for s in self])
+        lowerOther = set([s.lower() for s in other])
+        return lowerSelf.issubset(lowerOther)
+
+    def remove(self, item):
+        existingItem = self._getItem(item)
+        if existingItem:
+            item = existingItem
+            self.map.pop(existingItem)
+            self.invMap.pop(item.lower())
+        super().remove(item)
+        print(self)
+
+    def __contains__(self, item):
+        return item.lower() in self.invMap.keys()
+
+    def __eq__(self, other):
+        a = set([s.lower() for s in list(self)])
+        b = set([o.lower() for o in list(other)])
+        return a.__eq__(b)
 
 
 class Error(Exception):
