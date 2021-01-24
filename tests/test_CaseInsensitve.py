@@ -13,16 +13,19 @@ class TestCaseInsensitiveClasses(unittest.TestCase):
         # test __setitem__
         d["OPTION1"] = value2
         self.assertEqual(d["option1"], value2)
+        self.assertEqual("OPtion1", d.map["option1"])
         # test __contains__
         self.assertIn("Option1", d)
-        d["option2"] = value1
+        d["optioN2"] = value1
         self.assertEqual(len(d), 2)
         self.assertIn("OPTION2", d)
+        # test original capitalization is preserved on new key
+        self.assertEqual("optioN2", d.map["option2"])
         # test pop()
         d.pop("Option2")
         self.assertEqual(len(d), 1)
         self.assertEqual(d.get("opTION1"), value2)
-        self.assertEqual(list(d), ["option1"])
+        self.assertEqual(list(d), ["OPtion1"])
         d2 = CaseInsensitiveDict({"OPTION3": value3})
         # test update()
         d.update(d2)
@@ -33,8 +36,12 @@ class TestCaseInsensitiveClasses(unittest.TestCase):
         # test __contains__ and add()
         s = CaseInsensitiveSet({"Option1"})
         self.assertIn("OPTION1", s)
+        # test original capitalization is preserved on initialization
+        self.assertEqual("Option1", s.map["option1"])
         s.add("OPTION2")
         self.assertIn("option2", s)
+        # test original capitalization is preserved on new item
+        self.assertEqual("OPTION2", s.map["option2"])
         # test update()
         s2 = CaseInsensitiveSet({"OPTION2", "opTION3"})
         s.update(s2)
