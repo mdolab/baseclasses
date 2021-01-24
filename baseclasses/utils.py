@@ -14,9 +14,9 @@ class CaseInsensitiveDict(dict):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._updateMaps()
+        self._updateMap()
 
-    def _updateMaps(self):
+    def _updateMap(self):
         """
         This function updates self.map based on self.keys().
         """
@@ -81,7 +81,7 @@ class CaseInsensitiveDict(dict):
 
     def update(self, d, *args, **kwargs):
         super().update(d, *args, **kwargs)
-        self._updateMaps()
+        self._updateMap()
 
 
 class CaseInsensitiveSet(set):
@@ -100,9 +100,9 @@ class CaseInsensitiveSet(set):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._updateMaps()
+        self._updateMap()
 
-    def _updateMaps(self):
+    def _updateMap(self):
         self.map = {k.lower(): k for k in list(self)}
 
     def _getItem(self, item):
@@ -142,7 +142,7 @@ class CaseInsensitiveSet(set):
 
     def update(self, d, *args, **kwargs):
         super().update(d, *args, **kwargs)
-        self._updateMaps()
+        self._updateMap()
 
     def issubset(self, other):
         lowerSelf = set([s.lower() for s in self])
