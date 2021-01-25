@@ -1,5 +1,11 @@
 import unittest
 from baseclasses.utils import CaseInsensitiveDict, CaseInsensitiveSet
+from parameterized import parameterized
+
+try:
+    from mpi4py import MPI
+except ImportError:
+    MPI = None
 
 
 class TestCaseInsensitiveClasses(unittest.TestCase):
@@ -56,3 +62,23 @@ class TestCaseInsensitiveClasses(unittest.TestCase):
         self.assertEqual(len(s), 2)
         s3 = s.union(s2)
         self.assertEqual(s3, CaseInsensitiveSet({"option1", "option2", "option3"}))
+
+
+class TestParallel(unittest.TestCase):
+    N_PROCS = 2
+
+    @unittest.skipIf(MPI is None, "mpi4py not imported")
+    @parameterized.expand(["CaseInsensitiveDict", "CaseInsensitiveSet"])
+    def test_bcast(self, class_type):
+        comm = MPI.COMM_WORLD
+        d = {"OPtion1": 1}
+        s = {"OPtion1"}
+        if comm.rank == 0:
+            if class_type == "CaseInsensitiveDict":
+                obj = CaseInsensitiveDict(d)
+            elif class_type == "CaseInsensitiveSet":
+                obj = CaseInsensitiveSet(s)
+        else:
+            obj = None
+        obj = comm.bcast(obj, root=0)
+        self.assertIn("option1", obj)

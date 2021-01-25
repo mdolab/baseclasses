@@ -83,6 +83,14 @@ class CaseInsensitiveDict(dict):
         super().update(d, *args, **kwargs)
         self._updateMap()
 
+    def __new__(self, *args, **kwargs):
+        """
+        This is a custom __new__ implementation. All it does is set self.map to an empty dictionary.
+        This is here so the class instance can be pickled, and therefore used by mpi4py for bcast etc.
+        """
+        self.map = {}
+        return super().__new__(self)
+
 
 class CaseInsensitiveSet(set):
     """

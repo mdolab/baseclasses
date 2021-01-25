@@ -25,6 +25,9 @@ setup(
     install_requires=[
         "numpy>=1.16",
     ],
+    extras_require={
+        "testing": ["testflo", "parameterized"],
+    },
     classifiers=[
         "Operating System :: OS Independent",
         "Topic :: Scientific/Engineering",
