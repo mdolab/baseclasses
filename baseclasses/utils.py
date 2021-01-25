@@ -83,6 +83,10 @@ class CaseInsensitiveDict(dict):
         super().update(d, *args, **kwargs)
         self._updateMap()
 
+    def __new__(self, *args, **kwargs):
+        self.map = {}
+        return super().__new__(self)
+
 
 class CaseInsensitiveSet(set):
     """
