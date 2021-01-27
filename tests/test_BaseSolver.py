@@ -5,7 +5,7 @@ except ImportError:
 
 import unittest
 from baseclasses import BaseSolver
-from baseclasses.utils import Error, CaseInsensitiveDict
+from baseclasses.utils import Error
 
 
 class SOLVER(BaseSolver):
