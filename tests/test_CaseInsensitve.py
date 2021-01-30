@@ -16,8 +16,7 @@ class TestCaseInsensitiveDict(unittest.TestCase):
     def setUp(self):
         self.d = CaseInsensitiveDict({"OPtion1": value1})
         self.d2 = CaseInsensitiveDict({"opTION1": value2, "optioN2": value2})
-        self.d3 = CaseInsensitiveDict({"OPTION3": value3})
-        self.d4 = {"regular dict": 1}
+        self.d3 = {"regular dict": 1}
 
     def test_get(self):
         # test __getitem__
@@ -75,7 +74,7 @@ class TestCaseInsensitiveDict(unittest.TestCase):
 
     def test_update_dict_with_regular_dict(self):
         # test regular dict update
-        self.d.update(self.d4)
+        self.d.update(self.d3)
         self.assertTrue(isinstance(self.d, CaseInsensitiveDict))
         self.assertIn("REGULAR DICT", self.d)
         # check update preserves old capitalization
@@ -83,11 +82,11 @@ class TestCaseInsensitiveDict(unittest.TestCase):
 
     def test_update_regular_dict_with_dict(self):
         # update regular dict with this dict
-        self.d4.update(self.d)
-        self.assertFalse(isinstance(self.d4, CaseInsensitiveDict))
-        self.assertTrue(isinstance(self.d4, dict))
-        self.assertNotIn("REGULAR DICT", self.d4)  # d3 is a dict and is not case insensitive
-        self.assertIn("regular dict", self.d4)  # this works
+        self.d3.update(self.d)
+        self.assertFalse(isinstance(self.d3, CaseInsensitiveDict))
+        self.assertTrue(isinstance(self.d3, dict))
+        self.assertNotIn("REGULAR DICT", self.d3)  # d4 is a dict and is not case insensitive
+        self.assertIn("regular dict", self.d3)  # this works
 
     def test_equal(self):
         # test case insensitive comparison
@@ -99,7 +98,7 @@ class TestCaseInsensitiveSet(unittest.TestCase):
     def setUp(self):
         self.s = CaseInsensitiveSet({"Option1"})
         self.s2 = CaseInsensitiveSet({"OPTION1", "opTION2"})
-        self.s4 = {"regular set"}
+        self.s3 = {"regular set"}
 
     def test_add_contains(self):
         # test __contains__ and add()
@@ -129,18 +128,18 @@ class TestCaseInsensitiveSet(unittest.TestCase):
 
     def test_update_with_regular_set(self):
         # test regular set update
-        self.s.update(self.s4)
+        self.s.update(self.s3)
         self.assertTrue(isinstance(self.s, CaseInsensitiveSet))
         self.assertIn("REGULAR SET", self.s)
         self.assertEqual({"Option1", "regular set"}, self.s._getKeys())
 
     def test_update_regular_set_with_set(self):
-        self.s4.update(self.s)
-        self.assertFalse(isinstance(self.s4, CaseInsensitiveSet))
-        self.assertTrue(isinstance(self.s4, set))
-        self.assertNotIn("REGULAR SET", self.s4)  # s4 is a set and is not case insensitive
-        self.assertIn("regular set", self.s4)  # this works
-        self.assertEqual(self.s4, {"Option1", "regular set"})
+        self.s3.update(self.s)
+        self.assertFalse(isinstance(self.s3, CaseInsensitiveSet))
+        self.assertTrue(isinstance(self.s3, set))
+        self.assertNotIn("REGULAR SET", self.s3)  # s4 is a set and is not case insensitive
+        self.assertIn("regular set", self.s3)  # this works
+        self.assertEqual(self.s3, {"Option1", "regular set"})
 
     def test_subsets(self):
         # test set operations
