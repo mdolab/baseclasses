@@ -235,4 +235,7 @@ class BaseSolver(object):
             any Python object to be printed
         """
         if (self.comm is not None and self.comm.rank == 0) or self.comm is None:
-            pprint(obj)
+            if isinstance(obj, str):
+                print(obj)
+            else:
+                pprint(obj)
