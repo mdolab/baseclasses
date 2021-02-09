@@ -5,6 +5,8 @@ Holds a basic Python Analysis Classes (base and inherited).
 """
 from difflib import get_close_matches
 from pprint import pprint
+import copy
+import warnings
 from .utils import CaseInsensitiveDict, CaseInsensitiveSet, Error
 
 # =============================================================================
@@ -178,19 +180,37 @@ class BaseSolver(object):
             raise Error(f"{name} is not a valid option name. Perhaps you meant {guess}?")
 
     def printCurrentOptions(self):
+        self.printOptions()
+        warnings.warn("printCurrentOptions is deprecated. Use printOptions instead.", DeprecationWarning)
+
+    def printOptions(self):
         """
         Prints a nicely formatted dictionary of all the current solver
         options to the stdout on the root processor
         """
-
         self.pp("+----------------------------------------+")
         self.pp("|" + f"All {self.name} Options:".center(40) + "|")
         self.pp("+----------------------------------------+")
-        # Need to assemble a temporary dictionary
-        tmpDict = {}
-        for key in self.options:
-            tmpDict[key] = self.getOption(key)
-        self.pp(tmpDict)
+        options = self.getOptions()
+        self.pp(options)
+
+    def getOptions(self):
+        return copy.copy(self.options)
+
+    def getModifiedOptions(self):
+        """
+        Prints a nicely formatted dictionary of all the modified solver
+        options to the stdout on the root processor
+        """
+        modifiedOptions = {}
+        for key in self.options.keys():
+            defaultType, defaultValue = self.defaultOptions[key]
+            if defaultType is not list and isinstance(defaultValue, list):
+                defaultValue = defaultValue[0]
+            optionValue = self.getOption(key)
+            if optionValue != defaultValue:
+                modifiedOptions[key] = optionValue
+        return modifiedOptions
 
     def printModifiedOptions(self):
         """
@@ -201,16 +221,8 @@ class BaseSolver(object):
         self.pp("+----------------------------------------+")
         self.pp("|" + f"All Modified {self.name} Options:".center(40) + "|")
         self.pp("+----------------------------------------+")
-        # Need to assemble a temporary dictionary
-        tmpDict = {}
-        for key in self.options:
-            defaultType, defaultValue = self.defaultOptions[key]
-            if defaultType is list and not isinstance(defaultValue, list):
-                defaultValue = defaultValue[0]
-            optionValue = self.getOption(key)
-            if optionValue != defaultValue:
-                tmpDict[key] = optionValue
-        self.pp(tmpDict)
+        modifiedOptions = self.getModifiedOptions()
+        self.pp(modifiedOptions)
 
     def pp(self, obj):
         """
@@ -223,4 +235,7 @@ class BaseSolver(object):
             any Python object to be printed
         """
         if (self.comm is not None and self.comm.rank == 0) or self.comm is None:
-            pprint(obj)
+            if isinstance(obj, str):
+                print(obj)
+            else:
+                pprint(obj)

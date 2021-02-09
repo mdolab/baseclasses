@@ -56,7 +56,7 @@ class TestOptions(unittest.TestCase):
         intValue_set = 3
         options = {"floatOption": floatValue_set, "intOption": intValue_set}
         solver = SOLVER("test", options=options)
-        solver.printCurrentOptions()
+        solver.printOptions()
 
         # test getOption for initialized option
         floatValue_get = solver.getOption("floatOption")
@@ -95,10 +95,10 @@ class TestOptions(unittest.TestCase):
         # test Errors
         with self.assertRaises(Error) as context:
             solver.getOption("invalidOption")  # test invalid option in getOption
-        self.assertTrue("intoption" in context.exception.message)  # check that intoption is offered as a suggestion
+        self.assertTrue("intOption" in context.exception.message)  # check that intoption is offered as a suggestion
         with self.assertRaises(Error) as context:
             solver.setOption("invalidOption", 1)  # test invalid option in setOption
-        self.assertTrue("intoption" in context.exception.message)  # check that intoption is offered as a suggestion
+        self.assertTrue("intOption" in context.exception.message)  # check that intoption is offered as a suggestion
         with self.assertRaises(Error):
             solver.setOption("intOption", 4)  # test value not in list
         with self.assertRaises(Error):
@@ -124,6 +124,20 @@ class TestOptions(unittest.TestCase):
         with self.assertRaises(Error):
             solver.getOption("booloption")  # test that this name should be rejected
 
+    def test_getOptions(self):
+        solver = SOLVER("test")
+        options = solver.getOptions()
+        self.assertIn("floatOption", options)
+        self.assertEqual(len(options), 6)
+
+    def test_getModifiedOptions(self):
+        solver = SOLVER("test")
+        modifiedOptions = solver.getModifiedOptions()
+        self.assertEqual(len(modifiedOptions), 0)
+        solver.setOption("boolOption", False)
+        modifiedOptions = solver.getModifiedOptions()
+        self.assertEqual(list(modifiedOptions.keys()), ["boolOption"])
+
 
 class TestComm(unittest.TestCase):
 
@@ -134,13 +148,13 @@ class TestComm(unittest.TestCase):
         # initialize solver
         solver = SOLVER("testComm", comm=MPI.COMM_WORLD)
         self.assertFalse(solver.comm is None)
-        solver.printCurrentOptions()
+        solver.printOptions()
 
     def test_comm_without_mpi(self):
         # initialize solver
         solver = SOLVER("testComm", comm=None)
         self.assertTrue(solver.comm is None)
-        solver.printCurrentOptions()
+        solver.printOptions()  # this should print current options twice since comm is not set and N_PROCS=2
 
 
 class TestInforms(unittest.TestCase):
