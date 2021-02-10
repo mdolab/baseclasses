@@ -1,5 +1,10 @@
 trigger:
-- master
+  branches:
+    include:
+    - master
+  tags:
+    include:
+    - *
 
 pr:
 - master
@@ -17,8 +22,4 @@ extends:
     REPO_NAME: baseclasses
     IGNORE_STYLE: false
     PRIVATE: false
-
-jobs:
-- job: Test
-  steps:
-  - script: echo "Test"
+    PYPI: true
