@@ -17,3 +17,8 @@ extends:
     REPO_NAME: baseclasses
     IGNORE_STYLE: false
     PRIVATE: false
+
+jobs:
+- job: Test
+  steps:
+  - script: echo "Test"
