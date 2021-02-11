@@ -482,7 +482,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
         self.bc_data[groupName][varName] = value
 
-    def getBCData(self):
+    def getBCVars(self):
         return self.bc_data
 
     # def setBCArray(self, groupName, varName, dataArray, patch=None):
@@ -499,7 +499,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
         self.actuatorData[groupName][varName] = value
 
-    def getActuatorData(self):
+    def getActuatorVars(self):
         return self.actuatorData
 
     # def addBCDV(self, bc_var, value=None, lower=None, upper=None, scale=1.0,
