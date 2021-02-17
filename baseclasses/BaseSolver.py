@@ -205,7 +205,7 @@ class BaseSolver(object):
         modifiedOptions = {}
         for key in self.options.keys():
             defaultType, defaultValue = self.defaultOptions[key]
-            if defaultType is list and not isinstance(defaultValue, list):
+            if defaultType is not list and isinstance(defaultValue, list):
                 defaultValue = defaultValue[0]
             optionValue = self.getOption(key)
             if optionValue != defaultValue:
@@ -235,4 +235,7 @@ class BaseSolver(object):
             any Python object to be printed
         """
         if (self.comm is not None and self.comm.rank == 0) or self.comm is None:
-            pprint(obj)
+            if isinstance(obj, str):
+                print(obj)
+            else:
+                pprint(obj)

@@ -124,6 +124,20 @@ class TestOptions(unittest.TestCase):
         with self.assertRaises(Error):
             solver.getOption("booloption")  # test that this name should be rejected
 
+    def test_getOptions(self):
+        solver = SOLVER("test")
+        options = solver.getOptions()
+        self.assertIn("floatOption", options)
+        self.assertEqual(len(options), 6)
+
+    def test_getModifiedOptions(self):
+        solver = SOLVER("test")
+        modifiedOptions = solver.getModifiedOptions()
+        self.assertEqual(len(modifiedOptions), 0)
+        solver.setOption("boolOption", False)
+        modifiedOptions = solver.getModifiedOptions()
+        self.assertEqual(list(modifiedOptions.keys()), ["boolOption"])
+
 
 class TestComm(unittest.TestCase):
 

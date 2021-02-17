@@ -1,3 +1,6 @@
+import copy
+
+
 class CaseInsensitiveDict(dict):
     """
     Python dictionary where the keys are case-insensitive.
@@ -80,7 +83,16 @@ class CaseInsensitiveDict(dict):
         return super().get(key, *args, **kwargs)
 
     def update(self, d, *args, **kwargs):
-        super().update(d, *args, **kwargs)
+        if not isinstance(d, CaseInsensitiveDict):
+            super().update(d, *args, **kwargs)
+        else:
+            # we need to first remove duplicate entries
+            # make a copy to avoid modifying d
+            d_copy = copy.copy(d)
+            for k in list(d_copy.keys()):
+                if k.lower() in self.map:
+                    d_copy.pop(k)
+            super().update(d_copy, *args, **kwargs)
         self._updateMap()
 
     def __new__(self, *args, **kwargs):
@@ -90,6 +102,11 @@ class CaseInsensitiveDict(dict):
         """
         self.map = {}
         return super().__new__(self)
+
+    def __eq__(self, other):
+        selfLower = {k.lower(): v for k, v in self.items()}
+        otherLower = {k.lower(): v for k, v in other.items()}
+        return selfLower.__eq__(otherLower)
 
 
 class CaseInsensitiveSet(set):
@@ -133,6 +150,22 @@ class CaseInsensitiveSet(set):
         else:
             return None
 
+    def _getKeys(self):
+        """
+        This function returns the original, capitalized keys.
+        The lower-case keys can be accessed via self.map.keys().
+        Note that the equivalent method for dict is built in using set(self.keys()).
+
+        Returns
+        -------
+        set
+            the set of keys with original capitalization
+        """
+        s = set()
+        for k, v in self.map.items():
+            s.add(v)
+        return s
+
     def add(self, item):
         existingItem = self._getItem(item)
         if existingItem:
@@ -141,16 +174,23 @@ class CaseInsensitiveSet(set):
             self.map[item.lower()] = item
         super().add(item)
 
-    def pop(self, item, *args, **kwargs):
-        existingItem = self._getItem(item)
-        if existingItem:
-            item = existingItem
-            self.map.pop(item.lower())
-        super().pop(item, *args, **kwargs)
-
     def update(self, d, *args, **kwargs):
-        super().update(d, *args, **kwargs)
+        if not isinstance(d, CaseInsensitiveSet):
+            super().update(d, *args, **kwargs)
+        else:
+            # we need to first remove duplicate entries
+            # make a copy to avoid modifying d
+            d_copy = copy.copy(d)
+            for k in d_copy._getKeys():
+                if k.lower() in self.map:
+                    d_copy.remove(k)
+            super().update(d_copy, *args, **kwargs)
         self._updateMap()
+
+    def union(self, d, *args, **kwargs):
+        r = super().union(d, *args, **kwargs)
+        self._updateMap()
+        return CaseInsensitiveSet(r)
 
     def issubset(self, other):
         lowerSelf = set([s.lower() for s in self])
