@@ -20,6 +20,4 @@ extends:
   template: azure/azure_template.yaml@azure_template
   parameters:
     REPO_NAME: baseclasses
-    IGNORE_STYLE: false
-    PRIVATE: false
     PYPI: true
