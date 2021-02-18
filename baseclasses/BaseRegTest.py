@@ -186,6 +186,8 @@ class BaseRegTest(object):
             if self.train:
                 self.db[name] = values
             return
+        if not isinstance(name, str):
+            raise TypeError("All keys in the dictionary must use string indexing.")
         rtol, atol = getTol(**kwargs)
         compare = kwargs["compare"] if "compare" in kwargs else False
         full_name = kwargs["full_name"] if "full_name" in kwargs else None
