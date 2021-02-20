@@ -1,0 +1,37 @@
+trigger:
+  branches:
+    include:
+    - master
+  tags:
+    include:
+    - ^v\d+\.\d+(\.\d+)?(-\S*)?$
+
+pr:
+- master
+
+resources:
+  repositories:
+  - repository: azure_template
+    type: github
+    name: mdolab/.github
+    endpoint: mdolab
+
+variables:
+- name: REPO_NAME
+  value: baseclasses
+
+stages:
+- template: azure/azure_template.yaml@azure_template
+  parameters:
+    REPO_NAME: ${{ variables.REPO_NAME }}
+
+- stage:
+  dependsOn:
+  - Test_Real
+  - Style
+  displayName: PyPI
+  condition: and(succeeded(), contains(variables['build.sourceBranch'], 'tags'))
+  jobs:
+  - template: azure/azure_pypi.yaml@azure_template
+    parameters:
+      REPO_NAME: ${{ variables.REPO_NAME }}
