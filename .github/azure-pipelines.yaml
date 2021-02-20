@@ -23,7 +23,7 @@ variables:
 stages:
 - template: azure/azure_template.yaml@azure_template
   parameters:
-    REPO_NAME: $${{ variables.REPO_NAME }}
+    REPO_NAME: ${{ variables.REPO_NAME }}
 
 - stage:
   dependsOn:
@@ -34,4 +34,4 @@ stages:
   jobs:
   - template: azure/azure_pypi.yaml@azure_template
     parameters:
-      REPO_NAME: $${{ variables.REPO_NAME }}
+      REPO_NAME: ${{ variables.REPO_NAME }}
