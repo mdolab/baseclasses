@@ -5,4 +5,5 @@ if [[ $AGENT_NAME == "Azure Pipelines"* ]]; then
 else
     N_TEST=4
 fi
+echo $N_TEST
 testflo -v -n $N_TEST
