@@ -16,14 +16,10 @@ resources:
     name: mdolab/.github
     endpoint: mdolab
 
-variables:
-- name: REPO_NAME
-  value: baseclasses
-
 stages:
 - template: azure/azure_template.yaml@azure_template
   parameters:
-    REPO_NAME: ${{ variables.REPO_NAME }}
+    REPO_NAME: baseclasses
 
 - stage:
   dependsOn:
