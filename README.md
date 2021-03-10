@@ -1,6 +1,5 @@
 # baseclasses
 ![PyPI](https://img.shields.io/pypi/v/mdolab-baseclasses)
-[![Build Status](https://travis-ci.com/mdolab/baseclasses.svg?branch=master)](https://travis-ci.com/mdolab/baseclasses)
 [![Build Status](https://dev.azure.com/mdolab/Public/_apis/build/status/mdolab.baseclasses?repoName=mdolab%2Fbaseclasses&branchName=master)](https://dev.azure.com/mdolab/Public/_build/latest?definitionId=31&repoName=mdolab%2Fbaseclasses&branchName=master)
 [![Documentation Status](https://readthedocs.com/projects/mdolab-baseclasses/badge/?version=latest)](https://mdolab-baseclasses.readthedocs-hosted.com/?badge=latest)
 
