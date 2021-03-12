@@ -10,7 +10,7 @@ import copy
 try:
     from pygeo import geo_utils
 except ImportError:
-    print("Warning: unable to find pygeo module, some functionality in pyWeight_problem will be unavailable")
+    geo_utils = None
 from .utils import Error
 
 
@@ -137,7 +137,10 @@ class WeightProblem(object):
             self.v1 = numpy.array(surf[1])
             self.v2 = numpy.array(surf[2])
         else:
-            self._generateDiscreteSurface(surf)
+            if geo_utils is None:
+                raise Error("Unable to find pygeo module, which is required for this functionality.")
+            else:
+                self._generateDiscreteSurface(surf)
 
     def _generateDiscreteSurface(self, geo):
         """
