@@ -39,16 +39,15 @@ def getTol(**kwargs):
 class BaseRegTest(object):
     def __init__(self, ref_file, train=False, comm=None, check_arch=False):
         self.ref_file = ref_file
-        if comm is not None:
-            self.comm = comm
-            self.rank = self.comm.rank
+        if MPI is None:
+            self.comm = None
+            self.rank = 0
         else:
-            if MPI is None:
-                self.comm = None
-                self.rank = 0
+            if comm is not None:
+                self.comm = comm
             else:
                 self.comm = MPI.COMM_WORLD
-                self.rank = self.comm.rank
+            self.rank = self.comm.rank
 
         self.train = train
         if self.train:
