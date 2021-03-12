@@ -1,12 +1,14 @@
 import os
 import unittest
 import numpy as np
-from mpi4py import MPI
 from baseclasses import BaseRegTest
 from baseclasses.BaseRegTest import getTol
 
+try:
+    from mpi4py import MPI
+except ImportError:
+    MPI = None
 
-comm = MPI.COMM_WORLD
 baseDir = os.path.dirname(os.path.abspath(__file__))
 # this is the dictionary of values to be added
 root_vals = {
@@ -49,6 +51,16 @@ class TestGetTol(unittest.TestCase):
 class TestBaseRegTest(unittest.TestCase):
     N_PROCS = 2
 
+    def setUp(self):
+        if MPI is None:
+            self.comm = None
+            self.size = 1
+            self.rank = 0
+        else:
+            self.comm = MPI.COMM_WORLD
+            self.size = self.comm.size
+            self.rank = self.comm.rank
+
     def regression_test_root(self, handler):
         """
         This function adds values for the root proc
@@ -79,7 +91,7 @@ class TestBaseRegTest(unittest.TestCase):
         """
         This function adds values in parallel
         """
-        val = comm.rank + 0.5
+        val = self.rank + 0.5
         handler.par_add_val("par val", val)
         handler.par_add_sum("par sum", val)
         handler.par_add_norm("par norm", val)
@@ -106,6 +118,7 @@ class TestBaseRegTest(unittest.TestCase):
         handler = BaseRegTest(self.ref_file, train=False)
         self.regression_test_root(handler)
 
+    @unittest.skipIf(MPI is None, "mpi4py not imported")
     def test_train_then_test_par(self):
         """
         Test for adding values in parallel, both in training and in testing
@@ -120,5 +133,5 @@ class TestBaseRegTest(unittest.TestCase):
             self.regression_test_par(handler)
 
     def tearDown(self):
-        if comm.rank == 0:
+        if self.rank == 0:
             os.remove(self.ref_file)
