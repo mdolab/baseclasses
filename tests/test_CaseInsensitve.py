@@ -173,8 +173,8 @@ class TestCaseInsensitiveSet(unittest.TestCase):
 class TestParallel(unittest.TestCase):
     N_PROCS = 2
 
-    @unittest.skipIf(MPI is None, "mpi4py not imported")
     @parameterized.expand(["CaseInsensitiveDict", "CaseInsensitiveSet"])
+    @unittest.skipIf(MPI is None, "mpi4py not imported")
     def test_bcast(self, class_type):
         comm = MPI.COMM_WORLD
         d = {"OPtion1": 1}

@@ -1,13 +1,15 @@
 try:
     from mpi4py import MPI
 except ImportError:
-    print("Warning: unable to find mpi4py. Parallel regression tests will cause errors")
+    # parallel functions will throw errors
+    MPI = None
 import numpy
 import os
 import sys
 import json
 from collections import deque
 from contextlib import contextmanager
+from .utils import Error
 
 
 def getTol(**kwargs):
@@ -39,9 +41,14 @@ class BaseRegTest(object):
         self.ref_file = ref_file
         if comm is not None:
             self.comm = comm
+            self.rank = self.comm.rank
         else:
-            self.comm = MPI.COMM_WORLD
-        self.rank = self.comm.rank
+            if MPI is None:
+                self.comm = None
+                self.rank = 0
+            else:
+                self.comm = MPI.COMM_WORLD
+                self.rank = self.comm.rank
 
         self.train = train
         if self.train:
@@ -80,7 +87,8 @@ class BaseRegTest(object):
                 db = self.readRefJSON(self.ref_file)
             else:
                 db = None
-            db = self.comm.bcast(db)
+            if self.comm is not None:
+                db = self.comm.bcast(db)
             self.metadata = db.pop("metadata", None)
             return db
 
@@ -141,6 +149,8 @@ class BaseRegTest(object):
         """
         Add value(values) from parallel process in sorted order
         """
+        if self.comm is None:
+            raise Error("Parallel functionality requires mpi4py!")
         values = self.comm.gather(values)
         with multi_proc_exception_check(self.comm):
             if self.rank == 0:
@@ -150,6 +160,8 @@ class BaseRegTest(object):
         """
         Add the sum of sum of the values from all processors.
         """
+        if self.comm is None:
+            raise Error("Parallel functionality requires mpi4py!")
         reducedSum = self.comm.reduce(numpy.sum(values))
         with multi_proc_exception_check(self.comm):
             if self.rank == 0:
@@ -159,6 +171,8 @@ class BaseRegTest(object):
         """
         Add the norm across values from all processors.
         """
+        if self.comm is None:
+            raise Error("Parallel functionality requires mpi4py!")
         reducedSum = self.comm.reduce(numpy.sum(values ** 2))
         with multi_proc_exception_check(self.comm):
             if self.rank == 0:
