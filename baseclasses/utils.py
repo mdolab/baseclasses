@@ -1,7 +1,6 @@
-import copy
+from collections.abc import MutableMapping, MutableSet
 
-
-class CaseInsensitiveDict(dict):
+class CaseInsensitiveDict(MutableMapping):
     """
     Python dictionary where the keys are case-insensitive.
     Note that this assumes the keys are strings, and indeed will fail if you try to
@@ -16,14 +15,9 @@ class CaseInsensitiveDict(dict):
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._updateMap()
-
-    def _updateMap(self):
-        """
-        This function updates self.map based on self.keys().
-        """
-        self.map = {k.lower(): k for k in self.keys()}
+        self.data = dict(*args, **kwargs)
+        self._keys = list(self.data.keys())
+        self.map = {k.lower(): k for k in self._keys}
 
     def _getKey(self, key):
         """
@@ -50,66 +44,32 @@ class CaseInsensitiveDict(dict):
         if existingKey:
             key = existingKey
         else:
-            self.map[key.lower()] = key
-        super().__setitem__(key, value)
+            self._keys.append(key)
+        self.data[key] = value
+        self.map[key.lower()] = key
 
     def __getitem__(self, key):
         existingKey = self._getKey(key)
-        if existingKey:
-            key = existingKey
-        return super().__getitem__(key)
-
-    def __contains__(self, key):
-        return key.lower() in self.map.keys()
+        return self.data[existingKey]
 
     def __delitem__(self, key):
         existingKey = self._getKey(key)
         if existingKey:
-            key = existingKey
-            self.map.pop(key.lower())
-        super().__delitem__(key)
+            self.map.pop(existingKey.lower())
+            self.data.pop(existingKey)
+            self._keys.remove(existingKey)
 
-    def pop(self, key, *args, **kwargs):
-        existingKey = self._getKey(key)
-        if existingKey:
-            key = existingKey
-            self.map.pop(key.lower())
-        super().pop(key, *args, **kwargs)
+    def __iter__(self):
+        return iter(self.data)
 
-    def get(self, key, *args, **kwargs):
-        existingKey = self._getKey(key)
-        if existingKey:
-            key = existingKey
-        return super().get(key, *args, **kwargs)
-
-    def update(self, d, *args, **kwargs):
-        if not isinstance(d, CaseInsensitiveDict):
-            super().update(d, *args, **kwargs)
-        else:
-            # we need to first remove duplicate entries
-            # make a copy to avoid modifying d
-            d_copy = copy.copy(d)
-            for k in list(d_copy.keys()):
-                if k.lower() in self.map:
-                    d_copy.pop(k)
-            super().update(d_copy, *args, **kwargs)
-        self._updateMap()
-
-    def __new__(self, *args, **kwargs):
-        """
-        This is a custom __new__ implementation. All it does is set self.map to an empty dictionary.
-        This is here so the class instance can be pickled, and therefore used by mpi4py for bcast etc.
-        """
-        self.map = {}
-        return super().__new__(self)
+    def __len__(self):
+        return len(self._keys)
 
     def __eq__(self, other):
         selfLower = {k.lower(): v for k, v in self.items()}
         otherLower = {k.lower(): v for k, v in other.items()}
         return selfLower.__eq__(otherLower)
-
-
-class CaseInsensitiveSet(set):
+class CaseInsensitiveSet(MutableSet):
     """
     Python set where the elements are case-insensitive.
     Note that this assumes the elements are strings, and indeed will fail if you try to
@@ -124,10 +84,7 @@ class CaseInsensitiveSet(set):
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._updateMap()
-
-    def _updateMap(self):
+        self.data = set(*args, **kwargs)
         self.map = {k.lower(): k for k in list(self)}
 
     def _getItem(self, item):
@@ -147,24 +104,6 @@ class CaseInsensitiveSet(set):
         """
         if item.lower() in self.map:
             return self.map[item.lower()]
-        else:
-            return None
-
-    def _getKeys(self):
-        """
-        This function returns the original, capitalized keys.
-        The lower-case keys can be accessed via self.map.keys().
-        Note that the equivalent method for dict is built in using set(self.keys()).
-
-        Returns
-        -------
-        set
-            the set of keys with original capitalization
-        """
-        s = set()
-        for k, v in self.map.items():
-            s.add(v)
-        return s
 
     def add(self, item):
         existingItem = self._getItem(item)
@@ -172,46 +111,49 @@ class CaseInsensitiveSet(set):
             item = existingItem
         else:
             self.map[item.lower()] = item
-        super().add(item)
-
-    def update(self, d, *args, **kwargs):
-        if not isinstance(d, CaseInsensitiveSet):
-            super().update(d, *args, **kwargs)
-        else:
-            # we need to first remove duplicate entries
-            # make a copy to avoid modifying d
-            d_copy = copy.copy(d)
-            for k in d_copy._getKeys():
-                if k.lower() in self.map:
-                    d_copy.remove(k)
-            super().update(d_copy, *args, **kwargs)
-        self._updateMap()
-
-    def union(self, d, *args, **kwargs):
-        r = super().union(d, *args, **kwargs)
-        self._updateMap()
-        return CaseInsensitiveSet(r)
-
-    def issubset(self, other):
-        lowerSelf = set([s.lower() for s in self])
-        lowerOther = set([s.lower() for s in other])
-        return lowerSelf.issubset(lowerOther)
-
-    def remove(self, item):
-        existingItem = self._getItem(item)
-        if existingItem:
-            item = existingItem
-            self.map.pop(item.lower())
-        super().remove(item)
+            self.data.add(item)
 
     def __contains__(self, item):
         return item.lower() in self.map.keys()
 
     def __eq__(self, other):
+        """We convert both to regular set, and compare their lower case values"""
         a = set([s.lower() for s in list(self)])
         b = set([o.lower() for o in list(other)])
         return a.__eq__(b)
 
+    def __len__(self):
+        return len(self.data)
+
+    def __iter__(self):
+        return iter(self.data)
+
+    def discard(self, item):
+        existingItem = self._getItem(item)
+        if existingItem:
+            item = existingItem
+            self.map.pop(item.lower())
+            self.data.discard(item)
+
+    def union(self, d):
+        new_set = CaseInsensitiveSet(self.data)
+        for k in d:
+            existingItem = new_set._getItem(k)
+            if existingItem:
+                item = existingItem
+            else:
+                item = k
+            new_set.add(item)
+        return new_set
+
+    def update(self, d):
+        for item in d:
+            self.add(item)
+
+    def issubset(self, other):
+        lowerSelf = set([s.lower() for s in self])
+        lowerOther = set([s.lower() for s in other])
+        return lowerSelf.issubset(lowerOther)
 
 class Error(Exception):
     """
