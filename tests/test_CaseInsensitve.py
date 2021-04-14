@@ -16,8 +16,13 @@ value3 = 132
 class TestCaseInsensitiveDict(unittest.TestCase):
     def setUp(self):
         self.d = CaseInsensitiveDict({"OPtion1": value1})
-        self.d2 = CaseInsensitiveDict({"opTION1": value2, "optioN2": value2})
+        self.d2 = CaseInsensitiveDict(opTION1=value2, optioN2=value2)  # test different initialization
         self.d3 = {"regular dict": 1}
+
+    def test_empty_init(self):
+        d = CaseInsensitiveDict()
+        self.assertEqual(len(d), 0)
+        self.assertEqual(list(d.items()), [])
 
     def test_get(self):
         # test __getitem__
@@ -81,7 +86,6 @@ class TestCaseInsensitiveDict(unittest.TestCase):
         # check update preserves old capitalization
         self.assertEqual(set(self.d.keys()), {"OPtion1", "regular dict"})
 
-    @unittest.expectedFailure
     def test_update_regular_dict_with_dict(self):
         # update regular dict with this dict
         self.d3.update(self.d)
@@ -99,11 +103,29 @@ class TestCaseInsensitiveDict(unittest.TestCase):
         new_dict = pickle.loads(pickle.dumps(self.d))
         self.assertEqual(self.d, new_dict)
 
+    def test_items(self):
+        res = []
+        for k, v in self.d2.items():
+            res.append((k, v))
+        self.assertEqual(res, [("opTION1", value2), ("optioN2", value2)])
+
+    def test_iter(self):
+        res = []
+        for k in self.d2:
+            res.append(k)
+        self.assertEqual(res, ["opTION1", "optioN2"])
+
+
 class TestCaseInsensitiveSet(unittest.TestCase):
     def setUp(self):
         self.s = CaseInsensitiveSet({"Option1"})
         self.s2 = CaseInsensitiveSet({"OPTION1", "opTION2"})
         self.s3 = {"regular set"}
+
+    def test_empty_init(self):
+        s = CaseInsensitiveSet()
+        self.assertEqual(len(s), 0)
+        self.assertEqual(list(s), [])
 
     def test_add_contains(self):
         # test __contains__ and add()
@@ -177,6 +199,13 @@ class TestCaseInsensitiveSet(unittest.TestCase):
     def test_pickle(self):
         new_set = pickle.loads(pickle.dumps(self.s))
         self.assertEqual(self.s, new_set)
+
+    def test_iter(self):
+        res = set()
+        for k in self.s2:
+            res.add(k)
+        self.assertEqual(res, self.s2)
+
 
 class TestParallel(unittest.TestCase):
     N_PROCS = 2

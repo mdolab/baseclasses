@@ -1,5 +1,6 @@
 from collections.abc import MutableMapping, MutableSet
 
+
 class CaseInsensitiveDict(MutableMapping):
     """
     Python dictionary where the keys are case-insensitive.
@@ -16,8 +17,7 @@ class CaseInsensitiveDict(MutableMapping):
 
     def __init__(self, *args, **kwargs):
         self.data = dict(*args, **kwargs)
-        self._keys = list(self.data.keys())
-        self.map = {k.lower(): k for k in self._keys}
+        self.map = {k.lower(): k for k in self.data.keys()}
 
     def _getKey(self, key):
         """
@@ -43,8 +43,6 @@ class CaseInsensitiveDict(MutableMapping):
         existingKey = self._getKey(key)
         if existingKey:
             key = existingKey
-        else:
-            self._keys.append(key)
         self.data[key] = value
         self.map[key.lower()] = key
 
@@ -57,18 +55,19 @@ class CaseInsensitiveDict(MutableMapping):
         if existingKey:
             self.map.pop(existingKey.lower())
             self.data.pop(existingKey)
-            self._keys.remove(existingKey)
 
     def __iter__(self):
         return iter(self.data)
 
     def __len__(self):
-        return len(self._keys)
+        return len(self.data.keys())
 
     def __eq__(self, other):
         selfLower = {k.lower(): v for k, v in self.items()}
         otherLower = {k.lower(): v for k, v in other.items()}
         return selfLower.__eq__(otherLower)
+
+
 class CaseInsensitiveSet(MutableSet):
     """
     Python set where the elements are case-insensitive.
@@ -154,6 +153,7 @@ class CaseInsensitiveSet(MutableSet):
         lowerSelf = set([s.lower() for s in self])
         lowerOther = set([s.lower() for s in other])
         return lowerSelf.issubset(lowerOther)
+
 
 class Error(Exception):
     """
