@@ -1,4 +1,5 @@
 from collections.abc import MutableMapping, MutableSet
+from typing import Any, Dict, Optional
 
 
 class CaseInsensitiveDict(MutableMapping):
@@ -16,10 +17,12 @@ class CaseInsensitiveDict(MutableMapping):
     """
 
     def __init__(self, *args, **kwargs):
-        self.data = dict(*args, **kwargs)
-        self.map = {k.lower(): k for k in self.data.keys()}
+        self.data: dict = dict(*args, **kwargs)
+        if not all([isinstance(i, str) for i in self.data]):
+            raise ValueError("All keys must be strings!")
+        self.map: Dict[str, str] = {k.lower(): k for k in self.data.keys()}
 
-    def _getKey(self, key):
+    def _getKey(self, key: str):
         """
         This function checks if the input key already exists.
         Note that this check is case insensitive
@@ -39,18 +42,18 @@ class CaseInsensitiveDict(MutableMapping):
         else:
             return None
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: Any):
         existingKey = self._getKey(key)
         if existingKey:
             key = existingKey
         self.data[key] = value
         self.map[key.lower()] = key
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Any:
         existingKey = self._getKey(key)
         return self.data[existingKey]
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: str):
         existingKey = self._getKey(key)
         if existingKey:
             self.map.pop(existingKey.lower())
@@ -59,10 +62,10 @@ class CaseInsensitiveDict(MutableMapping):
     def __iter__(self):
         return iter(self.data)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.data.keys())
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         selfLower = {k.lower(): v for k, v in self.items()}
         otherLower = {k.lower(): v for k, v in other.items()}
         return selfLower.__eq__(otherLower)
@@ -83,10 +86,12 @@ class CaseInsensitiveSet(MutableSet):
     """
 
     def __init__(self, *args, **kwargs):
-        self.data = set(*args, **kwargs)
-        self.map = {k.lower(): k for k in list(self)}
+        self.data: set = set(*args, **kwargs)
+        if not all([isinstance(i, str) for i in self.data]):
+            raise ValueError("All items must be strings!")
+        self.map: Dict[str, str] = {k.lower(): k for k in list(self)}
 
-    def _getItem(self, item):
+    def _getItem(self, item: str) -> Optional[str]:
         """
         This function checks if the input item already exists.
         Note that this check is case insensitive
@@ -103,8 +108,10 @@ class CaseInsensitiveSet(MutableSet):
         """
         if item.lower() in self.map:
             return self.map[item.lower()]
+        else:
+            return None
 
-    def add(self, item):
+    def add(self, item: str):
         existingItem = self._getItem(item)
         if existingItem:
             item = existingItem
@@ -112,22 +119,22 @@ class CaseInsensitiveSet(MutableSet):
             self.map[item.lower()] = item
             self.data.add(item)
 
-    def __contains__(self, item):
+    def __contains__(self, item) -> bool:
         return item.lower() in self.map.keys()
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """We convert both to regular set, and compare their lower case values"""
         a = set([s.lower() for s in list(self)])
         b = set([o.lower() for o in list(other)])
         return a.__eq__(b)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.data)
 
     def __iter__(self):
         return iter(self.data)
 
-    def discard(self, item):
+    def discard(self, item: str):
         existingItem = self._getItem(item)
         if existingItem:
             item = existingItem
@@ -149,7 +156,7 @@ class CaseInsensitiveSet(MutableSet):
         for item in d:
             self.add(item)
 
-    def issubset(self, other):
+    def issubset(self, other) -> bool:
         lowerSelf = set([s.lower() for s in self])
         lowerOther = set([s.lower() for s in other])
         return lowerSelf.issubset(lowerOther)

@@ -24,6 +24,10 @@ class TestCaseInsensitiveDict(unittest.TestCase):
         self.assertEqual(len(d), 0)
         self.assertEqual(list(d.items()), [])
 
+    def test_invalid_init(self):
+        with self.assertRaises(ValueError):
+            CaseInsensitiveDict({1: 1})
+
     def test_get(self):
         # test __getitem__
         self.assertEqual(self.d["OPTION1"], value1)
@@ -127,6 +131,10 @@ class TestCaseInsensitiveSet(unittest.TestCase):
         self.assertEqual(len(s), 0)
         self.assertEqual(list(s), [])
 
+    def test_invalid_init(self):
+        with self.assertRaises(ValueError):
+            CaseInsensitiveSet({1, 2.5})
+
     def test_add_contains(self):
         # test __contains__ and add()
         self.assertIn("OPTION1", self.s)
@@ -147,7 +155,6 @@ class TestCaseInsensitiveSet(unittest.TestCase):
         self.assertEqual(len(self.s2), 1)
 
     def test_update(self):
-        # test update()
         self.s.update(self.s2)
         self.assertTrue(isinstance(self.s, CaseInsensitiveSet))
         self.assertEqual(len(self.s), 2)
