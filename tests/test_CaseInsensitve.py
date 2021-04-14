@@ -56,6 +56,8 @@ class TestCaseInsensitiveDict(unittest.TestCase):
         # check case insensitive contain
         self.assertIn("OPTION2", self.d)
         self.assertNotIn("INVALID", self.d)
+        with self.assertRaises(KeyError):
+            self.d["INVALID"]
 
     def test_del(self):
         # test __del__

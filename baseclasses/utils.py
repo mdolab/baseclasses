@@ -33,7 +33,7 @@ class CaseInsensitiveDict(MutableMapping):
             raise ValueError("All keys must be strings!")
         self.map: Dict[str, str] = {k.lower(): k for k in self.data.keys()}
 
-    def _getKey(self, key: str):
+    def _getKey(self, key: str, raiseError=False):
         """
         This function checks if the input key already exists.
         Note that this check is case insensitive
@@ -51,6 +51,8 @@ class CaseInsensitiveDict(MutableMapping):
         if key.lower() in self.map:
             return self.map[key.lower()]
         else:
+            if raiseError:
+                raise KeyError(f"Key '{key}' not found.")
             return None
 
     def __setitem__(self, key: str, value: Any):
@@ -63,15 +65,11 @@ class CaseInsensitiveDict(MutableMapping):
         self.map[key.lower()] = key
 
     def __getitem__(self, key: str) -> Any:
-        existingKey = self._getKey(key)
-        if existingKey is None:
-            raise KeyError(f"Key '{key}' not found.")
+        existingKey = self._getKey(key, raiseError=True)
         return self.data[existingKey]
 
     def __delitem__(self, key: str):
-        existingKey = self._getKey(key)
-        if existingKey is None:
-            raise KeyError(f"Key '{key}' not found.")
+        existingKey = self._getKey(key, raiseError=True)
         self.map.pop(existingKey.lower())
         self.data.pop(existingKey)
 
@@ -155,6 +153,8 @@ class CaseInsensitiveSet(MutableSet):
 
     def __eq__(self, other) -> bool:
         """We convert both to regular set, and compare their lower case values"""
+        if not all([isinstance(i, str) for i in other]):
+            raise ValueError("All items must be strings!")
         a = set([s.lower() for s in list(self)])
         b = set([o.lower() for o in list(other)])
         return a.__eq__(b)
