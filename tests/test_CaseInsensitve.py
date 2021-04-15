@@ -121,6 +121,17 @@ class TestCaseInsensitiveDict(unittest.TestCase):
             res.append(k)
         self.assertEqual(res, ["opTION1", "optioN2"])
 
+    def test_keys(self):
+        k = list(self.d2.keys())
+        self.assertEqual(k, ["opTION1", "optioN2"])
+
+    def test_values(self):
+        v = list(self.d2.values())
+        self.assertEqual(v, [value2, value2])
+
+    def test_repr(self):
+        self.assertEqual(self.d2.__str__(), self.d2.data.__str__())
+
 
 class TestCaseInsensitiveSet(unittest.TestCase):
     def setUp(self):
@@ -214,6 +225,9 @@ class TestCaseInsensitiveSet(unittest.TestCase):
         for k in self.s2:
             res.add(k)
         self.assertEqual(res, self.s2)
+
+    def test_repr(self):
+        self.assertEqual(self.s2.__str__(), self.s2.data.__str__())
 
 
 class TestParallel(unittest.TestCase):

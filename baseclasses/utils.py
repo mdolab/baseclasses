@@ -85,6 +85,9 @@ class CaseInsensitiveDict(MutableMapping):
         otherLower = {k.lower(): v for k, v in other.items()}
         return selfLower.__eq__(otherLower)
 
+    def __repr__(self):
+        return str(self.data)
+
 
 class CaseInsensitiveSet(MutableSet):
     """
@@ -190,6 +193,9 @@ class CaseInsensitiveSet(MutableSet):
         lowerSelf = set([s.lower() for s in self])
         lowerOther = set([s.lower() for s in other])
         return lowerSelf.issubset(lowerOther)
+
+    def __repr__(self):
+        return str(self.data)
 
 
 class Error(Exception):
