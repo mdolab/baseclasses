@@ -1,26 +1,53 @@
 import functools
 import unittest
+import importlib
 
 
 def require_mpi(func):
-    try:
-        from mpi4py import MPI  # noqa
+    return base_require(func, "mpi4py")
 
-        # this is a wrapper on func
-        # but we inject the MPI option in the signature
-        def wrapper(*args, **kwargs):
-            func(*args, **kwargs)
 
-        return wrapper
-    except ImportError:
-        msg = "mpi4py is not installed."
-        if not isinstance(func, type):
-            # this wraps obj, which is the actual function
-            @functools.wraps(func)
-            def skip_wrapper(*args, **kwargs):
-                raise unittest.SkipTest(msg)
+def base_require(func, module, message=None):
+    """
+    This is a generic function that can be used to generate decorators
+    that test an import, and skips a test based on whether the library
+    was found.
 
-            obj = skip_wrapper
-        obj.__unittest_skip__ = True
-        obj.__unittest_skip_why__ = msg
-        return obj
+    Parameters
+    ----------
+    func : callable
+        The function that the decorator is applied to. This is the required argument for a decorator and
+        is passed in automatically
+    module : str
+        The module to test import for
+    message : str
+        The message for skipTest. The default is "<module> is not installed."
+
+    Returns
+    -------
+    callable
+        The function to be executed via the decorator. Either the original function, or
+        if the module was not found, SkipTest is raised and the test function is skipped.
+
+    Raises
+    ------
+    unittest.SkipTest
+        If module is not found
+    """
+    # we check if the module can be found
+    module = importlib.find_loader(module)
+    # if not found
+    if module is None:
+        if message is None:
+            message = f"{module} is not installed."
+        # this is the alternative function which gets executed
+        # by the decorator, which just raises skiptest
+
+        @functools.wraps(func)
+        def skip_wrapper(*args, **kwargs):
+            raise unittest.SkipTest(message)
+
+        return skip_wrapper
+    # module found, we just return the function and proceed normally
+    else:
+        return func
