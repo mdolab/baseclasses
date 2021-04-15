@@ -25,7 +25,7 @@ class TestCaseInsensitiveDict(unittest.TestCase):
         self.assertEqual(list(d.items()), [])
 
     def test_invalid_init(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             CaseInsensitiveDict({1: 1})
 
     def test_get(self):
@@ -145,7 +145,7 @@ class TestCaseInsensitiveSet(unittest.TestCase):
         self.assertEqual(list(s), [])
 
     def test_invalid_init(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             CaseInsensitiveSet({1, 2.5})
 
     def test_add_contains(self):
