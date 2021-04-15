@@ -1,6 +1,6 @@
 import functools
 import unittest
-import importlib
+from importlib.util import find_spec
 
 
 def require_mpi(func):
@@ -35,7 +35,7 @@ def base_require(func, module, message=None):
         If module is not found
     """
     # we check if the module can be found
-    module = importlib.find_loader(module)
+    module = find_spec(module)
     # if not found
     if module is None:
         if message is None:
