@@ -30,7 +30,7 @@ class CaseInsensitiveDict(MutableMapping):
     def __init__(self, *args, **kwargs):
         self.data: dict = dict(*args, **kwargs)
         if not all([isinstance(i, str) for i in self.data]):
-            raise ValueError("All keys must be strings!")
+            raise TypeError("All keys must be strings!")
         self.map: Dict[str, str] = {k.lower(): k for k in self.data.keys()}
 
     def _getKey(self, key: str, raiseError=False):
@@ -42,11 +42,18 @@ class CaseInsensitiveDict(MutableMapping):
         ----------
         key : str
             the key to check
+        raiseError : bool
+            if true, raise KeyError if ``key`` is not found.
 
         Returns
         -------
         str, None
             Returns the original key if it exists. Otherwise returns None.
+
+        Raises
+        ------
+        KeyError
+            If ``raiseError`` and key is not found.
         """
         if key.lower() in self.map:
             return self.map[key.lower()]
@@ -57,7 +64,7 @@ class CaseInsensitiveDict(MutableMapping):
 
     def __setitem__(self, key: str, value: Any):
         if not isinstance(key, str):
-            raise ValueError("All keys must be strings.")
+            raise TypeError("All keys must be strings.")
         existingKey = self._getKey(key)
         if existingKey:
             key = existingKey
@@ -117,7 +124,7 @@ class CaseInsensitiveSet(MutableSet):
     def __init__(self, *args, **kwargs):
         self.data: set = set(*args, **kwargs)
         if not all([isinstance(i, str) for i in self.data]):
-            raise ValueError("All items must be strings!")
+            raise TypeError("All items must be strings!")
         self.map: Dict[str, str] = {k.lower(): k for k in list(self)}
 
     def _getItem(self, item: str) -> Optional[str]:
@@ -142,7 +149,7 @@ class CaseInsensitiveSet(MutableSet):
 
     def add(self, item: str):
         if not isinstance(item, str):
-            raise ValueError("All keys must be strings.")
+            raise TypeError("All keys must be strings.")
         existingItem = self._getItem(item)
         # don't do anything if it exists
         if not existingItem:
@@ -151,13 +158,13 @@ class CaseInsensitiveSet(MutableSet):
 
     def __contains__(self, item) -> bool:
         if not isinstance(item, str):
-            raise ValueError("All keys must be strings.")
+            raise TypeError("All keys must be strings.")
         return item.lower() in self.map.keys()
 
     def __eq__(self, other) -> bool:
         """We convert both to regular set, and compare their lower case values"""
         if not all([isinstance(i, str) for i in other]):
-            raise ValueError("All items must be strings!")
+            raise TypeError("All items must be strings!")
         a = set([s.lower() for s in list(self)])
         b = set([o.lower() for o in list(other)])
         return a.__eq__(b)
