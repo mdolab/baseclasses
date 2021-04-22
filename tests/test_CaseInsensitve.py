@@ -1,11 +1,7 @@
 import unittest
 from baseclasses.utils import CaseInsensitiveDict, CaseInsensitiveSet
 from parameterized import parameterized
-
-try:
-    from mpi4py import MPI
-except ImportError:
-    MPI = None
+from baseclasses.decorators import require_mpi
 
 value1 = 123
 value2 = 321
@@ -174,8 +170,10 @@ class TestParallel(unittest.TestCase):
     N_PROCS = 2
 
     @parameterized.expand(["CaseInsensitiveDict", "CaseInsensitiveSet"])
-    @unittest.skipIf(MPI is None, "mpi4py not imported")
+    @require_mpi
     def test_bcast(self, class_type):
+        from mpi4py import MPI
+
         comm = MPI.COMM_WORLD
         d = {"OPtion1": 1}
         s = {"OPtion1"}
