@@ -1,11 +1,7 @@
-try:
-    from mpi4py import MPI
-except ImportError:
-    MPI = None
-
 import unittest
 from baseclasses import BaseSolver
 from baseclasses.utils import Error
+from baseclasses.decorators import require_mpi
 
 
 class SOLVER(BaseSolver):
@@ -143,8 +139,10 @@ class TestComm(unittest.TestCase):
 
     N_PROCS = 2
 
-    @unittest.skipIf(MPI is None, "mpi4py not imported")
+    @require_mpi
     def test_comm_with_mpi(self):
+        from mpi4py import MPI
+
         # initialize solver
         solver = SOLVER("testComm", comm=MPI.COMM_WORLD)
         self.assertFalse(solver.comm is None)
