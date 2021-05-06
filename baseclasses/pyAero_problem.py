@@ -112,10 +112,10 @@ class AeroProblem(FluidProperties):
         Set the yawing rate coefficient
 
     degPol : integer. Default is 0
-        Degree of polynominal for prescribed motion. ADflow only
+        Degree of polynomial for prescribed motion. ADflow only
 
     coefPol : array_like. Default is [0.0]
-        Coefficients of polynominal motion. ADflow only
+        Coefficients of polynomial motion. ADflow only
 
     degFourier : integer. Default is 0
         Degree of Fourier coefficient for prescribed motion. ADflow only
@@ -676,7 +676,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         aerostructural optimization.  If we use the Breguet range
         equation is used for either the objective or constraints we
         need to know the flight velocity, 'V', which is a non-trivial
-        function of the altitue (and Mach number).
+        function of the altitude (and Mach number).
 
         Also, even if 'altitude' and 'mach' are not parameters, this
         function can be used to evaluate the 'V' value for example. In
