@@ -84,13 +84,13 @@ class AeroProblem(FluidProperties):
         aeroProblem.
 
     mach : float. Default is 0.0
-        Set the mach number for the simulation
+        Set the Mach number for the simulation
 
     machRef : float. Default is None
-        Sets the reference mach number for the simulation.
+        Sets the reference Mach number for the simulation.
 
     machGrid : float. Default is None
-        Set the mach number for the grid.
+        Set the Mach number for the grid.
 
     alpha : float. Default is 0.0
         Set the angle of attack
@@ -118,10 +118,10 @@ class AeroProblem(FluidProperties):
         Coefficients of polynominal motion. ADflow only
 
     degFourier : integer. Default is 0
-        Degree of fourrier coefficient for prescribed motion. ADflow only
+        Degree of Fourier coefficient for prescribed motion. ADflow only
 
     omegaFourier : float. Default is 0.0
-        Fundamental circular freqnecy for oscillatory motino (ADflow only)
+        Fundamental circular frequency for oscillatory motion. ADflow only
 
     cosCoefFourier : array_like. Default is [0.0]
         Coefficients for cos terms
@@ -171,7 +171,7 @@ class AeroProblem(FluidProperties):
         Set the reference axis for non-x/y/z based moment calculations
 
     R : float
-        The gas constant. By defalut we use air. R=287.05
+        The gas constant. By default we use air. R=287.05
 
     englishUnits : bool
         Flag to use all English units: pounds, feet, Rankine etc.
