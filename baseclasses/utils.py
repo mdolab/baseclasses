@@ -1,5 +1,6 @@
 from collections.abc import MutableMapping, MutableSet
 from typing import Any, Dict, Optional
+from pprint import pformat
 
 
 class CaseInsensitiveDict(MutableMapping):
@@ -93,7 +94,7 @@ class CaseInsensitiveDict(MutableMapping):
         return selfLower.__eq__(otherLower)
 
     def __repr__(self):
-        return str(self.data)
+        return pformat(self.data)
 
 
 class CaseInsensitiveSet(MutableSet):
@@ -202,7 +203,7 @@ class CaseInsensitiveSet(MutableSet):
         return lowerSelf.issubset(lowerOther)
 
     def __repr__(self):
-        return str(self.data)
+        return pformat(self.data)
 
 
 class Error(Exception):
