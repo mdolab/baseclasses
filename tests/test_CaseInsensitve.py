@@ -1,5 +1,6 @@
 import unittest
 import pickle
+from pprint import pformat
 from baseclasses.utils import CaseInsensitiveDict, CaseInsensitiveSet
 from parameterized import parameterized
 from baseclasses.decorators import require_mpi
@@ -128,6 +129,14 @@ class TestCaseInsensitiveDict(unittest.TestCase):
     def test_repr(self):
         self.assertEqual(self.d2.__str__(), self.d2.data.__str__())
 
+    def test_repr_pprint(self):
+        long_dict = {"b-longstring": 2, "a-longstring": 1, "c-longstring": 3, "e-longstring": 5, "d-longstring": 4}
+        string_format = pformat(CaseInsensitiveDict(long_dict))
+        string_expected = (
+            "{'a-longstring': 1,\n 'b-longstring': 2,\n 'c-longstring': 3,\n 'd-longstring': 4,\n 'e-longstring': 5}"
+        )
+        self.assertEqual(string_format, string_expected)
+
 
 class TestCaseInsensitiveSet(unittest.TestCase):
     def setUp(self):
@@ -224,6 +233,14 @@ class TestCaseInsensitiveSet(unittest.TestCase):
 
     def test_repr(self):
         self.assertEqual(self.s2.__str__(), self.s2.data.__str__())
+
+    def test_repr_pprint(self):
+        long_set = {"a-longstring", "b-longstring", "c-longstring", "d-longstring", "e-longstring", "f-longstring"}
+        string_format = pformat(CaseInsensitiveSet(long_set))
+        string_expected = (
+            "{'a-longstring',\n 'b-longstring',\n 'c-longstring',\n 'd-longstring',\n 'e-longstring',\n 'f-longstring'}"
+        )
+        self.assertEqual(string_format, string_expected)
 
 
 class TestParallel(unittest.TestCase):
