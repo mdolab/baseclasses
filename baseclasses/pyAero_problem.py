@@ -16,25 +16,25 @@ class AeroProblem(FluidProperties):
     """
     The main purpose of this class is to represent all relevant
     information for a single aerodynamic analysis. This will
-    include the thermodynamic parameters defining the flow,
-    condition, the reference quantities for normalization.
+    include the thermodynamic parameters defining the flow
+    condition and the reference quantities for normalization.
 
     There are several different ways of specifying thermodynamic
     conditions. The following describes several of the possible
     ways and the appropriate situations.
 
     'mach' + 'altitude'
-        This is the preferred method. The 1976 standard atmosphere is
-        used to generate all therodynamic properties in a consistent
-        manner. This is suitable for all aerodynamic analysis codes,
-        including aerostructral analysis.
+        This is the preferred method for specifying flight conditions.
+        The 1976 standard atmosphere is used to generate all thermodynamic properties in a consistent manner.
+        The resulting Reynolds number depends on the scale of the mesh.
+        This is suitable for all aerodynamic analysis codes, including aerostructural analysis.
 
     'mach' + 'reynolds' + 'reynoldsLength' + 'T':
-        Used to precisely match reynolds numbers. Complete
-        thermodynamic state is computed.
+        Used to precisely match Reynolds numbers.
+        Complete thermodynamic state is computed.
 
     'V' + 'reynolds' + 'reynoldsLength' + 'T':
-        Used to precisely match reynolds numbers for low speed cases.
+        Used to precisely match Reynolds numbers for low speed cases.
         Complete thermodynamic state is computed.
 
     'mach' + 'T' + 'P':
@@ -57,13 +57,13 @@ class AeroProblem(FluidProperties):
 
     The combinations listed above are the **only** valid combinations
     of arguments that are permitted. Furthermore, since the internal
-    processing is based (permenantly) on these parameters, it is
+    processing is based (permanently) on these parameters, it is
     important that the parameters given on initialization are
     sufficient for the required analysis. For example, if only the
-    Mach number is given, an error will be raised if the user tried to
+    Mach number is given, an error will be raised if the user tries to
     set the 'P' (pressure) variable.
 
-    All parameters are optinonal except for the `name` argument which
+    All parameters are optional except for the `name` argument which
     is required. All of the parameters listed below can be acessed and
     set directly after class creation by calling::
 
@@ -84,13 +84,13 @@ class AeroProblem(FluidProperties):
         aeroProblem.
 
     mach : float. Default is 0.0
-        Set the mach number for the simulation
+        Set the Mach number for the simulation
 
     machRef : float. Default is None
-        Sets the reference mach number for the simulation.
+        Sets the reference Mach number for the simulation.
 
     machGrid : float. Default is None
-        Set the mach number for the grid.
+        Set the Mach number for the grid.
 
     alpha : float. Default is 0.0
         Set the angle of attack
@@ -100,7 +100,7 @@ class AeroProblem(FluidProperties):
 
     altitude : float. Default is 0.0
         Set all thermodynamic parameters from the 1976 standard atmosphere.
-        the altitude must be given in meters.
+        The altitude must be given in meters.
 
     phat : float. Default is 0.0
         Set the rolling rate coefficient
@@ -112,16 +112,16 @@ class AeroProblem(FluidProperties):
         Set the yawing rate coefficient
 
     degPol : integer. Default is 0
-        Degree of polynominal for prescribed motion. ADflow only
+        Degree of polynomial for prescribed motion. ADflow only
 
     coefPol : array_like. Default is [0.0]
-        Coefficients of polynominal motion. ADflow only
+        Coefficients of polynomial motion. ADflow only
 
     degFourier : integer. Default is 0
-        Degree of fourrier coefficient for prescribed motion. ADflow only
+        Degree of Fourier coefficient for prescribed motion. ADflow only
 
     omegaFourier : float. Default is 0.0
-        Fundamental circular freqnecy for oscillatory motino (ADflow only)
+        Fundamental circular frequency for oscillatory motion. ADflow only
 
     cosCoefFourier : array_like. Default is [0.0]
         Coefficients for cos terms
@@ -139,16 +139,16 @@ class AeroProblem(FluidProperties):
         Set the ratio of the specific heats in ideal gas law
 
     reynolds : float. Default is None
-        Set the reynolds number
+        Set the Reynolds number
 
     reynoldslength : float. Default is 1.0
-        Set the length reference for the reynolds number calculations
+        Set the reference length for the Reynolds number calculations
 
     areaRef : float. Default is 1.0
-        Set the reference area used for normalization of Lift, Drag etc.
+        Set the reference area used for normalization of lift, drag, etc.
 
     chordRef : float. Default is 1.0
-        Set the reference length used for moment normaliziation.
+        Set the reference length used for moment normalization
 
     spanRef : float. Default is 1.0
         Set reference length for span. Only used for normalization of
@@ -167,20 +167,20 @@ class AeroProblem(FluidProperties):
         are taken
 
     momentAxis : iterable object containing floats.
-        Defualt is [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]
+        Default is [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]
         Set the reference axis for non-x/y/z based moment calculations
 
     R : float
-        The gas constant. By defalut we use air. R=287.05
+        The gas constant. By default we use air. R=287.05
 
     englishUnits : bool
         Flag to use all English units: pounds, feet, Rankine etc.
 
     solverOptions : dict
-        A set of solver specific options that temprorily overide the solver's
+        A set of solver specific options that temporarily override the solver's
         internal options for this aero problem only. It must contain the name of
         the solver followed by a dictionary of options for that solver. For example
-        solverOptions ={'adflow':{'vis4':0.018}}. Currently only the only solver
+        ``solverOptions={'adflow':{'vis4':0.018}}``. Currently, the only solver
         supported is 'adflow' and must use the specific key 'adflow'.
 
     Examples
@@ -193,11 +193,11 @@ chordRef=275.8*.0254, xRef=1325.9*0.0254, zRef=177.95*.0254)
     >>> ap = AeroProblem('flight_condition', mach=0.85, altitude=37000*.3048, \
 areaRef=594720*.0254**2, chordRef=275.8*.0254, \
 xRef=1325.9*0.0254, zRef=177.95*.0254)
-    >>> # OneraM6 Test condition (euler)
+    >>> # Onera M6 Test condition (Euler)
     >>> ap = AeroProblem('m6_tunnel', mach=0.8395, areaRef=0.772893541, chordRef=0.64607 \
 xRef=0.0, zRef=0.0, alpha=3.06)
-    >>> # OneraM6 Test condition (RANS)
-    >>> ap = AeroProblem('m6_tunnel', mach=0.8395, reynolds=11.72e6, reynoldsLenght=0.64607, \
+    >>> # Onera M6 Test condition (RANS)
+    >>> ap = AeroProblem('m6_tunnel', mach=0.8395, reynolds=11.72e6, reynoldsLength=0.64607, \
 areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                          """
 
@@ -552,8 +552,8 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         """
         Add one of the class attributes as an 'aerodynamic' design
         variable. Typical variables are alpha, mach, altitude,
-        chordRef etc. An error will be given if the requested DV is
-        not allowed to be added
+        chordRef, etc. An error will be given if the requested DV is
+        not allowed to be added.
 
 
         Parameters
@@ -581,21 +581,20 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
         offset : float. Default is 0.0
 
-            Specify a specific (constant!) offset of the value used,
-            as compared to the actual design variable. This is most
+            Specify a constant offset of the value relative
+            to the actual design variable. This is most
             often used when a single aerodynamic variable is used to
-            change multiple aeroProblems. For example. if you have
-            three aeroProblems for a multiPoint analysis, and you want
-            mach numbers of 0.84, 0.85 and 0.86, but want want only to
-            change the center one, and have the other two slave, we
-            would do this::
+            change multiple aeroProblems. For example, if you have
+            three aeroProblems for a multiPoint analysis with
+            Mach numbers of 0.84, 0.85 and 0.86, and you want all
+            three to change by the same amount, you could do this::
 
-              >>> ap1.addDV('mach',...,name='centerMach', offset=-0.01)
-              >>> ap2.addDV('mach',...,name='centerMach', offset= 0.00)
-              >>> ap3.addDV('mach',...,name='centerMach', offset=+0.01)
+              >>> ap1.addDV('mach',..., name='centerMach', offset=-0.01)
+              >>> ap2.addDV('mach',..., name='centerMach', offset= 0.00)
+              >>> ap3.addDV('mach',..., name='centerMach', offset=+0.01)
 
             The result is a single design variable driving three
-            different mach numbers.
+            different Mach numbers.
 
         dvOffset : float. Default is 0.0
             This is the offset used to give to pyOptSparse. It can be used
@@ -608,7 +607,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             and the others can set this to False.
 
         units : str or None. Default None
-            physical units of the variable
+            Physical units of the variable
 
 
         Examples
@@ -813,7 +812,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         aerostructural optimization.  If we use the Breguet range
         equation is used for either the objective or constraints we
         need to know the flight velocity, 'V', which is a non-trivial
-        function of the altitue (and Mach number).
+        function of the altitude (and Mach number).
 
         Also, even if 'altitude' and 'mach' are not parameters, this
         function can be used to evaluate the 'V' value for example. In

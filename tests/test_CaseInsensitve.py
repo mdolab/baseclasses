@@ -1,11 +1,9 @@
 import unittest
+import pickle
+from pprint import pformat
 from baseclasses.utils import CaseInsensitiveDict, CaseInsensitiveSet
 from parameterized import parameterized
-
-try:
-    from mpi4py import MPI
-except ImportError:
-    MPI = None
+from baseclasses.decorators import require_mpi
 
 value1 = 123
 value2 = 321
@@ -15,8 +13,17 @@ value3 = 132
 class TestCaseInsensitiveDict(unittest.TestCase):
     def setUp(self):
         self.d = CaseInsensitiveDict({"OPtion1": value1})
-        self.d2 = CaseInsensitiveDict({"opTION1": value2, "optioN2": value2})
+        self.d2 = CaseInsensitiveDict(opTION1=value2, optioN2=value2)  # test different initialization
         self.d3 = {"regular dict": 1}
+
+    def test_empty_init(self):
+        d = CaseInsensitiveDict()
+        self.assertEqual(len(d), 0)
+        self.assertEqual(list(d.items()), [])
+
+    def test_invalid_init(self):
+        with self.assertRaises(TypeError):
+            CaseInsensitiveDict({1: 1})
 
     def test_get(self):
         # test __getitem__
@@ -46,6 +53,8 @@ class TestCaseInsensitiveDict(unittest.TestCase):
         # check case insensitive contain
         self.assertIn("OPTION2", self.d)
         self.assertNotIn("INVALID", self.d)
+        with self.assertRaises(KeyError):
+            self.d["INVALID"]
 
     def test_del(self):
         # test __del__
@@ -93,6 +102,41 @@ class TestCaseInsensitiveDict(unittest.TestCase):
         d = CaseInsensitiveDict({"opTIon1": value1})
         self.assertEqual(d, self.d)
 
+    def test_pickle(self):
+        new_dict = pickle.loads(pickle.dumps(self.d))
+        self.assertEqual(self.d, new_dict)
+
+    def test_items(self):
+        res = []
+        for k, v in self.d2.items():
+            res.append((k, v))
+        self.assertEqual(res, [("opTION1", value2), ("optioN2", value2)])
+
+    def test_iter(self):
+        res = []
+        for k in self.d2:
+            res.append(k)
+        self.assertEqual(res, ["opTION1", "optioN2"])
+
+    def test_keys(self):
+        k = list(self.d2.keys())
+        self.assertEqual(k, ["opTION1", "optioN2"])
+
+    def test_values(self):
+        v = list(self.d2.values())
+        self.assertEqual(v, [value2, value2])
+
+    def test_repr(self):
+        self.assertEqual(self.d2.__str__(), self.d2.data.__str__())
+
+    def test_repr_pprint(self):
+        long_dict = {"b-longstring": 2, "a-longstring": 1, "c-longstring": 3, "e-longstring": 5, "d-longstring": 4}
+        string_format = pformat(CaseInsensitiveDict(long_dict))
+        string_expected = (
+            "{'a-longstring': 1,\n 'b-longstring': 2,\n 'c-longstring': 3,\n 'd-longstring': 4,\n 'e-longstring': 5}"
+        )
+        self.assertEqual(string_format, string_expected)
+
 
 class TestCaseInsensitiveSet(unittest.TestCase):
     def setUp(self):
@@ -100,19 +144,28 @@ class TestCaseInsensitiveSet(unittest.TestCase):
         self.s2 = CaseInsensitiveSet({"OPTION1", "opTION2"})
         self.s3 = {"regular set"}
 
+    def test_empty_init(self):
+        s = CaseInsensitiveSet()
+        self.assertEqual(len(s), 0)
+        self.assertEqual(list(s), [])
+
+    def test_invalid_init(self):
+        with self.assertRaises(TypeError):
+            CaseInsensitiveSet({1, 2.5})
+
     def test_add_contains(self):
         # test __contains__ and add()
         self.assertIn("OPTION1", self.s)
         # test original capitalization is preserved on initialization
-        self.assertEqual({"Option1"}, self.s._getKeys())
+        self.assertEqual({"Option1"}, self.s.data)
         self.s.add("OPTION2")
         self.assertIn("option2", self.s)
         # now add the same key again with different capitalization
         self.s.add("option2")
-        self.assertNotIn("option2", self.s._getKeys())
-        self.assertIn("OPTION2", self.s._getKeys())
+        self.assertNotIn("option2", self.s.data)
+        self.assertIn("OPTION2", self.s.data)
         # test original capitalization is preserved on new item
-        self.assertEqual({"Option1", "OPTION2"}, self.s._getKeys())
+        self.assertEqual({"Option1", "OPTION2"}, self.s.data)
 
     def test_len(self):
         self.assertEqual(len(self.s2), 2)
@@ -120,18 +173,17 @@ class TestCaseInsensitiveSet(unittest.TestCase):
         self.assertEqual(len(self.s2), 1)
 
     def test_update(self):
-        # test update()
         self.s.update(self.s2)
         self.assertTrue(isinstance(self.s, CaseInsensitiveSet))
         self.assertEqual(len(self.s), 2)
-        self.assertEqual(self.s._getKeys(), {"Option1", "opTION2"})
+        self.assertEqual(self.s.data, {"Option1", "opTION2"})
 
     def test_update_with_regular_set(self):
         # test regular set update
         self.s.update(self.s3)
         self.assertTrue(isinstance(self.s, CaseInsensitiveSet))
         self.assertIn("REGULAR SET", self.s)
-        self.assertEqual({"Option1", "regular set"}, self.s._getKeys())
+        self.assertEqual({"Option1", "regular set"}, self.s.data)
 
     def test_update_regular_set_with_set(self):
         self.s3.update(self.s)
@@ -169,13 +221,36 @@ class TestCaseInsensitiveSet(unittest.TestCase):
         self.s2.remove("opTION2")
         self.assertEqual(self.s, self.s2)
 
+    def test_pickle(self):
+        new_set = pickle.loads(pickle.dumps(self.s))
+        self.assertEqual(self.s, new_set)
+
+    def test_iter(self):
+        res = set()
+        for k in self.s2:
+            res.add(k)
+        self.assertEqual(res, self.s2)
+
+    def test_repr(self):
+        self.assertEqual(self.s2.__str__(), self.s2.data.__str__())
+
+    def test_repr_pprint(self):
+        long_set = {"a-longstring", "b-longstring", "c-longstring", "d-longstring", "e-longstring", "f-longstring"}
+        string_format = pformat(CaseInsensitiveSet(long_set))
+        string_expected = (
+            "{'a-longstring',\n 'b-longstring',\n 'c-longstring',\n 'd-longstring',\n 'e-longstring',\n 'f-longstring'}"
+        )
+        self.assertEqual(string_format, string_expected)
+
 
 class TestParallel(unittest.TestCase):
     N_PROCS = 2
 
-    @unittest.skipIf(MPI is None, "mpi4py not imported")
     @parameterized.expand(["CaseInsensitiveDict", "CaseInsensitiveSet"])
+    @require_mpi
     def test_bcast(self, class_type):
+        from mpi4py import MPI
+
         comm = MPI.COMM_WORLD
         d = {"OPtion1": 1}
         s = {"OPtion1"}

@@ -1,0 +1,31 @@
+trigger:
+  branches:
+    include:
+    - master
+  tags:
+    include:
+    - v*.*.*
+
+pr:
+- master
+
+resources:
+  repositories:
+  - repository: azure_template
+    type: github
+    name: mdolab/.github
+    endpoint: mdolab
+
+stages:
+- template: azure/azure_template.yaml@azure_template
+  parameters:
+    REPO_NAME: baseclasses
+
+- stage:
+  dependsOn:
+  - Test_Real
+  - Style
+  displayName: PyPI
+  condition: and(succeeded(), contains(variables['build.sourceBranch'], 'tags'))
+  jobs:
+  - template: azure/azure_pypi.yaml@azure_template

@@ -514,8 +514,8 @@ class MissionSegment(object):
 
     This is the basic building block of the mission solver.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     phase : str
         Segment type selector valid options include
 
