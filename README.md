@@ -1,6 +1,6 @@
 # baseclasses
-![PyPI](https://img.shields.io/pypi/v/mdolab-baseclasses)
-![conda](https://img.shields.io/conda/v/conda-forge/mdolab-baseclasses)
+[![PyPI](https://img.shields.io/pypi/v/mdolab-baseclasses)](https://pypi.org/project/mdolab-baseclasses/)
+[![conda](https://img.shields.io/conda/v/conda-forge/mdolab-baseclasses)](https://anaconda.org/conda-forge/mdolab-baseclasses)
 [![Build Status](https://dev.azure.com/mdolab/Public/_apis/build/status/mdolab.baseclasses?repoName=mdolab%2Fbaseclasses&branchName=master)](https://dev.azure.com/mdolab/Public/_build/latest?definitionId=31&repoName=mdolab%2Fbaseclasses&branchName=master)
 [![Documentation Status](https://readthedocs.com/projects/mdolab-baseclasses/badge/?version=latest)](https://mdolab-baseclasses.readthedocs-hosted.com/?badge=latest)
 
