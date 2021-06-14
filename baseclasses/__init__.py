@@ -25,3 +25,5 @@ from .pyLG_problem import LGProblem
 
 from .py3Util import getPy3SafeString
 from .BaseRegTest import BaseRegTest
+
+from .SolverHist import SolverHist
