@@ -37,3 +37,9 @@ For stability we recommend cloning or checking out a tagged release.
 
    BaseSolver
    pyAero_solver
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Testing Classes
+
+   BaseRegTest
