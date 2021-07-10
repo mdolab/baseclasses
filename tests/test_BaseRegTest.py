@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 from baseclasses import BaseRegTest
 from baseclasses.BaseRegTest import getTol
+from baseclasses.decorators import require_mpi
 
 try:
     from mpi4py import MPI
@@ -118,7 +119,7 @@ class TestBaseRegTest(unittest.TestCase):
         handler = BaseRegTest(self.ref_file, train=False)
         self.regression_test_root(handler)
 
-    @unittest.skipIf(MPI is None, "mpi4py not imported")
+    @require_mpi
     def test_train_then_test_par(self):
         """
         Test for adding values in parallel, both in training and in testing
@@ -133,5 +134,5 @@ class TestBaseRegTest(unittest.TestCase):
             self.regression_test_par(handler)
 
     def tearDown(self):
-        if self.rank == 0:
+        if self.rank == 0 and hasattr(self, "ref_file"):
             os.remove(self.ref_file)
