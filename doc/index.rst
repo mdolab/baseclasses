@@ -43,3 +43,4 @@ For stability we recommend cloning or checking out a tagged release.
    :caption: Testing Classes
 
    BaseRegTest
+   Example
