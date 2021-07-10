@@ -1,10 +1,10 @@
-.. _Example:
+.. _regression_example:
 
 Regression Testing Example
 --------------------------
 
 :class:`baseclasses.BaseRegTest.BaseRegTest` provides a framework for creating regression tests.
-It stores data in a JSON file format during _training_ and compares test results against this stored data during _testing_.
+It stores data in a JSON file format during *training* and compares test results against this stored data during *testing*.
 Here, we will go through a short example of how to integrate this into Pythons's ``unittest`` framework, specifically when used with ``testflo``.
 
 In this example, a regression test for a function called ``sampling.polynomial`` will be created.
@@ -13,7 +13,7 @@ The test function is structured as follows:
 
 .. code-block:: python
 
-    def TestSampling(unittest.TestCase):
+    class TestSampling(unittest.TestCase):
         def test_polynomial(self, train=False):
             ref_file = os.path.join(baseDir, "ref/test_polynomial.ref")
             with BaseRegTest(ref_file, train=train) as handler:
@@ -22,7 +22,7 @@ The test function is structured as follows:
 
 The key difference from a typical unit test is the optional ``train`` flag.
 When this flag is false then :meth:`baseclasses.BaseRegTest.BaseRegTest.root_add_val` will check the reference file for the value associated with the given key and compare it to the array ``s``.
-When train is set to true, :meth:`baseclasses.BaseRegTest.BaseRegTest.root_add_val` will instead store the current value of ``s`` in the reference file with the given key.
+When train is set to true, :meth:`root_add_val<baseclasses.BaseRegTest.BaseRegTest.root_add_val>` will instead store the current value of ``s`` in the reference file with the given key.
 The ``with`` keyword is used to make sure the opening and closing of the reference file is handled correctly. 
 
 To quickly make the reference data for multiple regression tests we can create a corresponding train function:

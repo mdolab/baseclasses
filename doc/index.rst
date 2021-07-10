@@ -56,4 +56,4 @@ Or from source, by cloning the repo and then running (from the repo root)::
    :caption: Testing Classes
 
    BaseRegTest
-   Example
+   regression_example
