@@ -37,7 +37,7 @@ def getTol(**kwargs):
 
 
 class BaseRegTest(object):
-    def __init__(self, ref_file, train=False, comm=None, check_arch=False):
+    def __init__(self, ref_file, train=False, comm=None):
         self.ref_file = ref_file
         if MPI is None:
             self.comm = None
@@ -57,13 +57,6 @@ class BaseRegTest(object):
             # it will hang when it tries to open it on the root proc.
             assert os.path.isfile(self.ref_file)
             self.db = self.readRef()
-
-        # dictionary of real/complex PETSc arch names
-        self.arch = {"real": None, "complex": None}
-        # If we specify the test type, verify that the $PETSC_ARCH contains 'real' or 'complex',
-        # and sets the self.arch flag appropriately
-        if check_arch:
-            self.checkPETScArch()
 
     def __enter__(self):
         return self
@@ -90,26 +83,6 @@ class BaseRegTest(object):
                 db = self.comm.bcast(db)
             self.metadata = db.pop("metadata", None)
             return db
-
-    def checkPETScArch(self):
-        # Determine real/complex petsc arches: take the one when the script is
-        # called to be the real:
-        self.arch["real"] = os.environ.get("PETSC_ARCH")
-        pdir = os.environ.get("PETSC_DIR")
-        # Directories in the root of the petsc directory
-        dirs = [o for o in os.listdir(pdir) if os.path.isdir(pdir + "/" + o)]
-        # See if any one has 'complex' in it...basically we want to see if
-        # an architecture has 'complex' in it which means it is (most
-        # likely) a complex build
-        carch = []
-        for d in dirs:
-            if "complex" in d.lower():
-                carch.append(d)
-        if len(carch) > 0:
-            # take the first one if there are multiple
-            self.arch["complex"] = carch[0]
-        else:
-            self.arch["complex"] = None
 
     # *****************
     # Public functions
@@ -297,7 +270,7 @@ class BaseRegTest(object):
 
     @staticmethod
     def convertRegFileToJSONRegFile(file_name, output_file=None):
-        """ converts from the old format of regression test file to the new JSON format"""
+        """converts from the old format of regression test file to the new JSON format"""
 
         if output_file is None:
             output_file = os.path.splitext(file_name)[0] + ".json"
