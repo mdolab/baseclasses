@@ -23,7 +23,7 @@ The test function is structured as follows:
 The key difference from a typical unit test is the optional ``train`` flag.
 When this flag is false then :meth:`baseclasses.BaseRegTest.BaseRegTest.root_add_val` will check the reference file for the value associated with the given key and compare it to the array ``s``.
 When train is set to true, :meth:`root_add_val<baseclasses.BaseRegTest.BaseRegTest.root_add_val>` will instead store the current value of ``s`` in the reference file with the given key.
-The ``with`` keyword is used to make sure the opening and closing of the reference file is handled correctly. 
+The ``with`` keyword is used to make sure that during training mode, the reference file is updated correctly at the end.
 
 To quickly make the reference data for multiple regression tests we can create a corresponding train function:
 
