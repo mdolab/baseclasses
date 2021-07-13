@@ -7,3 +7,6 @@ BaseRegTest
 
 .. autoclass:: BaseRegTest
     :members:
+
+.. automodule:: baseclasses.BaseRegTest
+    :members:
