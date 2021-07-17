@@ -50,3 +50,10 @@ Or from source, by cloning the repo and then running (from the repo root)::
 
    BaseSolver
    pyAero_solver
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Testing Classes
+
+   BaseRegTest
+   regression_example
