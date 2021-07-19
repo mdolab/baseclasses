@@ -427,7 +427,7 @@ class AeroSolver(BaseSolver):
         pass
 
     def setStates(self, states):
-        """ Set the states on this processor."""
+        """Set the states on this processor."""
 
         pass
 
