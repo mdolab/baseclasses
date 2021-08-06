@@ -14,7 +14,7 @@ except ImportError:
 from .utils import Error
 
 
-class WeightProblem(object):
+class WeightProblem:
     """
     Weight Problem Object:
 
@@ -206,7 +206,7 @@ class WeightProblem(object):
             points.append(self.p0[i] + self.v1[i])
             points.append(self.p0[i] + self.v2[i])
             for i in range(len(points)):
-                f.write("%f %f %f\n" % (points[i][0], points[i][1], points[i][2]))
+                f.write(f"{points[i][0]:f} {points[i][1]:f} {points[i][2]:f}\n")
 
         for i in range(len(self.p0)):
             f.write("%d %d %d\n" % (3 * i + 1, 3 * i + 2, 3 * i + 3))
@@ -511,7 +511,7 @@ class WeightProblem(object):
                 z = numpy.real(CG[2])
                 m = numpy.real(mass)
 
-                f.write("%f %f %f %f\n" % (x, y, z, m))
+                f.write(f"{x:f} {y:f} {z:f} {m:f}\n")
 
             # end
             f.write("\n")
@@ -545,7 +545,7 @@ class WeightProblem(object):
             mass = self.components[key].getMass(self.units)
             W = self.components[key].getWeight(self.units)
             name = self.components[key].name
-            f.write("%s: %f, %f, %f %f %f \n" % (name, W, mass, CG[0], CG[1], CG[2]))
+            f.write(f"{name}: {W:f}, {mass:f}, {CG[0]:f} {CG[1]:f} {CG[2]:f} \n")
         # end
 
         f.close()
@@ -562,7 +562,7 @@ class WeightProblem(object):
         return " "
 
 
-class FuelCase(object):
+class FuelCase:
     """
     class to handle individual fuel cases.
     """
@@ -650,7 +650,7 @@ class FuelCase(object):
         # First check if we are allowed to add the DV:
         if key not in self.possibleDVs:
             raise Error(
-                "The DV '%s' could not be added.  The list of possible DVs are: %s." % (key, repr(self.possibleDVs))
+                f"The DV '{key}' could not be added.  The list of possible DVs are: {repr(self.possibleDVs)}."
             )
 
         if name is None:
@@ -799,7 +799,7 @@ class FuelCase(object):
         return args
 
 
-class fuelCaseDV(object):
+class fuelCaseDV:
     """
     A container storing information regarding a fuel case variable.
     """

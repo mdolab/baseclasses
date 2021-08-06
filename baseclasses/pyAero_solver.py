@@ -191,7 +191,7 @@ class AeroSolver(BaseSolver):
                 points.append(p0[i] + v1[i])
                 points.append(p0[i] + v2[i])
                 for i in range(len(points)):
-                    f.write("%f %f %f\n" % (points[i][0], points[i][1], points[i][2]))
+                    f.write(f"{points[i][0]:f} {points[i][1]:f} {points[i][2]:f}\n")
 
             for i in range(len(p0)):
                 f.write("%d %d %d\n" % (3 * i + 1, 3 * i + 2, 3 * i + 3))

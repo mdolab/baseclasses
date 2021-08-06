@@ -7,7 +7,7 @@ Holds the Python Aerodynamic Analysis Classes (base and inherited).
 # =============================================================================
 # Geometry Class
 # =============================================================================
-class Geometry(object):
+class Geometry:
 
     """
     Abstract Class for Geometry Object

@@ -54,7 +54,7 @@ def getTol(**kwargs):
     return rtol, atol
 
 
-class BaseRegTest(object):
+class BaseRegTest:
     def __init__(self, ref_file, train=False, comm=None):
         """
         The class for handling regression tests.
@@ -268,7 +268,7 @@ class BaseRegTest(object):
     def assert_allclose(self, actual, reference, name, rtol, atol, full_name=None):
         if full_name is None:
             full_name = name
-        msg = "Failed value for: {}".format(full_name)
+        msg = f"Failed value for: {full_name}"
         numpy.testing.assert_allclose(actual, reference, rtol=rtol, atol=atol, err_msg=msg)
 
     def _add_values(self, name, values, db=None, **kwargs):
@@ -387,7 +387,7 @@ class BaseRegTest(object):
                     return dict(__ndarray__=float(obj), dtype=str(obj.dtype), shape=obj.shape)
 
                 # Let the base class default method raise the TypeError
-                super(NumpyEncoder, self).default(obj)
+                super().default(obj)
 
         # move metadata to end of db if it exists
         if "metadata" in ref:
@@ -419,7 +419,7 @@ class BaseRegTest(object):
                 return numpy.array(data, dct["dtype"]).reshape(dct["shape"])
             return dct
 
-        with open(file_name, "r") as json_file:
+        with open(file_name) as json_file:
             data = json.load(json_file, object_hook=json_numpy_obj_hook)
 
         return data
@@ -457,7 +457,7 @@ class BaseRegTest(object):
                 mydict[key] = value
 
         curr_dict = ref
-        with open(file_name, "r") as fid:
+        with open(file_name) as fid:
             for line in fid:
                 # key ideas
                 #    - lines starting with @value aren't added to the queque

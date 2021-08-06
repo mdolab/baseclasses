@@ -13,7 +13,7 @@ from .FluidProperties import FluidProperties
 from .utils import Error
 
 
-class MissionProblem(object):
+class MissionProblem:
     """
     Mission Problem Object:
 
@@ -239,7 +239,7 @@ class MissionProblem(object):
         return string
 
 
-class MissionProfile(object):
+class MissionProfile:
     """
     Mission Profile Object:
 
@@ -294,13 +294,13 @@ class MissionProfile(object):
                     if dvName in self.dvList:
                         raise Error(
                             "User-defined design variable name "
-                            + "{} has already been added".format(dvName)
+                            + f"{dvName} has already been added"
                             + " to this profile."
                         )
                     dvNameGlobal = dvName
                 else:
                     # Prepend profile name and segment ID
-                    dvNameGlobal = "{}_seg{}_{}".format(self.name, segID, dvName)
+                    dvNameGlobal = f"{self.name}_seg{segID}_{dvName}"
                 # Save a reference of the DV object and set its segment ID
                 self.dvList[dvNameGlobal] = seg.dvList[dvName]
                 self.dvList[dvNameGlobal].setSegmentID(segID)
@@ -508,7 +508,7 @@ class MissionProfile(object):
         return string
 
 
-class MissionSegment(object):
+class MissionSegment:
     """
     Mission Segment Object:
 
@@ -527,8 +527,7 @@ class MissionSegment(object):
         self.phase = phase
 
         # These are the parameters that can be simply set directly in the class.
-        paras = set(
-            (
+        paras = {
                 "initMach",
                 "initAlt",
                 "initCAS",
@@ -547,8 +546,7 @@ class MissionSegment(object):
                 "descentrate",
                 "climbtdratio",
                 "descenttdratio",
-            )
-        )
+        }
 
         # By default everything is None
         for para in paras:
@@ -793,12 +791,12 @@ class MissionSegment(object):
             # Requires either (v, hi, hf), (v, hi, Mf), or (v, Mi, hf)
             self.finalCAS = self.initCAS
 
-            if set(["initCAS", "initAlt", "finalAlt"]).issubset(self.segInputs):
+            if {"initCAS", "initAlt", "finalAlt"}.issubset(self.segInputs):
                 # (v, hi, hf): Solve for the TAS and then for Mach
                 self._calculateSpeed(endPoint="start")
                 self._calculateSpeed(endPoint="end")
 
-            elif set(["initCAS", "initAlt", "finalMach"]).issubset(self.segInputs):
+            elif {"initCAS", "initAlt", "finalMach"}.issubset(self.segInputs):
                 # (v, hi, Mf): Solve for finalAlt and then TAS
                 self.finalAlt = self._solveMachCASIntercept(self.initCAS, self.finalMach)
                 self.finalTAS = self._CAS2TAS(self.finalCAS, self.finalAlt)
@@ -806,7 +804,7 @@ class MissionSegment(object):
                 a = self._getSoundSpeed(self.initAlt)
                 self.initMach = self.initTAS / a
 
-            elif set(["initCAS", "initMach", "finalAlt"]).issubset(self.segInputs):
+            elif {"initCAS", "initMach", "finalAlt"}.issubset(self.segInputs):
                 # (v, Mi, hf): Solve for initAlt and then TAS
                 self.initAlt = self._solveMachCASIntercept(self.initCAS, self.initMach)
                 self.initTAS = self._CAS2TAS(self.initCAS, self.initAlt)
@@ -821,12 +819,12 @@ class MissionSegment(object):
             # Requires either (M, hi, hf), (M, vi, hf), or (M, hi, vf)
             self.finalMach = self.initMach
 
-            if set(["initMach", "initAlt", "finalAlt"]).issubset(self.segInputs):
+            if {"initMach", "initAlt", "finalAlt"}.issubset(self.segInputs):
                 # (M, hi, hf): Solve for the TAS and then CAS
                 self._calculateSpeed(endPoint="start")
                 self._calculateSpeed(endPoint="end")
 
-            elif set(["initMach", "initCAS", "finalAlt"]).issubset(self.segInputs):
+            elif {"initMach", "initCAS", "finalAlt"}.issubset(self.segInputs):
                 # (M, vi, hf): Solve for initAlt and then initTAS, finalTAS then finalCAS
                 self.initAlt = self._solveMachCASIntercept(self.initCAS, self.initMach)
                 self.initTAS = self._CAS2TAS(self.initCAS, self.initAlt)
@@ -834,7 +832,7 @@ class MissionSegment(object):
                 self.finalTAS = self.finalMach * a
                 self.finalCAS = self._TAS2CAS(self.finalTAS, self.finalAlt)
 
-            elif set(["initMach", "initAlt", "finalCAS"]).issubset(self.segInputs):
+            elif {"initMach", "initAlt", "finalCAS"}.issubset(self.segInputs):
                 # (M, hi, vf): Solve for finalAlt and then finalTAS, initTAS then initCAS
                 self.finalAlt = self._solveMachCASIntercept(self.finalCAS, self.finalMach)
                 self.finalTAS = self._CAS2TAS(self.finalCAS, self.finalAlt)
@@ -1097,7 +1095,7 @@ class MissionSegment(object):
 
         # Get the engine type and ensure the engine type is defined in engTypeDict
         if self.engType not in engTypeDict and self.engType is not None:
-            raise Error("engType %s defined in segment %s not defined in engTypeDict" % (self.engType, self.phase))
+            raise Error(f"engType {self.engType} defined in segment {self.phase} not defined in engTypeDict")
         if self.engType is None:
             self.engType = "None"
         engTypeID = engTypeDict[getattr(self, "engType")]
@@ -1251,9 +1249,9 @@ class MissionSegment(object):
         else:
             fuelFrac = numpy.nan
 
-        string = "%3s %18s  " % (idTag, self.phase)
-        string += "%8s  %8s  %8s  %8s  %8s \n" % ("Alt", "Mach", "CAS", "TAS", "FuelFrac")
-        string += "%22s  %8.2f  %8.6f  %8.4f  %8.4f  %8.4f \n" % (
+        string = f"{idTag:>3} {self.phase:>18}  "
+        string += "{:>8}  {:>8}  {:>8}  {:>8}  {:>8} \n".format("Alt", "Mach", "CAS", "TAS", "FuelFrac")
+        string += "{:>22}  {:8.2f}  {:8.6f}  {:8.4f}  {:8.4f}  {:8.4f} \n".format(
             "",
             states[0, 0],
             states[0, 1],
@@ -1261,12 +1259,12 @@ class MissionSegment(object):
             states[0, 3],
             fuelFrac,
         )
-        string += "%22s  %8.2f  %8.6f  %8.4f  %8.4f \n" % ("", states[1, 0], states[1, 1], states[1, 2], states[1, 3])
+        string += "{:>22}  {:8.2f}  {:8.6f}  {:8.4f}  {:8.4f} \n".format("", states[1, 0], states[1, 1], states[1, 2], states[1, 3])
 
         return string
 
 
-class SegmentDV(object):
+class SegmentDV:
     """
     A container storing information regarding a mission profile variable.
     """
