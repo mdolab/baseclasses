@@ -9,7 +9,7 @@ import sys
 import json
 from collections import deque
 from contextlib import contextmanager
-from .utils import Error
+from .utils import CaseInsensitiveDict, CaseInsensitiveSet, Error
 
 
 def getTol(**kwargs):
@@ -366,9 +366,14 @@ class BaseRegTest:
             The dictionary
         """
 
-        class NumpyEncoder(json.JSONEncoder):
+        class MyEncoder(json.JSONEncoder):
+            """
+            Custom encoder class for Numpy arrays and CaseInsensitiveDict
+            """
+
             def default(self, obj):
-                """If input object is an ndarray it will be converted into a dict
+                """
+                If input object is an ndarray it will be converted into a dict
                 holding dtype, shape and the data, base64 encoded.
                 """
                 if isinstance(obj, numpy.ndarray):
@@ -385,6 +390,10 @@ class BaseRegTest:
                     return dict(__ndarray__=int(obj), dtype=str(obj.dtype), shape=obj.shape)
                 elif isinstance(obj, numpy.floating):
                     return dict(__ndarray__=float(obj), dtype=str(obj.dtype), shape=obj.shape)
+                elif isinstance(obj, CaseInsensitiveDict):
+                    return dict(obj)
+                elif isinstance(obj, CaseInsensitiveSet):
+                    return set(obj)
 
                 # Let the base class default method raise the TypeError
                 super().default(obj)
@@ -393,7 +402,7 @@ class BaseRegTest:
         if "metadata" in ref:
             ref["metadata"] = ref.pop("metadata")
         with open(file_name, "w") as json_file:
-            json.dump(ref, json_file, sort_keys=True, indent=4, separators=(",", ": "), cls=NumpyEncoder)
+            json.dump(ref, json_file, sort_keys=True, indent=4, separators=(",", ": "), cls=MyEncoder)
 
     # based on this stack overflow answer https://stackoverflow.com/questions/3488934/simplejson-and-numpy-array/24375113#24375113
     @staticmethod
