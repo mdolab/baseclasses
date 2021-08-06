@@ -528,24 +528,24 @@ class MissionSegment:
 
         # These are the parameters that can be simply set directly in the class.
         paras = {
-                "initMach",
-                "initAlt",
-                "initCAS",
-                "initTAS",
-                "finalMach",
-                "finalAlt",
-                "finalCAS",
-                "finalTAS",
-                "fuelFraction",
-                "rangeFraction",
-                "segTime",
-                "engType",
-                "throttle",
-                "nIntervals",
-                "residualclimbrate",
-                "descentrate",
-                "climbtdratio",
-                "descenttdratio",
+            "initMach",
+            "initAlt",
+            "initCAS",
+            "initTAS",
+            "finalMach",
+            "finalAlt",
+            "finalCAS",
+            "finalTAS",
+            "fuelFraction",
+            "rangeFraction",
+            "segTime",
+            "engType",
+            "throttle",
+            "nIntervals",
+            "residualclimbrate",
+            "descentrate",
+            "climbtdratio",
+            "descenttdratio",
         }
 
         # By default everything is None
@@ -1259,7 +1259,9 @@ class MissionSegment:
             states[0, 3],
             fuelFrac,
         )
-        string += "{:>22}  {:8.2f}  {:8.6f}  {:8.4f}  {:8.4f} \n".format("", states[1, 0], states[1, 1], states[1, 2], states[1, 3])
+        string += "{:>22}  {:8.2f}  {:8.6f}  {:8.4f}  {:8.4f} \n".format(
+            "", states[1, 0], states[1, 1], states[1, 2], states[1, 3]
+        )
 
         return string
 

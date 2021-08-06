@@ -42,14 +42,14 @@ class LGProblem:
         # These are the parameters that can be simply set directly in
         # the class.
         paras = {
-                "aircraftMass",
-                "tireEff",
-                "tireDef",
-                "shockEff",
-                "shockDef",
-                "weightCondition",
-                "loadCaseType",
-                "loadFrac",
+            "aircraftMass",
+            "tireEff",
+            "tireDef",
+            "shockEff",
+            "shockDef",
+            "weightCondition",
+            "loadCaseType",
+            "loadFrac",
         }
 
         self.g = 9.81  # (m/s)

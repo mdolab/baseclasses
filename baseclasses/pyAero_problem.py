@@ -212,29 +212,29 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         # These are the parameters that can be simply set directly in
         # the class.
         paras = {
-                "alpha",
-                "beta",
-                "areaRef",
-                "chordRef",
-                "spanRef",
-                "xRef",
-                "yRef",
-                "zRef",
-                "xRot",
-                "yRot",
-                "zRot",
-                "phat",
-                "qhat",
-                "rhat",
-                "momentAxis",
-                "degreePol",
-                "coefPol",
-                "degreeFourier",
-                "omegaFourier",
-                "cosCoefFourier",
-                "sinCoefFourier",
-                "machRef",
-                "machGrid",
+            "alpha",
+            "beta",
+            "areaRef",
+            "chordRef",
+            "spanRef",
+            "xRef",
+            "yRef",
+            "zRef",
+            "xRot",
+            "yRot",
+            "zRot",
+            "phat",
+            "qhat",
+            "rhat",
+            "momentAxis",
+            "degreePol",
+            "coefPol",
+            "degreeFourier",
+            "omegaFourier",
+            "cosCoefFourier",
+            "sinCoefFourier",
+            "machRef",
+            "machGrid",
         }
 
         # By default everything is None
@@ -282,7 +282,19 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
         # full list of states in the class
         self.fullState = {
-            "mach", "V", "P", "T", "rho", "mu", "nu", "a", "q", "altitude", "re", "reynolds", "reynoldsLength"
+            "mach",
+            "V",
+            "P",
+            "T",
+            "rho",
+            "mu",
+            "nu",
+            "a",
+            "q",
+            "altitude",
+            "re",
+            "reynolds",
+            "reynoldsLength",
         }
 
         # now call the routine to setup the states

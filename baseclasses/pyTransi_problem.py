@@ -28,7 +28,14 @@ class TransiProblem:
 
         # these are the possible input values
         possibleInputStates = {
-            "mach", "reynolds", "T", "nCritTS", "nCritCF", "spanDirection", "sectionData", "partName"
+            "mach",
+            "reynolds",
+            "T",
+            "nCritTS",
+            "nCritCF",
+            "spanDirection",
+            "sectionData",
+            "partName",
         }
 
         # turn the kwargs into a set
@@ -44,9 +51,7 @@ class TransiProblem:
         # print(kwargs.keys(),'self.name')
 
         # full list of states in the class
-        self.fullState = {
-            "mach", "reynolds", "T", "nCritTS", "nCritCF", "spanDirection", "sectionData", "partName"
-        }
+        self.fullState = {"mach", "reynolds", "T", "nCritTS", "nCritCF", "spanDirection", "sectionData", "partName"}
 
         # now call the routine to setup the states
         self._setStates(self.inputs)

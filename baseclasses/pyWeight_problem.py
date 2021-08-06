@@ -649,9 +649,7 @@ class FuelCase:
 
         # First check if we are allowed to add the DV:
         if key not in self.possibleDVs:
-            raise Error(
-                f"The DV '{key}' could not be added.  The list of possible DVs are: {repr(self.possibleDVs)}."
-            )
+            raise Error(f"The DV '{key}' could not be added.  The list of possible DVs are: {repr(self.possibleDVs)}.")
 
         if name is None:
             dvName = "%s_" % self.name + key
