@@ -9,7 +9,7 @@ import sys
 import json
 from collections import deque
 from contextlib import contextmanager
-from .utils import Error
+from .utils import CaseInsensitiveDict, CaseInsensitiveSet, Error
 
 
 def getTol(**kwargs):
@@ -54,7 +54,7 @@ def getTol(**kwargs):
     return rtol, atol
 
 
-class BaseRegTest(object):
+class BaseRegTest:
     def __init__(self, ref_file, train=False, comm=None):
         """
         The class for handling regression tests.
@@ -268,7 +268,7 @@ class BaseRegTest(object):
     def assert_allclose(self, actual, reference, name, rtol, atol, full_name=None):
         if full_name is None:
             full_name = name
-        msg = "Failed value for: {}".format(full_name)
+        msg = f"Failed value for: {full_name}"
         numpy.testing.assert_allclose(actual, reference, rtol=rtol, atol=atol, err_msg=msg)
 
     def _add_values(self, name, values, db=None, **kwargs):
@@ -366,9 +366,14 @@ class BaseRegTest(object):
             The dictionary
         """
 
-        class NumpyEncoder(json.JSONEncoder):
+        class MyEncoder(json.JSONEncoder):
+            """
+            Custom encoder class for Numpy arrays and CaseInsensitiveDict
+            """
+
             def default(self, obj):
-                """If input object is an ndarray it will be converted into a dict
+                """
+                If input object is an ndarray it will be converted into a dict
                 holding dtype, shape and the data, base64 encoded.
                 """
                 if isinstance(obj, numpy.ndarray):
@@ -385,15 +390,19 @@ class BaseRegTest(object):
                     return dict(__ndarray__=int(obj), dtype=str(obj.dtype), shape=obj.shape)
                 elif isinstance(obj, numpy.floating):
                     return dict(__ndarray__=float(obj), dtype=str(obj.dtype), shape=obj.shape)
+                elif isinstance(obj, CaseInsensitiveDict):
+                    return dict(obj)
+                elif isinstance(obj, CaseInsensitiveSet):
+                    return set(obj)
 
                 # Let the base class default method raise the TypeError
-                super(NumpyEncoder, self).default(obj)
+                super().default(obj)
 
         # move metadata to end of db if it exists
         if "metadata" in ref:
             ref["metadata"] = ref.pop("metadata")
         with open(file_name, "w") as json_file:
-            json.dump(ref, json_file, sort_keys=True, indent=4, separators=(",", ": "), cls=NumpyEncoder)
+            json.dump(ref, json_file, sort_keys=True, indent=4, separators=(",", ": "), cls=MyEncoder)
 
     # based on this stack overflow answer https://stackoverflow.com/questions/3488934/simplejson-and-numpy-array/24375113#24375113
     @staticmethod
@@ -419,7 +428,7 @@ class BaseRegTest(object):
                 return numpy.array(data, dct["dtype"]).reshape(dct["shape"])
             return dct
 
-        with open(file_name, "r") as json_file:
+        with open(file_name) as json_file:
             data = json.load(json_file, object_hook=json_numpy_obj_hook)
 
         return data
@@ -457,7 +466,7 @@ class BaseRegTest(object):
                 mydict[key] = value
 
         curr_dict = ref
-        with open(file_name, "r") as fid:
+        with open(file_name) as fid:
             for line in fid:
                 # key ideas
                 #    - lines starting with @value aren't added to the queque

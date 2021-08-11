@@ -1,7 +1,7 @@
 import numpy
 
 
-class ICAOAtmosphere(object):
+class ICAOAtmosphere:
     def __init__(self, **kwargs):
 
         # Check if we have english units:

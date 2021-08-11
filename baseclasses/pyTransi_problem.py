@@ -5,14 +5,14 @@ pyAero_problem
 from .utils import Error
 
 
-class TransiProblem(object):
+class TransiProblem:
     def __init__(self, name, **kwargs):
         # Always have to have the name
         # Always have to have the name
         self.name = name
         # These are the parameters that can be simply set directly in
         # the class.
-        paras = set(("mach", "reynolds", "T", "nCritTS", "nCritCF", "spanDirection", "sectionData", "partName"))
+        paras = {"mach", "reynolds", "T", "nCritTS", "nCritCF", "spanDirection", "sectionData", "partName"}
 
         # By default everything is None
         # print(kwargs)
@@ -27,9 +27,16 @@ class TransiProblem(object):
         # print(self.mach,'self.name')
 
         # these are the possible input values
-        possibleInputStates = set(
-            ["mach", "reynolds", "T", "nCritTS", "nCritCF", "spanDirection", "sectionData", "partName"]
-        )
+        possibleInputStates = {
+            "mach",
+            "reynolds",
+            "T",
+            "nCritTS",
+            "nCritCF",
+            "spanDirection",
+            "sectionData",
+            "partName",
+        }
 
         # turn the kwargs into a set
         keys = set(kwargs.keys())
@@ -44,9 +51,7 @@ class TransiProblem(object):
         # print(kwargs.keys(),'self.name')
 
         # full list of states in the class
-        self.fullState = set(
-            ["mach", "reynolds", "T", "nCritTS", "nCritCF", "spanDirection", "sectionData", "partName"]
-        )
+        self.fullState = {"mach", "reynolds", "T", "nCritTS", "nCritCF", "spanDirection", "sectionData", "partName"}
 
         # now call the routine to setup the states
         self._setStates(self.inputs)
@@ -83,7 +88,7 @@ class TransiProblem(object):
         # now we know our inputs are valid. update self.Input and update states
         for key in inputDict:
             self.inputs[key] = inputDict[key]
-        if set(("mach", "reynolds", "T", "nCritTS", "nCritCF", "spanDirection", "sectionData", "partName")) == inKeys:
+        if {"mach", "reynolds", "T", "nCritTS", "nCritCF", "spanDirection", "sectionData", "partName"} == inKeys:
             self.__dict__["mach"] = self.inputs["mach"]
             self.__dict__["reynolds"] = self.inputs["reynolds"]
             self.__dict__["T"] = self.inputs["T"]

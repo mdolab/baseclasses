@@ -1,7 +1,7 @@
 import warnings
 
 
-class FluidProperties(object):
+class FluidProperties:
     """
     Parameters
     ----------
