@@ -316,7 +316,7 @@ class AeroSolver(BaseSolver):
         indices = []
         for group in groups:
             if group.lower() not in self.familyGroups:
-                raise Error("The specified family '%s' for group '%s', does "
+                raise Error("The specified familyGroup '%s' for group '%s', does "
                             "not exist in the cgns file or has "
                             "not already been added. The current list of "
                             "families is: %s and the current list of family"
