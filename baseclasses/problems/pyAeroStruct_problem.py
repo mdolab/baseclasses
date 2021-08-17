@@ -6,7 +6,7 @@ pyAeroStruct_problem
 # ======================================================================
 from .pyAero_problem import AeroProblem
 from .pyStruct_problem import StructProblem
-from .utils import Error
+from ..utils import Error
 
 
 class AeroStructProblem:

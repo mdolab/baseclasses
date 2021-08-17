@@ -9,7 +9,7 @@ import sys
 import json
 from collections import deque
 from contextlib import contextmanager
-from .utils import CaseInsensitiveDict, CaseInsensitiveSet, Error
+from ..utils import CaseInsensitiveDict, CaseInsensitiveSet, Error
 
 
 def getTol(**kwargs):

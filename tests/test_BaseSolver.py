@@ -1,7 +1,7 @@
 import unittest
 from baseclasses import BaseSolver
 from baseclasses.utils import Error
-from baseclasses.decorators import require_mpi
+from baseclasses.testing.decorators import require_mpi
 
 
 class SOLVER(BaseSolver):

@@ -6,7 +6,7 @@ pyStrut_problem
 # Imports
 # =============================================================================
 import warnings
-from .utils import Error
+from ..utils import Error
 
 
 class StructProblem:

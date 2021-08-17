@@ -11,7 +11,7 @@ try:
     from pygeo import geo_utils
 except ImportError:
     geo_utils = None
-from .utils import Error
+from ..utils import Error
 
 
 class WeightProblem:
