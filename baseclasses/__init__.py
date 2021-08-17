@@ -1,27 +1,27 @@
 __version__ = "1.5.2"
 
-from .pyAero_problem import AeroProblem
-from .pyTransi_problem import TransiProblem
-from .pyStruct_problem import StructProblem
-from .pyAeroStruct_problem import AeroStructProblem
+from .problems.pyAero_problem import AeroProblem
+from .problems.pyTransi_problem import TransiProblem
+from .problems.pyStruct_problem import StructProblem
+from .problems.pyAeroStruct_problem import AeroStructProblem
 
-from .pyAero_solver import AeroSolver
-from .BaseSolver import BaseSolver
+from .solvers.pyAero_solver import AeroSolver
+from .solvers.BaseSolver import BaseSolver
 
-from .pyMission_problem import MissionProblem
-from .pyMission_problem import MissionProfile
-from .pyMission_problem import MissionSegment
+from .problems.pyMission_problem import MissionProblem
+from .problems.pyMission_problem import MissionProfile
+from .problems.pyMission_problem import MissionSegment
 
-from .pyWeight_problem import WeightProblem
-from .pyWeight_problem import FuelCase
+from .problems.pyWeight_problem import WeightProblem
+from .problems.pyWeight_problem import FuelCase
 
-from .FluidProperties import FluidProperties
-from .ICAOAtmosphere import ICAOAtmosphere
-from .pyEngine_problem import EngineProblem
+from .problems.FluidProperties import FluidProperties
+from .problems.ICAOAtmosphere import ICAOAtmosphere
+from .problems.pyEngine_problem import EngineProblem
 
-from .pyFieldPerformance_problem import FieldPerformanceProblem
+from .problems.pyFieldPerformance_problem import FieldPerformanceProblem
 
-from .pyLG_problem import LGProblem
+from .problems.pyLG_problem import LGProblem
 
-from .py3Util import getPy3SafeString
-from .BaseRegTest import BaseRegTest
+from .utils.py3Util import getPy3SafeString
+from .testing.BaseRegTest import BaseRegTest
