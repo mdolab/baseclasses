@@ -9,7 +9,7 @@ import warnings
 from .utils import Error
 
 
-class StructProblem(object):
+class StructProblem:
     """
     The main purpose of this class is to represent all relevant
     information for a structural analysis. This will include
@@ -199,7 +199,7 @@ class StructProblem(object):
                 )
 
 
-class structDV(object):
+class structDV:
     """
     A container storing information regarding an 'structral problem' variable.
     """

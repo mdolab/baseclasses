@@ -12,7 +12,7 @@ from .utils import CaseInsensitiveDict, CaseInsensitiveSet, Error
 # =============================================================================
 # BaseSolver Class
 # =============================================================================
-class BaseSolver(object):
+class BaseSolver:
     """
     Abstract Class for a basic Solver Object
     """

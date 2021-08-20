@@ -13,7 +13,7 @@ function of the LG geometry if necessary.
 import numpy
 
 
-class LGProblem(object):
+class LGProblem:
     """
     Landing Gear Problem Object:
 
@@ -41,18 +41,16 @@ class LGProblem(object):
 
         # These are the parameters that can be simply set directly in
         # the class.
-        paras = set(
-            (
-                "aircraftMass",
-                "tireEff",
-                "tireDef",
-                "shockEff",
-                "shockDef",
-                "weightCondition",
-                "loadCaseType",
-                "loadFrac",
-            )
-        )
+        paras = {
+            "aircraftMass",
+            "tireEff",
+            "tireDef",
+            "shockEff",
+            "shockDef",
+            "weightCondition",
+            "loadCaseType",
+            "loadFrac",
+        }
 
         self.g = 9.81  # (m/s)
         self.nMainGear = 2
@@ -241,9 +239,9 @@ class LGProblem(object):
         f.write("\\toprule\n")
         f.write("Parameter & Value \\\\\n")
         f.write(" \\midrule\n")
-        f.write(" %s $F_\\text{stat}$ (N) &$ %10.0f$ \\\\\n" % (caseType, f_stat))
-        f.write(" %s $F_\\text{dyn}$ (N) &$ %10.0f$\\\\\n" % (caseType, f_dyn))
-        f.write(" %s Load Factor & %6.3f\\\\\n" % (caseType, g_load))
+        f.write(f" {caseType} $F_\\text{{stat}}$ (N) &$ {f_stat:10.0f}$ \\\\\n")
+        f.write(f" {caseType} $F_\\text{{dyn}}$ (N) &$ {f_dyn:10.0f}$\\\\\n")
+        f.write(f" {caseType} Load Factor & {g_load:6.3f}\\\\\n")
         f.write("\\bottomrule\n")
         f.write("\\end{tabular}\n")
 

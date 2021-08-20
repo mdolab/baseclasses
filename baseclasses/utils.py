@@ -166,8 +166,8 @@ class CaseInsensitiveSet(MutableSet):
         """We convert both to regular set, and compare their lower case values"""
         if not all([isinstance(i, str) for i in other]):
             raise TypeError("All items must be strings!")
-        a = set([s.lower() for s in list(self)])
-        b = set([o.lower() for o in list(other)])
+        a = {s.lower() for s in list(self)}
+        b = {o.lower() for o in list(other)}
         return a.__eq__(b)
 
     def __len__(self) -> int:
@@ -198,8 +198,8 @@ class CaseInsensitiveSet(MutableSet):
 
     def issubset(self, other) -> bool:
         """We convert both to regular set, and compare their lower case values"""
-        lowerSelf = set([s.lower() for s in self])
-        lowerOther = set([s.lower() for s in other])
+        lowerSelf = {s.lower() for s in self}
+        lowerOther = {s.lower() for s in other}
         return lowerSelf.issubset(lowerOther)
 
     def __repr__(self):

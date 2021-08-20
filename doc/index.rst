@@ -9,16 +9,29 @@
 baseClasses
 ===========
 
+
 The ``baseClasses`` repository contains common definitions for
 aerodynamic, structural and aerostructural solvers, as well as classes
 defining standard ways of describing aerodynamic, structural and
 aerostructural problems for use in those classes.
 
-To install, first clone the repo, then go into the root directory and type::
+----------
+Installing
+----------
+
+The package may be installed by pip from PyPI, as::
+
+   pip install mdolab-baseclassees
+
+Or by Conda from the ``conda-forge`` channel, as::
+
+   conda install -c conda-forge mdolab-baseclasses
+
+Or from source, by cloning the repo and then running (from the repo root)::
 
    pip install .
 
-For stability we recommend cloning or checking out a tagged release.
+
 
 .. toctree::
    :maxdepth: 1
@@ -37,3 +50,10 @@ For stability we recommend cloning or checking out a tagged release.
 
    BaseSolver
    pyAero_solver
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Testing Classes
+
+   BaseRegTest
+   regression_example

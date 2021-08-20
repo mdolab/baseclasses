@@ -4,6 +4,7 @@ import numpy as np
 from baseclasses import BaseRegTest
 from baseclasses.BaseRegTest import getTol
 from baseclasses.decorators import require_mpi
+from baseclasses.utils import CaseInsensitiveDict
 
 try:
     from mpi4py import MPI
@@ -103,7 +104,7 @@ class TestBaseRegTest(unittest.TestCase):
         Also tests read/write in the process
         """
         self.ref_file = os.path.join(baseDir, "test_root.ref")
-        metadata = {"options": None}
+        metadata = {"options": CaseInsensitiveDict({})}
         with BaseRegTest(self.ref_file, train=True) as handler:
             self.regression_test_root(handler)
             handler.add_metadata(metadata)

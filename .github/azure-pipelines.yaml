@@ -20,6 +20,7 @@ stages:
 - template: azure/azure_template.yaml@azure_template
   parameters:
     REPO_NAME: baseclasses
+    COVERAGE: true
 
 - stage:
   dependsOn:

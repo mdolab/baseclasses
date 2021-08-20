@@ -11,7 +11,7 @@ from .FluidProperties import FluidProperties
 from .utils import CaseInsensitiveDict, Error
 
 
-class FieldPerformanceProblem(object):
+class FieldPerformanceProblem:
     """
     The main purpose of this class is to represent all relevant
     information for a single field performance analysis. This includes
@@ -110,35 +110,33 @@ class FieldPerformanceProblem(object):
         self.name = name
         # These are the parameters that can be simply set directly in
         # the class.
-        paras = set(
-            (
-                "TOW",
-                "span",
-                "WingHeight",
-                "Area",
-                "runwayFrictionCoef",
-                "altitude",
-                "CLmax",
-                "CD0",
-                "CD0_LG",
-                "CD0_HL",
-                "e",
-                "T_VG",
-                "T_VT",
-                "T_V2",
-                "T_TOS",
-                "T_OEI",
-                "T_VA",
-                "T_VF",
-                "T_VTD",
-                "TSFC_VG",
-                "TSFC_VT",
-                "TSFC_VA",
-                "TSFC_VF",
-                "TSFC_VTD",
-                "BPR",
-            )
-        )
+        paras = {
+            "TOW",
+            "span",
+            "WingHeight",
+            "Area",
+            "runwayFrictionCoef",
+            "altitude",
+            "CLmax",
+            "CD0",
+            "CD0_LG",
+            "CD0_HL",
+            "e",
+            "T_VG",
+            "T_VT",
+            "T_V2",
+            "T_TOS",
+            "T_OEI",
+            "T_VA",
+            "T_VF",
+            "T_VTD",
+            "TSFC_VG",
+            "TSFC_VT",
+            "TSFC_VA",
+            "TSFC_VF",
+            "TSFC_VTD",
+            "BPR",
+        }
 
         # By default everything is None
         for para in paras:
@@ -339,7 +337,7 @@ class FieldPerformanceProblem(object):
 
     def __str__(self):
         for key, val in self.__dict__.items():
-            print("{0:20} : {1:<16}".format(key, val))
+            print(f"{key:20} : {val:<16}")
 
     # def _getDVSens(self, func):
     #     """
@@ -356,7 +354,7 @@ class FieldPerformanceProblem(object):
     #     return rDict
 
 
-class fieldPerformanceDV(object):
+class fieldPerformanceDV:
     """
     A container storing information regarding an 'fieldPerformance' variable.
     """
