@@ -10,7 +10,7 @@ import copy
 
 from .ICAOAtmosphere import ICAOAtmosphere
 from .FluidProperties import FluidProperties
-from .utils import Error
+from ..utils import Error
 
 
 class MissionProblem:

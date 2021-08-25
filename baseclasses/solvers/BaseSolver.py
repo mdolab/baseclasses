@@ -7,7 +7,7 @@ from difflib import get_close_matches
 from pprint import pprint
 import copy
 import warnings
-from .utils import CaseInsensitiveDict, CaseInsensitiveSet, Error
+from ..utils import CaseInsensitiveDict, CaseInsensitiveSet, Error
 
 # =============================================================================
 # BaseSolver Class

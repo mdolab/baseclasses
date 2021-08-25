@@ -13,7 +13,7 @@ import numpy
 # Extension modules
 # =============================================================================
 from .BaseSolver import BaseSolver
-from .utils import CaseInsensitiveDict, Error
+from ..utils import CaseInsensitiveDict, Error
 
 # =============================================================================
 # AeroSolver Class

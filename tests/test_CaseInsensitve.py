@@ -3,7 +3,7 @@ import pickle
 from pprint import pformat
 from baseclasses.utils import CaseInsensitiveDict, CaseInsensitiveSet
 from parameterized import parameterized
-from baseclasses.decorators import require_mpi
+from baseclasses.testing.decorators import require_mpi
 
 value1 = 123
 value2 = 321

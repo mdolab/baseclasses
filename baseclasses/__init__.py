@@ -1,27 +1,24 @@
 __version__ = "1.5.2"
 
-from .pyAero_problem import AeroProblem
-from .pyTransi_problem import TransiProblem
-from .pyStruct_problem import StructProblem
-from .pyAeroStruct_problem import AeroStructProblem
+from .problems import (
+    AeroProblem,
+    TransiProblem,
+    StructProblem,
+    AeroStructProblem,
+    MissionProblem,
+    MissionProfile,
+    MissionSegment,
+    WeightProblem,
+    FuelCase,
+    FluidProperties,
+    ICAOAtmosphere,
+    EngineProblem,
+    FieldPerformanceProblem,
+    LGProblem,
+)
 
-from .pyAero_solver import AeroSolver
-from .BaseSolver import BaseSolver
+from .solvers import BaseSolver, AeroSolver
 
-from .pyMission_problem import MissionProblem
-from .pyMission_problem import MissionProfile
-from .pyMission_problem import MissionSegment
+from .utils import getPy3SafeString
 
-from .pyWeight_problem import WeightProblem
-from .pyWeight_problem import FuelCase
-
-from .FluidProperties import FluidProperties
-from .ICAOAtmosphere import ICAOAtmosphere
-from .pyEngine_problem import EngineProblem
-
-from .pyFieldPerformance_problem import FieldPerformanceProblem
-
-from .pyLG_problem import LGProblem
-
-from .py3Util import getPy3SafeString
-from .BaseRegTest import BaseRegTest
+from .testing import BaseRegTest, getTol

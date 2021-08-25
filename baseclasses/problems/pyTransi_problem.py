@@ -2,7 +2,7 @@
 pyAero_problem
 
 """
-from .utils import Error
+from ..utils import Error
 
 
 class TransiProblem:

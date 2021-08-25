@@ -2,8 +2,8 @@ import os
 import unittest
 import numpy as np
 from baseclasses import BaseRegTest
-from baseclasses.BaseRegTest import getTol
-from baseclasses.decorators import require_mpi
+from baseclasses.testing import getTol
+from baseclasses.testing.decorators import require_mpi
 from baseclasses.utils import CaseInsensitiveDict
 
 try:
