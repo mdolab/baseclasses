@@ -4,6 +4,17 @@ from importlib.util import find_spec
 
 
 def require_mpi(func):
+    """A decorator to skip tests unless ``mpi4py`` is available
+
+    Examples
+    --------
+    .. code-block:: python
+
+       @require_mpi
+       def test_mpi4py(self):
+           print(self.comm.rank)
+
+    """
     return base_require(func, "mpi4py")
 
 
