@@ -1,5 +1,5 @@
-pyMission_problem
------------------
+MissionProblem
+--------------
 
 .. autoclass:: baseclasses.MissionProblem
     :members:

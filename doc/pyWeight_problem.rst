@@ -1,4 +1,4 @@
-pyWeight_problem
+WeightProblem
 ----------------
 
 .. autoclass:: baseclasses.WeightProblem

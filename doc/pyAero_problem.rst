@@ -1,5 +1,5 @@
-pyAero_problem
---------------
+AeroProblem
+-----------
 
 .. autoclass:: baseclasses.AeroProblem
     :members:

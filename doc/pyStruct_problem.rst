@@ -1,5 +1,5 @@
-pyStruct_problem
-----------------
+StructProblem
+-------------
 
 .. autoclass:: baseclasses.StructProblem
     :members:

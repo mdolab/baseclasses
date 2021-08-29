@@ -6,7 +6,7 @@ import sys
 
 
 def getPy3SafeString(string):
-    """Accepts a <string> and makes sure its converted to unicode for python 3.6 and above"""
+    """Accepts a string and makes sure it's converted to unicode for python 3.6 and above"""
 
     if string is None:
         return None

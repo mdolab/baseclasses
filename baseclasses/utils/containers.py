@@ -25,7 +25,7 @@ class CaseInsensitiveDict(MutableMapping):
     --------
     This container preserves the initial capitalization, such that
     any operation which operates on an existing entry will not modify it.
-    This means that add() and update() will NOT update the original capitalization.
+    This means that for example :meth:`__setitem__()` will NOT update the original capitalization.
     """
 
     def __init__(self, *args, **kwargs):
@@ -119,7 +119,7 @@ class CaseInsensitiveSet(MutableSet):
     --------
     This container preserves the initial capitalization, such that
     any operation which operates on an existing entry will not modify it.
-    This means that add() and update() will NOT update the original capitalization.
+    This means that :meth:`add()` and :meth:`update()` will NOT update the original capitalization.
     """
 
     def __init__(self, *args, **kwargs):
@@ -192,7 +192,7 @@ class CaseInsensitiveSet(MutableSet):
         return new_set
 
     def update(self, d):
-        """Just call add() iteratively"""
+        """Just call :meth:`add()` iteratively"""
         for item in d:
             self.add(item)
 

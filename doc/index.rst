@@ -55,3 +55,9 @@ Or from source, by cloning the repo and then running (from the repo root)::
 
    BaseRegTest
    regression_example
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Utilities
+
+   utils

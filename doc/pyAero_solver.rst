@@ -1,7 +1,5 @@
-.. _pyAero_solver:
-
-pyAero_solver
--------------
+AeroSolver
+----------
 
 .. currentmodule:: baseclasses
 

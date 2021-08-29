@@ -1,4 +1,4 @@
-pyAeroStruct_problem
+AeroStructProblem
 --------------------
 
 .. autoclass:: baseclasses.AeroStructProblem
