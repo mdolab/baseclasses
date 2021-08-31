@@ -1,9 +1,5 @@
-.. _pyAeroStruct_problem:
-
-pyAeroStruct_problem
+AeroStructProblem
 --------------------
 
-.. currentmodule:: baseclasses.pyAeroStruct_problem
-
-.. autoclass:: AeroStructProblem
+.. autoclass:: baseclasses.AeroStructProblem
     :members:

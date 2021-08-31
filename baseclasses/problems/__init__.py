@@ -9,3 +9,20 @@ from .ICAOAtmosphere import ICAOAtmosphere
 from .pyEngine_problem import EngineProblem
 from .pyFieldPerformance_problem import FieldPerformanceProblem
 from .pyLG_problem import LGProblem
+
+__all__ = [
+    "AeroProblem",
+    "TransiProblem",
+    "StructProblem",
+    "AeroStructProblem",
+    "MissionProblem",
+    "MissionProfile",
+    "MissionSegment",
+    "WeightProblem",
+    "FuelCase",
+    "FluidProperties",
+    "ICAOAtmosphere",
+    "EngineProblem",
+    "FieldPerformanceProblem",
+    "LGProblem",
+]

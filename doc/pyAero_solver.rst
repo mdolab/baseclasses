@@ -1,9 +1,7 @@
-.. _pyAero_solver:
+AeroSolver
+----------
 
-pyAero_solver
--------------
-
-.. currentmodule:: baseclasses.pyAero_solver
+.. currentmodule:: baseclasses
 
 .. autoclass:: AeroSolver
     :members:

@@ -1,9 +1,5 @@
-.. _pyStruct_problem:
+StructProblem
+-------------
 
-pyStruct_problem
-----------------
-
-.. currentmodule:: baseclasses.pyStruct_problem
-
-.. autoclass:: StructProblem
+.. autoclass:: baseclasses.StructProblem
     :members:

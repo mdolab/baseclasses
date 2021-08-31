@@ -76,17 +76,17 @@ class TestBaseRegTest(unittest.TestCase):
         if handler.train:
             # check non-unique training value will throw ValueError
             # due to context manager, need to check for the generic Exception rather than specific ValueError
-            with self.assertRaises(Exception):
+            with self.assertRaises(Exception):  # noqa: B017
                 handler.root_add_val("scalar", 2.0)
-            with self.assertRaises(Exception):
+            with self.assertRaises(Exception):  # noqa: B017
                 handler.root_add_val("simple dictionary", {"c": -1})
         else:
-            with self.assertRaises(Exception):
+            with self.assertRaises(Exception):  # noqa: B017
                 handler.root_add_val("nonexisting dictionary", {"c": -1})
 
         # check if the compare argument works in training mode
         handler.root_add_val("scalar", 1.0, compare=True)
-        with self.assertRaises(Exception):
+        with self.assertRaises(Exception):  # noqa: B017
             handler.root_add_val("scalar", 2.0, compare=True)
 
     def regression_test_par(self, handler):

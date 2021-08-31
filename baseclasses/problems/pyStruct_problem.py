@@ -55,7 +55,7 @@ class StructProblem:
                 self.evalFuncs = set(kwargs["funcs"])
 
         # we cast the set to a sorted list, so that each proc can loop over in the same order
-        self.evalFuncs = sorted(list(self.evalFuncs))
+        self.evalFuncs = sorted(self.evalFuncs)
 
         # When a solver calls its evalFunctions() it must write the
         # unique name it gives to funcNames.
