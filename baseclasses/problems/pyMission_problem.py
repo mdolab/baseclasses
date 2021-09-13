@@ -1078,7 +1078,7 @@ class MissionSegment:
         fuelFraction = self.fuelFraction
         throttle = self.throttle
         if fuelFraction is None and throttle is None:
-            segTypeID = segTypeDict[getattr(self, "phase").lower()]
+            segTypeID = segTypeDict[self.phase.lower()]
             fuelFraction = 0.0
             throttle = 0.0
         elif fuelFraction is not None:
