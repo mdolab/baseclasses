@@ -38,7 +38,7 @@ class StructProblem:
         # Set defaults for loadFactor and evalFuncs if not supplied
         if loadFactor is None:
             self.loadFactor = 1.0
-            
+
         if evalFuncs is None:
             self.evalFuncs = set()
         else:
