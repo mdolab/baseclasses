@@ -34,6 +34,8 @@ class StructProblem:
         # Always have to have the name
         self.name = name
 
+        self.loadFile = loadFile
+
         # Set defaults for loadFactor and evalFuncs if not supplied
         if loadFactor is None:
             self.loadFactor = 1.0
