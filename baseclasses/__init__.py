@@ -21,4 +21,4 @@ from .solvers import BaseSolver, AeroSolver
 
 from .utils import getPy3SafeString
 
-from .testing import BaseRegTest, getTol
+#from .testing import BaseRegTest, getTol
