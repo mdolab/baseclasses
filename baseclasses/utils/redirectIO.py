@@ -26,6 +26,9 @@ def redirectIO(f_out, f_err=None):
     if not f_err:
         f_err = f_out
 
+    orig_out = sys.stdout.fileno()
+    orig_err = sys.stderr.fileno()
+
     # flush the standard out
     sys.stdout.flush()
     sys.stderr.flush()
@@ -34,9 +37,12 @@ def redirectIO(f_out, f_err=None):
     sys.stdout.close()
     sys.stderr.close()
 
+    os.dup2(f_out.fileno(), orig_out)
+    os.dup2(f_err.fileno(), orig_err)
+
     # reopen the stream with new file descriptors
-    sys.stdout = io.TextIOWrapper(os.fdopen(f_out.fileno(), "wb"))
-    sys.stderr = io.TextIOWrapper(os.fdopen(f_err.fileno(), "wb"))
+    sys.stdout = io.TextIOWrapper(os.fdopen(orig_out, "wb"))
+    sys.stderr = io.TextIOWrapper(os.fdopen(orig_err, "wb"))
 
 
 @contextmanager
@@ -66,6 +72,9 @@ def redirectingIO(f_out, f_err=None):
     # yield to the with block
     yield
 
+    orig_out = sys.stdout.fileno()
+    orig_err = sys.stderr.fileno()
+    
     # flush output
     sys.stderr.flush()
     sys.stdout.flush()
@@ -74,6 +83,9 @@ def redirectingIO(f_out, f_err=None):
     sys.stderr.close()
     sys.stdout.close()
 
+    os.dup2(saved_stdout_fd, orig_out)
+    os.dup2(saved_stderr_fd, orig_err)
+
     # reopen the standard streams with original file descriptors
-    sys.stdout = io.TextIOWrapper(os.fdopen(saved_stdout_fd, "wb"))
-    sys.stderr = io.TextIOWrapper(os.fdopen(saved_stderr_fd, "wb"))
+    sys.stdout = io.TextIOWrapper(os.fdopen(orig_out, "wb"))
+    sys.stderr = io.TextIOWrapper(os.fdopen(orig_err, "wb"))

@@ -8,9 +8,9 @@ baseDir = os.path.dirname(os.path.abspath(__file__))
 
 class TestRedirectIO(unittest.TestCase):
     def setUp(self):
-        self.stdout_lines = ["redirect out", "redirect echo out"]
+        self.stdout_lines = ["redirect echo out", "redirect out" ]
 
-        self.stderr_lines = ["redirect err", "redirect echo err"]
+        self.stderr_lines = ["redirect echo err", "redirect err"]
 
     def test_redirectIO(self):
         stdout_file = os.path.join(baseDir, "test_redirectIO.out")
@@ -20,11 +20,11 @@ class TestRedirectIO(unittest.TestCase):
         redirectIO.redirectIO(open(stdout_file, "w"), open(stderr_file, "w"))
 
         # write some stuff
-        print("redirect out")
         os.system('echo "redirect echo out"')
+        print("redirect out")
 
-        print("redirect err", file=sys.stderr)
         os.system('echo "redirect echo err" 1>&2')
+        print("redirect err", file=sys.stderr)
 
         # check that stuff matches
         out_result = list(open(stdout_file, "r"))
@@ -43,14 +43,14 @@ class TestRedirectIO(unittest.TestCase):
         stdout_file = os.path.join(baseDir, "test_redirectIO_same.out")
 
         # redirecting output
-        redirectIO.redirectIO(open(stdout_file), "w")
+        redirectIO.redirectIO(open(stdout_file, "w"))
 
         # write some stuff
-        print("redirect out")
         os.system('echo "redirect echo out"')
+        print("redirect out")
 
-        print("redirect err", file=sys.stderr)
         os.system('echo "redirect echo err" 1>&2')
+        print("redirect err", file=sys.stderr)
 
         # check that stuff matches
         out_result = list(open(stdout_file, "r"))
@@ -70,16 +70,16 @@ class TestRedirectIO(unittest.TestCase):
         with redirectIO.redirectingIO(open(stdout_file, "w"), open(stderr_file, "w")):
 
             # write some stuff
-            print("redirect out")
             os.system('echo "redirect echo out"')
+            print("redirect out")
 
-            print("redirect err", file=sys.stderr)
             os.system('echo "redirect echo err" 1>&2')
+            print("redirect err", file=sys.stderr)
 
-        print("outside out")
         os.system('echo "outside echo out"')
-        print("outside err", file=sys.stderr)
+        print("outside out")
         os.system('echo "outside echo err" 1>&2')
+        print("outside err", file=sys.stderr)
 
         # check that stuff matches
         out_result = list(open(stdout_file, "r"))
@@ -102,11 +102,11 @@ class TestRedirectIO(unittest.TestCase):
         with redirectIO.redirectingIO(open(stdout_file, "w")):
 
             # write some stuff
-            print("redirect out")
             os.system('echo "redirect echo out"')
+            print("redirect out")
 
-            print("redirect err", file=sys.stderr)
             os.system('echo "redirect echo err" 1>&2')
+            print("redirect err", file=sys.stderr)
 
         print("outside out")
         os.system('echo "outside echo out"')
