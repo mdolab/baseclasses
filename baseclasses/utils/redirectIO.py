@@ -74,7 +74,7 @@ def redirectingIO(f_out, f_err=None):
 
     orig_out = sys.stdout.fileno()
     orig_err = sys.stderr.fileno()
-    
+
     # flush output
     sys.stderr.flush()
     sys.stdout.flush()

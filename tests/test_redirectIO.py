@@ -8,7 +8,7 @@ baseDir = os.path.dirname(os.path.abspath(__file__))
 
 class TestRedirectIO(unittest.TestCase):
     def setUp(self):
-        self.stdout_lines = ["redirect echo out", "redirect out" ]
+        self.stdout_lines = ["redirect echo out", "redirect out"]
 
         self.stderr_lines = ["redirect echo err", "redirect err"]
 
