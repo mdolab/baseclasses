@@ -48,7 +48,16 @@ def redirectIO(f_out, f_err=None):
 @contextmanager
 def redirectingIO(f_out, f_err=None):
     """
-    A function that redirects stdout in a with block and returns to the stdout after the with block completes
+    A function that redirects stdout in a with block and returns to the stdout after the `with` block completes.
+    The filestream passed to this function will be closed after exiting the `with` block.
+
+    Here is an example of usage where all adflow output is redirected to the file `adflow_out.txt`:
+    >>> from baseclasses.utils import redirectIO
+    >>> print("Printing some information to terminal")
+    >>> with redirectIO.redirectingIO(open("adflow_out.txt", "w")):
+    ...     CFDSolver = ADFLOW(options=options)
+    ...     CFDSolver(AeroProblem(**apOptions)
+    >>> print("Printing some more information to terminal")
 
     Parameters
     ----------
