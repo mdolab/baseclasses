@@ -27,8 +27,12 @@ class TestRedirectIO(unittest.TestCase):
         print("redirect err", file=sys.stderr)
 
         # check that stuff matches
-        out_result = list(open(stdout_file, "r"))
-        err_result = list(open(stderr_file, "r"))
+        out_stream = open(stdout_file, "r")
+        out_result = list(out_stream)
+        out_stream.close()
+        err_stream = open(stdout_file, "r")
+        err_result = list(err_stream)
+        err_stream.close()
 
         self.assertEqual(len(out_result), len(self.stdout_lines))
         self.assertEqual(len(err_result), len(self.stderr_lines))
@@ -53,7 +57,9 @@ class TestRedirectIO(unittest.TestCase):
         print("redirect err", file=sys.stderr)
 
         # check that stuff matches
-        out_result = list(open(stdout_file, "r"))
+        out_stream = open(stdout_file, "r")
+        out_result = list(out_stream)
+        out_stream.close()
 
         self.assertEqual(len(out_result), len(self.stdout_lines) + len(self.stderr_lines))
 
@@ -82,8 +88,12 @@ class TestRedirectIO(unittest.TestCase):
         print("outside err", file=sys.stderr)
 
         # check that stuff matches
-        out_result = list(open(stdout_file, "r"))
-        err_result = list(open(stderr_file, "r"))
+        out_stream = open(stdout_file, "r")
+        out_result = list(out_stream)
+        out_stream.close()
+        err_stream = open(stdout_file, "r")
+        err_result = list(err_stream)
+        err_stream.close()
 
         self.assertEqual(len(out_result), len(self.stdout_lines))
         self.assertEqual(len(err_result), len(self.stderr_lines))
@@ -114,7 +124,9 @@ class TestRedirectIO(unittest.TestCase):
         os.system('echo "outside echo err" 1>&2')
 
         # check that stuff matches
-        out_result = list(open(stdout_file, "r"))
+        out_stream = open(stdout_file, "r")
+        out_result = list(out_stream)
+        out_stream.close()
 
         self.assertEqual(len(out_result), len(self.stdout_lines) + len(self.stderr_lines))
 
@@ -123,3 +135,7 @@ class TestRedirectIO(unittest.TestCase):
             self.assertEqual(out_result[i + 2], self.stderr_lines[i])
 
         os.remove(stdout_file)
+
+if __name__ == "__main__":
+    print("runnning tests")
+    unittest.main()
