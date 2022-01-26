@@ -336,16 +336,17 @@ class BaseRegTest:
             db[dict_name] = {}
         elif dict_name not in db.keys():
             raise ValueError(f"The key '{dict_name}' was not found in the reference file!")
-
+        
         for key in sorted(d.keys()):
-            full_name = f"{full_name}: {key}"
+            full_name_key = f"{full_name}: {key}"
+
             if isinstance(d[key], bool):
-                self._add_values(key, int(d[key]), rtol=rtol, atol=atol, db=db[dict_name], full_name=full_name)
+                self._add_values(key, int(d[key]), rtol=rtol, atol=atol, db=db[dict_name], full_name=full_name_key)
             elif isinstance(d[key], dict):
                 # do some good ol' fashion recursion
-                self._add_dict(key, d[key], full_name, rtol=rtol, atol=atol, db=db[dict_name])
+                self._add_dict(key, d[key], full_name_key, rtol=rtol, atol=atol, db=db[dict_name])
             else:
-                self._add_values(key, d[key], rtol=rtol, atol=atol, db=db[dict_name], full_name=full_name)
+                self._add_values(key, d[key], rtol=rtol, atol=atol, db=db[dict_name], full_name=full_name_key)
 
     # =============================================================================
     #                         reference files I/O

@@ -353,7 +353,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         ]
         self.possibleBCDVs = set(BCVarFuncs)
 
-        actuatorFuncs = ["Thrust", "Torque"]
+        actuatorFuncs = ["Thrust", "Torque", "Heat"]
         self.possibleActuatorDVs = set(actuatorFuncs)
 
         # Now determine the possible functions. Any possible design
