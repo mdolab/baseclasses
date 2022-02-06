@@ -2,7 +2,7 @@ import unittest
 import os
 from parameterized import parameterized
 from baseclasses.testing.decorators import require_mpi
-from baseclasses.testing.comparisons import assertEqual
+from baseclasses.testing.assertions import assertEqual
 from baseclasses.utils import readPickle, writePickle, readJSON, writeJSON
 import numpy as np
 
