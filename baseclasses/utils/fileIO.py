@@ -58,12 +58,17 @@ def writeJSON(fname, obj):
 def readJSON(fname):
     """
     Reads a JSON file and return the contents as a dictionary.
-    This includes a custom NumPy reader to retrieve NumPy arrays, matching the :meth:`writeRefJSON` function.
+    This includes a custom NumPy reader to retrieve NumPy arrays, matching the :meth:`writeJSON` function.
 
     Parameters
     ----------
     file_name : str
         The file name
+
+
+    References
+    ----------
+    This is based on `this stack overflow answer <https://stackoverflow.com/questions/3488934/simplejson-and-numpy-array/24375113#24375113>`_
     """
 
     def json_numpy_obj_hook(dct):

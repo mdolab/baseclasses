@@ -113,7 +113,10 @@ class BaseRegTest:
         """
         with multi_proc_exception_check(self.comm):
             if self.rank == 0:
-                self.writeRefJSON(self.ref_file, self.db)
+                # move metadata to end of db if it exists
+                if "metadata" in self.db:
+                    self.db["metadata"] = self.db.pop("metadata")
+                writeJSON(self.ref_file, self.db)
 
     def readRef(self):
         """
@@ -121,7 +124,7 @@ class BaseRegTest:
         """
         with multi_proc_exception_check(self.comm):
             if self.rank == 0:
-                db = self.readRefJSON(self.ref_file)
+                db = readJSON(self.ref_file)
             else:
                 db = None
             if self.comm is not None:
@@ -350,41 +353,6 @@ class BaseRegTest:
     # =============================================================================
     #                         reference files I/O
     # =============================================================================
-    # based on this stack overflow answer https://stackoverflow.com/questions/3488934/simplejson-and-numpy-array/24375113#24375113
-
-    @staticmethod
-    def writeRefJSON(file_name, ref):
-        """
-        Write a dictionary to a reference JSON file.
-        This includes a custom NumPy encoder to reliably write NumPy arrays to JSON, which can then be read back via :meth:`readRefJSON`.
-
-        Parameters
-        ----------
-        file_name : str
-            The file name
-        ref : dict
-            The dictionary
-        """
-
-        # move metadata to end of db if it exists
-        if "metadata" in ref:
-            ref["metadata"] = ref.pop("metadata")
-        writeJSON(file_name, ref)
-
-    # based on this stack overflow answer https://stackoverflow.com/questions/3488934/simplejson-and-numpy-array/24375113#24375113
-    @staticmethod
-    def readRefJSON(file_name):
-        """
-        Reads a JSON file and return the contents as a dictionary.
-        This is a wrapper around :meth:`readJSON` maintained for backwards compatibility.
-
-        Parameters
-        ----------
-        file_name : str
-            The file name
-        """
-
-        return readJSON(file_name)
 
     @staticmethod
     def convertRegFileToJSONRegFile(file_name, output_file=None):
