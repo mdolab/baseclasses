@@ -371,32 +371,32 @@ class BaseRegTest:
             Custom encoder class for Numpy arrays and CaseInsensitiveDict
             """
 
-            def default(self, obj):
+            def default(self, o):
                 """
                 If input object is an ndarray it will be converted into a dict
                 holding dtype, shape and the data, base64 encoded.
                 """
-                if isinstance(obj, numpy.ndarray):
-                    if obj.flags["C_CONTIGUOUS"]:
+                if isinstance(o, numpy.ndarray):
+                    if o.flags["C_CONTIGUOUS"]:
                         pass
                     else:
-                        obj = numpy.ascontiguousarray(obj)
-                        assert obj.flags["C_CONTIGUOUS"]
-                    if obj.size == 1:
-                        return obj.item()
+                        o = numpy.ascontiguousarray(o)
+                        assert o.flags["C_CONTIGUOUS"]
+                    if o.size == 1:
+                        return o.item()
                     else:
-                        return dict(__ndarray__=obj.tolist(), dtype=str(obj.dtype), shape=obj.shape)
-                elif isinstance(obj, numpy.integer):
-                    return dict(__ndarray__=int(obj), dtype=str(obj.dtype), shape=obj.shape)
-                elif isinstance(obj, numpy.floating):
-                    return dict(__ndarray__=float(obj), dtype=str(obj.dtype), shape=obj.shape)
-                elif isinstance(obj, CaseInsensitiveDict):
-                    return dict(obj)
-                elif isinstance(obj, CaseInsensitiveSet):
-                    return set(obj)
+                        return dict(__ndarray__=o.tolist(), dtype=str(o.dtype), shape=o.shape)
+                elif isinstance(o, numpy.integer):
+                    return dict(__ndarray__=int(o), dtype=str(o.dtype), shape=o.shape)
+                elif isinstance(o, numpy.floating):
+                    return dict(__ndarray__=float(o), dtype=str(o.dtype), shape=o.shape)
+                elif isinstance(o, CaseInsensitiveDict):
+                    return dict(o)
+                elif isinstance(o, CaseInsensitiveSet):
+                    return set(o)
 
                 # Let the base class default method raise the TypeError
-                super().default(obj)
+                super().default(o)
 
         # move metadata to end of db if it exists
         if "metadata" in ref:
@@ -519,9 +519,9 @@ class BaseRegTest:
         BaseRegTest.writeRefJSON(output_file, ref)
 
 
-"""This strategy of dealing with error propagation to multiple procs is taken directly form openMDAO.utils;
-It was not imported and used here to avoid adding openMDAO as a dependency. If openMDAO is added as a dependency in
-the future this context manager definition should be replaced by an import"""
+# This strategy of dealing with error propagation to multiple procs is taken directly form openMDAO.utils;
+# It was not imported and used here to avoid adding openMDAO as a dependency.
+# If openMDAO is added as a dependency in the future this context manager definition should be replaced by an import
 
 
 @contextmanager
@@ -558,7 +558,6 @@ def multi_proc_exception_check(comm):
             allmsgs = comm.allgather(msg)
             if fail:
                 msg = f"Exception raised on rank {comm.rank}: {exc[1]}"
-                raise exc[0](msg).with_traceback(exc[2])
                 raise exc[0](msg).with_traceback(exc[2])
             else:
                 for m in allmsgs:
