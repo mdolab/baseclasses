@@ -1,8 +1,9 @@
 """
 Helper methods for supporting python3 and python2 at the same time
 """
-
 import sys
+from pprint import pprint
+from .containers import CaseInsensitiveDict, CaseInsensitiveSet
 
 
 def getPy3SafeString(string):
@@ -17,3 +18,16 @@ def getPy3SafeString(string):
         return string.decode("utf-8")
 
     return string
+
+
+def pp(obj, comm=None):
+    if (comm is None) or (comm is not None and comm.rank == 0):
+        # use normal print for string so there's no quotes
+        if isinstance(obj, str):
+            print(obj)
+        # use pprint for other built-in types (other than string)
+        elif obj.__class__.__module__ == "__builtin__" or isinstance(obj, (CaseInsensitiveDict, CaseInsensitiveSet)):
+            pprint(obj)
+        # use print for everything else
+        else:
+            print(obj)

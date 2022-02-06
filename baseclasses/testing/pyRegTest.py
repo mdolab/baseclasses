@@ -111,6 +111,7 @@ class BaseRegTest:
         """
         Write the reference file from the root proc
         """
+        # move metadata to the end of the file
         if "metadata" in self.db:
             self.db["metadata"] = self.db.pop("metadata")
         with multi_proc_exception_check(self.comm):
@@ -342,95 +343,6 @@ class BaseRegTest:
                 self._add_dict(key, d[key], full_name, rtol=rtol, atol=atol, db=db[dict_name])
             else:
                 self._add_values(key, d[key], rtol=rtol, atol=atol, db=db[dict_name], full_name=full_name)
-
-    # =============================================================================
-    #                         reference files I/O
-    # =============================================================================
-
-    @staticmethod
-    def convertRegFileToJSONRegFile(file_name, output_file=None):
-        """
-        Converts from the old format of regression test file to the new JSON format
-
-        Parameters
-        ----------
-        file_name : str
-            The file name
-        output_file : The output file name, optional
-            If None, the same filename will be used, but with a ``.json`` suffix.
-        """
-        if output_file is None:
-            output_file = os.path.splitext(file_name)[0] + ".json"
-
-        ref = {}
-        line_history = deque(maxlen=3)
-
-        def saveValueInRef(value, key, mydict):
-            """a helper function to add values to our ref dict"""
-
-            if key in mydict:
-                # turn the value into a numpy array and append or just append if
-                # the value is already an numpy.array
-
-                if isinstance(mydict[key], numpy.ndarray):
-                    mydict[key] = numpy.append(mydict[key], value)
-                else:
-                    mydict[key] = numpy.array([mydict[key], value])
-            else:
-                mydict[key] = value
-
-        curr_dict = ref
-        with open(file_name) as fid:
-            for line in fid:
-                # key ideas
-                #    - lines starting with @value aren't added to the queque
-
-                # check to see if it is the start of dictionary of values
-                if "Dictionary Key: " in line:
-
-                    # if there are other lines in the queque this isn't following
-                    # an @value
-                    if len(line_history) > 0:
-
-                        # We must create a new dictionary and add it to ref
-                        last_line = line_history[-1].rstrip()
-                        if "Dictionary Key: " in last_line:
-                            # this is a nested dict
-                            key = last_line[len("Dictionary Key: ") :]
-
-                            if len(line_history) > 1:
-                                prior_dict = curr_dict
-                                curr_dict[key] = {}
-                                curr_dict = curr_dict[key]
-                            else:
-                                prior_dict[key] = {}
-                                curr_dict = prior_dict[key]
-                            print("nested dict", last_line)
-                        else:
-                            print("dict ", last_line)
-                            ref[last_line] = {}
-                            curr_dict = ref[last_line]
-
-                if "@value" in line:
-                    # get the value from the ref file
-                    value = float(line.split()[1])
-
-                    # if a value was not just added
-                    if line_history:
-                        # grab the data and use them as the keys for the reference dictionary
-                        key = line_history[-1].rstrip()
-                        if "Dictionary Key: " in key:
-                            key = key[len("Dictionary Key: ") :]
-                        else:
-                            curr_dict = ref
-
-                    saveValueInRef(value, key, curr_dict)
-                    line_history.clear()
-                else:
-                    # When deque reaches 2 lines, will automatically evict oldest
-                    line_history.append(line)
-
-        BaseRegTest.writeRefJSON(output_file, ref)
 
 
 # This strategy of dealing with error propagation to multiple procs is taken directly form openMDAO.utils;
