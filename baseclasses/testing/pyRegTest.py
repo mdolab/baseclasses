@@ -6,7 +6,6 @@ except ImportError:
 import numpy
 import os
 import sys
-from collections import deque
 from contextlib import contextmanager
 from ..utils import Error
 from ..utils import writeJSON, readJSON

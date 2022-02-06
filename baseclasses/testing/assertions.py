@@ -16,7 +16,7 @@ def assertEqual(a, b):
     elif isinstance(a, dict):
         if set(a.keys()) != set(b.keys()):
             raise AssertionError("The two dictionaries do not have the same keys")
-        for k, v in a.items():
+        for k in a.keys():
             assertEqual(a[k], b[k])
     elif not a == b:
         raise AssertionError(f"{a} and {b} are not equal.")
