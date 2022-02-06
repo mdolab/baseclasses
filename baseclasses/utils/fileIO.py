@@ -1,8 +1,6 @@
-import numpy as np
 import pickle
-from collections import OrderedDict
 import json
-from sqlitedict import SqliteDict
+import numpy as np
 from .containers import CaseInsensitiveDict, CaseInsensitiveSet
 
 
@@ -17,7 +15,6 @@ def writeJSON(fname, obj, comm=None):
         The file name
     obj : dict or ndarray
         The object to be written to JSON
-
     comm : mpi4py.MPI.Comm, optional
         The communicator over which this function is called.
         If supplied, only the root proc will be used for file IO.
@@ -108,3 +105,55 @@ def readJSON(fname, comm=None):
     if comm is not None:
         data = comm.bcast(data)
     return data
+
+
+def readPickle(fname, comm=None):
+    """
+    This is a parallel pickle.load function, which is performed on the root proc only.
+    Error checking is necessary to provide py2 compatibility.
+
+    Parameters
+    ----------
+    fname : str
+        The pickle file name
+    comm : mpi4py.MPI.Comm, optional
+        The communicator over which this function is called.
+        If supplied, only the root proc will be used for file IO.
+
+    Returns
+    -------
+    obj : The object stored in the pickle file
+    """
+    obj = None
+    if (comm is None) or (comm is not None and comm.rank == 0):
+        try:
+            with open(fname, "rb") as f:
+                obj = pickle.load(f)
+        except UnicodeDecodeError:  # if pickled with py2
+            with open(fname, "rb") as f:
+                obj = pickle.load(f, encoding="latin1")
+    if comm is not None:
+        comm.barrier()
+        obj = comm.bcast(obj)
+    return obj
+
+
+def writePickle(fname, obj, comm=None):
+    """
+    Parallel pickle writing function, only performs operations on the root proc
+
+    Parameters
+    ----------
+    fname : str
+        The pickle file name
+    obj : any object which can be pickled by Python
+        The object to be pickled
+    comm : mpi4py.MPI.Comm, optional
+        The communicator over which this function is called.
+        If supplied, only the root proc will be used for file IO.
+    """
+    if (comm is None) or (comm is not None and comm.rank == 0):
+        with open(fname, "wb") as handle:
+            pickle.dump(obj, handle)
+    if comm is not None:
+        comm.barrier()

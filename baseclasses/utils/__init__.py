@@ -1,7 +1,7 @@
 from .containers import CaseInsensitiveSet, CaseInsensitiveDict
 from .error import Error
 from .utils import getPy3SafeString
-from .fileIO import writeJSON, readJSON
+from .fileIO import writeJSON, readJSON, writePickle, readPickle
 
 __all__ = [
     "CaseInsensitiveSet",
@@ -10,4 +10,6 @@ __all__ = [
     "getPy3SafeString",
     "writeJSON",
     "readJSON",
+    "writePickle",
+    "readPickle",
 ]
