@@ -6,10 +6,10 @@ except ImportError:
 import numpy
 import os
 import sys
-import json
 from collections import deque
 from contextlib import contextmanager
-from ..utils import CaseInsensitiveDict, CaseInsensitiveSet, Error
+from ..utils import Error
+from ..utils import writeJSON, readJSON
 
 
 def getTol(**kwargs):
@@ -366,50 +366,17 @@ class BaseRegTest:
             The dictionary
         """
 
-        class MyEncoder(json.JSONEncoder):
-            """
-            Custom encoder class for Numpy arrays and CaseInsensitiveDict
-            """
-
-            def default(self, o):
-                """
-                If input object is an ndarray it will be converted into a dict
-                holding dtype, shape and the data, base64 encoded.
-                """
-                if isinstance(o, numpy.ndarray):
-                    if o.flags["C_CONTIGUOUS"]:
-                        pass
-                    else:
-                        o = numpy.ascontiguousarray(o)
-                        assert o.flags["C_CONTIGUOUS"]
-                    if o.size == 1:
-                        return o.item()
-                    else:
-                        return dict(__ndarray__=o.tolist(), dtype=str(o.dtype), shape=o.shape)
-                elif isinstance(o, numpy.integer):
-                    return dict(__ndarray__=int(o), dtype=str(o.dtype), shape=o.shape)
-                elif isinstance(o, numpy.floating):
-                    return dict(__ndarray__=float(o), dtype=str(o.dtype), shape=o.shape)
-                elif isinstance(o, CaseInsensitiveDict):
-                    return dict(o)
-                elif isinstance(o, CaseInsensitiveSet):
-                    return set(o)
-
-                # Let the base class default method raise the TypeError
-                super().default(o)
-
         # move metadata to end of db if it exists
         if "metadata" in ref:
             ref["metadata"] = ref.pop("metadata")
-        with open(file_name, "w") as json_file:
-            json.dump(ref, json_file, sort_keys=True, indent=4, separators=(",", ": "), cls=MyEncoder)
+        writeJSON(file_name, ref)
 
     # based on this stack overflow answer https://stackoverflow.com/questions/3488934/simplejson-and-numpy-array/24375113#24375113
     @staticmethod
     def readRefJSON(file_name):
         """
         Reads a JSON file and return the contents as a dictionary.
-        This includes a custom NumPy reader to retrieve NumPy arrays, matching the :meth:`writeRefJSON` function.
+        This is a wrapper around :meth:`readJSON` maintained for backwards compatibility.
 
         Parameters
         ----------
@@ -417,21 +384,7 @@ class BaseRegTest:
             The file name
         """
 
-        def json_numpy_obj_hook(dct):
-            """Decodes a previously encoded numpy ndarray with proper shape and dtype.
-
-            :param dct: (dict) json encoded ndarray
-            :return: (ndarray) if input was an encoded ndarray
-            """
-            if isinstance(dct, dict) and "__ndarray__" in dct:
-                data = dct["__ndarray__"]
-                return numpy.array(data, dct["dtype"]).reshape(dct["shape"])
-            return dct
-
-        with open(file_name) as json_file:
-            data = json.load(json_file, object_hook=json_numpy_obj_hook)
-
-        return data
+        return readJSON(file_name)
 
     @staticmethod
     def convertRegFileToJSONRegFile(file_name, output_file=None):
