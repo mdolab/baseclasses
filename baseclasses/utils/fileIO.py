@@ -6,17 +6,21 @@ from sqlitedict import SqliteDict
 from .containers import CaseInsensitiveDict, CaseInsensitiveSet
 
 
-def writeJSON(fname, obj):
+def writeJSON(fname, obj, comm=None):
     """
-    Write a dictionary to a reference JSON file.
+    Write an object to a JSON file.
     This includes a custom NumPy encoder to reliably write NumPy arrays to JSON, which can then be read back via :meth:`readJSON`.
 
     Parameters
     ----------
-    file_name : str
+    fname : str
         The file name
-    ref : dict
-        The dictionary
+    obj : dict or ndarray
+        The object to be written to JSON
+
+    comm : mpi4py.MPI.Comm, optional
+        The communicator over which this function is called.
+        If supplied, only the root proc will be used for file IO.
     """
 
     class MyEncoder(json.JSONEncoder):
@@ -47,15 +51,18 @@ def writeJSON(fname, obj):
                 return dict(o)
             elif isinstance(o, CaseInsensitiveSet):
                 return set(o)
+            else:
+                # Let the base class default method raise the TypeError
+                super().default(o)
 
-            # Let the base class default method raise the TypeError
-            super().default(o)
+    if (comm is None) or (comm is not None and comm.rank == 0):
+        with open(fname, "w") as json_file:
+            json.dump(obj, json_file, sort_keys=True, indent=4, separators=(",", ": "), cls=MyEncoder)
+    if comm is not None:
+        comm.barrier()
 
-    with open(fname, "w") as json_file:
-        json.dump(obj, json_file, sort_keys=True, indent=4, separators=(",", ": "), cls=MyEncoder)
 
-
-def readJSON(fname):
+def readJSON(fname, comm=None):
     """
     Reads a JSON file and return the contents as a dictionary.
     This includes a custom NumPy reader to retrieve NumPy arrays, matching the :meth:`writeJSON` function.
@@ -65,6 +72,10 @@ def readJSON(fname):
     file_name : str
         The file name
 
+    comm : mpi4py.MPI.Comm, optional
+        The communicator over which this function is called.
+        If supplied, only the root proc will be used for file IO.
+
 
     References
     ----------
@@ -72,17 +83,28 @@ def readJSON(fname):
     """
 
     def json_numpy_obj_hook(dct):
-        """Decodes a previously encoded numpy ndarray with proper shape and dtype.
+        """
+        Decodes a previously encoded numpy ndarray with proper shape and dtype.
 
-        :param dct: (dict) json encoded ndarray
-        :return: (ndarray) if input was an encoded ndarray
+        Parameters
+        ----------
+        dct: dictionary
+            JSON dictionary containing the encoded ndarray
+
+        Returns
+        -------
+        dct: dictionary or Numpy array
+            The decoded Numpy array, or the input dct if it is not an encoded Numpy array
         """
         if isinstance(dct, dict) and "__ndarray__" in dct:
             data = dct["__ndarray__"]
             return np.array(data, dct["dtype"]).reshape(dct["shape"])
         return dct
 
-    with open(fname) as json_file:
-        data = json.load(json_file, object_hook=json_numpy_obj_hook)
-
+    data = None
+    if (comm is None) or (comm is not None and comm.rank == 0):
+        with open(fname, "r") as json_file:
+            data = json.load(json_file, object_hook=json_numpy_obj_hook)
+    if comm is not None:
+        data = comm.bcast(data)
     return data

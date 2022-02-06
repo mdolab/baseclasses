@@ -111,26 +111,19 @@ class BaseRegTest:
         """
         Write the reference file from the root proc
         """
+        if "metadata" in self.db:
+            self.db["metadata"] = self.db.pop("metadata")
         with multi_proc_exception_check(self.comm):
-            if self.rank == 0:
-                # move metadata to end of db if it exists
-                if "metadata" in self.db:
-                    self.db["metadata"] = self.db.pop("metadata")
-                writeJSON(self.ref_file, self.db)
+            writeJSON(self.ref_file, self.db, comm=self.comm)
 
     def readRef(self):
         """
         Read in the reference file on the root proc, then broadcast to all procs
         """
         with multi_proc_exception_check(self.comm):
-            if self.rank == 0:
-                db = readJSON(self.ref_file)
-            else:
-                db = None
-            if self.comm is not None:
-                db = self.comm.bcast(db)
+            db = readJSON(self.ref_file, comm=self.comm)
             self.metadata = db.pop("metadata", None)
-            return db
+        return db
 
     # *****************
     # Public functions
