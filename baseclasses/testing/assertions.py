@@ -3,7 +3,7 @@ import numpy as np
 DEFAULT_TOL = 1e-12
 
 
-def assertEqual(a, b):
+def assert_equal(a, b):
     """
     This replaces the assertEqual functionality provided by unittest.TestCase
     so that we can call this outside the class
@@ -17,7 +17,7 @@ def assertEqual(a, b):
         if set(a.keys()) != set(b.keys()):
             raise AssertionError("The two dictionaries do not have the same keys")
         for k in a.keys():
-            assertEqual(a[k], b[k])
+            assert_equal(a[k], b[k])
     elif not a == b:
         raise AssertionError(f"{a} and {b} are not equal.")
 
@@ -63,7 +63,7 @@ def assert_dict_not_allclose(actual, desired, atol=DEFAULT_TOL, rtol=DEFAULT_TOL
     """
     The opposite of assert_dict_allclose
     """
-    assertEqual(set(actual.keys()), set(desired.keys()))
+    assert_equal(set(actual.keys()), set(desired.keys()))
     for key in actual.keys():
         if np.allclose(actual[key], desired[key], atol=atol, rtol=rtol):
             raise AssertionError(f"Dictionaries are close! Got {actual} and {desired} for key {key}")

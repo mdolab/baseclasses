@@ -2,7 +2,7 @@ import unittest
 import os
 from parameterized import parameterized
 from baseclasses.testing.decorators import require_mpi
-from baseclasses.testing.assertions import assertEqual
+from baseclasses.testing.assertions import assert_equal
 from baseclasses.utils import readPickle, writePickle, readJSON, writeJSON
 import numpy as np
 
@@ -35,7 +35,7 @@ class TestFileIO(unittest.TestCase):
         self.fileName = f"{name}.pkl"
         writePickle(self.fileName, obj, comm=self.comm)
         newObj = readPickle(self.fileName, comm=self.comm)
-        assertEqual(obj, newObj)
+        assert_equal(obj, newObj)
 
     @parameterized.expand(
         [
@@ -48,7 +48,7 @@ class TestFileIO(unittest.TestCase):
         self.fileName = f"{name}.json"
         writeJSON(self.fileName, obj, comm=self.comm)
         newObj = readJSON(self.fileName, comm=self.comm)
-        assertEqual(obj, newObj)
+        assert_equal(obj, newObj)
 
     def tearDown(self):
         if self.comm.rank == 0:
