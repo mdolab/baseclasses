@@ -224,7 +224,7 @@ class BaseSolver:
         modifiedOptions = self.getModifiedOptions()
         self.pp(modifiedOptions)
 
-    def pp(self, obj):
+    def pp(self, obj, flush=False):
         """
         This method prints ``obj`` (via pprint) on the root proc of ``self.comm`` if it exists.
         Otherwise it will just print ``obj``.
@@ -236,6 +236,6 @@ class BaseSolver:
         """
         if (self.comm is not None and self.comm.rank == 0) or self.comm is None:
             if isinstance(obj, str):
-                print(obj)
+                print(obj, flush=flush)
             else:
                 pprint(obj)
