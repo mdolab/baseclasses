@@ -20,14 +20,26 @@ def getPy3SafeString(string):
     return string
 
 
-def pp(obj, comm=None):
+def pp(obj, comm=None, flush=False):
+    """
+    Parallel safe printing routine. This method prints ``obj`` (via pprint) on the root proc of ``self.comm`` if it exists. Otherwise it will just print ``obj``.
+
+    Parameters
+    ----------
+    obj : object
+        Any Python object to be printed
+    comm : MPI comm
+        The MPI comm object on this processor
+    flush : bool
+        If defined, the stream will be flushed.
+    """
     if (comm is None) or (comm is not None and comm.rank == 0):
         # use normal print for string so there's no quotes
         if isinstance(obj, str):
-            print(obj)
+            print(obj, flush=flush)
         # use pprint for other built-in types (other than string)
         elif obj.__class__.__module__ == "__builtin__" or isinstance(obj, (CaseInsensitiveDict, CaseInsensitiveSet)):
             pprint(obj)
         # use print for everything else
         else:
-            print(obj)
+            print(obj, flush=flush)
