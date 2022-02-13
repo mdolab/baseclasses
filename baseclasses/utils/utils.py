@@ -2,7 +2,7 @@
 Helper methods for supporting python3 and python2 at the same time
 """
 import sys
-from pprint import pprint
+from pprint import pformat
 from .containers import CaseInsensitiveDict, CaseInsensitiveSet
 
 
@@ -39,7 +39,9 @@ def pp(obj, comm=None, flush=False):
             print(obj, flush=flush)
         # use pprint for other built-in types (other than string)
         elif obj.__class__.__module__ == "__builtin__" or isinstance(obj, (CaseInsensitiveDict, CaseInsensitiveSet)):
-            pprint(obj)
+            # we use pformat to get the string and then call print manually, that way we can flush if we need to
+            pprint_str = pformat(obj)
+            print(pprint_str, flush=flush)
         # use print for everything else
         else:
             print(obj, flush=flush)
