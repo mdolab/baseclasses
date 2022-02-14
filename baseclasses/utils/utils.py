@@ -20,7 +20,7 @@ def getPy3SafeString(string):
     return string
 
 
-def pp(obj, comm=None, flush=False):
+def pp(obj, comm=None, flush=True):
     """
     Parallel safe printing routine. This method prints ``obj`` (via pprint) on the root proc of ``self.comm`` if it exists. Otherwise it will just print ``obj``.
 

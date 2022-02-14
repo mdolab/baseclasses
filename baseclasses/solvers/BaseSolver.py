@@ -223,7 +223,7 @@ class BaseSolver:
         modifiedOptions = self.getModifiedOptions()
         self.pp(modifiedOptions)
 
-    def pp(self, obj, flush=False):
+    def pp(self, obj, flush=True):
         """
         This method prints ``obj`` (via pprint) on the root proc of ``self.comm`` if it exists.
         Otherwise it will just print ``obj``.
