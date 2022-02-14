@@ -36,11 +36,8 @@ def pp(obj, comm=None, flush=True):
         # use normal print for string so there's no quotes
         if isinstance(obj, str):
             print(obj, flush=flush)
-        # use pprint for other built-in types (other than string)
-        elif obj.__class__.__module__ == "__builtin__":
+        # use pprint for everything else
+        else:
             # we use pformat to get the string and then call print manually, that way we can flush if we need to
             pprint_str = pformat(obj)
             print(pprint_str, flush=flush)
-        # use print for everything else
-        else:
-            print(obj, flush=flush)
