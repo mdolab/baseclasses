@@ -233,7 +233,7 @@ class BaseSolver:
         obj : object
             Any Python object to be printed
         flush : bool
-            If defined, the stream will be flushed.
+            If True, the stream will be flushed.
         """
 
         # Call the parallel safe pp routine defined in utils

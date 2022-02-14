@@ -31,7 +31,7 @@ def pp(obj, comm=None, flush=True):
     comm : MPI comm
         The MPI comm object on this processor
     flush : bool
-        If defined, the stream will be flushed.
+        If True, the stream will be flushed.
     """
     if (comm is None) or (comm is not None and comm.rank == 0):
         # use normal print for string so there's no quotes
