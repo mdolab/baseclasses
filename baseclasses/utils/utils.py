@@ -3,7 +3,6 @@ Helper methods for supporting python3 and python2 at the same time
 """
 import sys
 from pprint import pformat
-from .containers import CaseInsensitiveDict, CaseInsensitiveSet
 
 
 def getPy3SafeString(string):
