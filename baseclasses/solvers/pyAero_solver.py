@@ -80,7 +80,7 @@ class AeroSolver(BaseSolver):
         pts = self.getSurfaceCoordinates(self.meshFamilyGroup)
         self.mesh.setSurfaceDefinition(pts, conn, faceSizes)
 
-    def setDVGeo(self, DVGeo, pointSetKwargs={}):
+    def setDVGeo(self, DVGeo, pointSetKwargs=None):
         """
         Set the DVGeometry object that will manipulate 'geometry' in
         this object. Note that <SOLVER> does not **strictly** need a
@@ -103,7 +103,11 @@ class AeroSolver(BaseSolver):
         """
 
         self.DVGeo = DVGeo
-        self.pointSetKwargs = pointSetKwargs
+
+        if pointSetKwargs is None:
+            pointSetKwargs = {}
+        else:
+            self.pointSetKwargs = pointSetKwargs
 
     def getTriangulatedMeshSurface(self, groupName=None, **kwargs):
         """
