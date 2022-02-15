@@ -105,7 +105,7 @@ class AeroSolver(BaseSolver):
         self.DVGeo = DVGeo
 
         if pointSetKwargs is None:
-            pointSetKwargs = {}
+            self.pointSetKwargs = {}
         else:
             self.pointSetKwargs = pointSetKwargs
 
