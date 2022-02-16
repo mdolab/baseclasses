@@ -21,7 +21,10 @@ class TestFileIO(unittest.TestCase):
     N_PROCS = 1
 
     def setUp(self):
-        self.comm = MPI.COMM_WORLD
+        if MPI is not None:
+            self.comm = MPI.COMM_WORLD
+        else:
+            self.comm = None
 
     @parameterized.expand(
         [
