@@ -20,10 +20,10 @@ def redirectIO(f_out, f_err=None):
         A file stream to redirect stdout to
 
     f_err : file
-        A file stream to redirect stderr to, if none is specified it is set to `f_out`
+        A file stream to redirect stderr to. If none is specified it is set to `f_out`
     """
 
-    if not f_err:
+    if f_err is None:
         f_err = f_out
 
     orig_out = sys.stdout.fileno()
@@ -65,10 +65,10 @@ def redirectingIO(f_out, f_err=None):
         A file stream that stdout should be redirected to
 
     f_err : file
-        A file stream that stderr should be redirected to
+        A file stream to redirect stderr to. If none is specified it is set to `f_out`
     """
 
-    if not f_err:
+    if f_err is None:
         f_err = f_out
 
     # save the file descriptors to restore to
