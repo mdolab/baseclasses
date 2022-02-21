@@ -55,6 +55,9 @@ class AeroSolver(BaseSolver):
         self.families = CaseInsensitiveDict()
         self._updateGeomInfo = False
 
+        # Initialize kwargs for addPointSet
+        self.pointSetKwargs = None
+
     def setMesh(self, mesh):
         """
         Set the mesh object to the aero_solver to do geometric deformations
@@ -77,7 +80,7 @@ class AeroSolver(BaseSolver):
         pts = self.getSurfaceCoordinates(self.meshFamilyGroup)
         self.mesh.setSurfaceDefinition(pts, conn, faceSizes)
 
-    def setDVGeo(self, DVGeo):
+    def setDVGeo(self, DVGeo, pointSetKwargs=None):
         """
         Set the DVGeometry object that will manipulate 'geometry' in
         this object. Note that <SOLVER> does not **strictly** need a
@@ -86,9 +89,12 @@ class AeroSolver(BaseSolver):
 
         Parameters
         ----------
-        dvGeo : A DVGeometry object.
-            Object responsible for manipulating the constraints that
-            this object is responsible for.
+        DVGeo : A DVGeometry object.
+            Object responsible for manipulating the geometry.
+
+        pointSetKwargs : dict
+            Keyword arguments to be passed to the DVGeo addPointSet call.
+            Useful for DVGeometryMulti, specifying FFD projection tolerances, etc.
 
         Examples
         --------
@@ -97,6 +103,11 @@ class AeroSolver(BaseSolver):
         """
 
         self.DVGeo = DVGeo
+
+        if pointSetKwargs is None:
+            self.pointSetKwargs = {}
+        else:
+            self.pointSetKwargs = pointSetKwargs
 
     def getTriangulatedMeshSurface(self, groupName=None, **kwargs):
         """
