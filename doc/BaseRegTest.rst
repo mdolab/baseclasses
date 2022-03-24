@@ -1,12 +1,8 @@
-.. _BaseRegTest:
+Testing
+-------
 
-BaseRegTest
------------
-
-.. currentmodule:: baseclasses.BaseRegTest
-
-.. autoclass:: BaseRegTest
+.. autoclass:: baseclasses.BaseRegTest
     :members:
 
-.. automodule:: baseclasses.BaseRegTest
+.. automodule:: baseclasses.testing
     :members:

@@ -5,8 +5,7 @@ pyStrut_problem
 # =============================================================================
 # Imports
 # =============================================================================
-import warnings
-from .utils import Error
+from ..utils import Error
 
 
 class StructProblem:
@@ -30,32 +29,26 @@ class StructProblem:
     >>> sp = StructProblem('lc0', loadFile='loads.txt')
     """
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, loadFile=None, loadFactor=None, evalFuncs=None):
 
         # Always have to have the name
         self.name = name
 
-        # Defaults
-        self.loadFile = None
-        self.loadFactor = 1.0
+        self.loadFile = loadFile
 
-        if "loadFile" in kwargs:
-            self.loadFile = kwargs["loadFile"]
+        # Set defaults for loadFactor and evalFuncs if not supplied
+        if loadFactor is None:
+            self.loadFactor = 1.0
+        else:
+            self.loadFactor = loadFactor
 
-        if "loadFactor" in kwargs:
-            self.loadFactor = kwargs["loadFactor"]
-
-        # Check for function list:
-        self.evalFuncs = set()
-        if "evalFuncs" in kwargs:
-            self.evalFuncs = set(kwargs["evalFuncs"])
-        if "funcs" in kwargs:
-            warnings.warn("funcs should **not** be an argument. Use 'evalFuncs' instead.")
-            if self.evalFuncs is None:
-                self.evalFuncs = set(kwargs["funcs"])
+        if evalFuncs is None:
+            self.evalFuncs = set()
+        else:
+            self.evalFuncs = set(evalFuncs)
 
         # we cast the set to a sorted list, so that each proc can loop over in the same order
-        self.evalFuncs = sorted(list(self.evalFuncs))
+        self.evalFuncs = sorted(self.evalFuncs)
 
         # When a solver calls its evalFunctions() it must write the
         # unique name it gives to funcNames.

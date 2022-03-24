@@ -5,7 +5,7 @@ pyEngine_problem
 # =============================================================================
 # Imports
 # =============================================================================
-from baseclasses import AeroProblem
+from .pyAero_problem import AeroProblem
 
 
 class EngineProblem(AeroProblem):

@@ -10,7 +10,7 @@ import copy
 
 from .ICAOAtmosphere import ICAOAtmosphere
 from .FluidProperties import FluidProperties
-from .utils import Error
+from ..utils import Error
 
 
 class MissionProblem:
@@ -397,13 +397,13 @@ class MissionProfile:
                 pass
             else:
                 if not self.firstSegSet:
-                    setattr(seg, "isFirstStateSeg", True)
+                    seg.isFirstStateSeg = True
                     self.firstSegSet = True
                 # end
                 if seg.isFirstStateSeg:
                     # this is the first segment.
                     # Need to have at least the start alt and V or M
-                    if getattr(seg, "initAlt") is None:
+                    if seg.initAlt is None:
                         raise Error(
                             "%s: Initial altitude must be\
                                      specified for the first non fuel fraction\
@@ -412,11 +412,7 @@ class MissionProfile:
                         )
                     # end
 
-                    if (
-                        (getattr(seg, "initMach") is None)
-                        and (getattr(seg, "initCAS") is None)
-                        and (getattr(seg, "initTAS") is None)
-                    ):
+                    if (seg.initMach is None) and (seg.initCAS is None) and (seg.initTAS is None):
                         raise Error(
                             "%s: One of initCAS,initTAS or initMach needs to be\
                                      specified for the first non fuelfraction\
@@ -430,14 +426,14 @@ class MissionProfile:
 
                 else:
                     prevSeg = self.segments[i - 1]
-                    refAlt = getattr(prevSeg, "finalAlt")
-                    refCAS = getattr(prevSeg, "finalCAS")
-                    refTAS = getattr(prevSeg, "finalTAS")
-                    refMach = getattr(prevSeg, "finalMach")
-                    TASi = getattr(seg, "initTAS")
-                    CASi = getattr(seg, "initCAS")
-                    Mi = getattr(seg, "initMach")
-                    Alti = getattr(seg, "initAlt")
+                    refAlt = prevSeg.finalAlt
+                    refCAS = prevSeg.finalCAS
+                    refTAS = prevSeg.finalTAS
+                    refMach = prevSeg.finalMach
+                    TASi = seg.initTAS
+                    CASi = seg.initCAS
+                    Mi = seg.initMach
+                    Alti = seg.initAlt
                     if CASi is not None:
                         if not CASi == refCAS:
                             raise Error(
@@ -449,7 +445,7 @@ class MissionProfile:
                             )
                         # end
                     else:
-                        setattr(seg, "initCAS", refCAS)
+                        seg.initCAS = refCAS
                     # end
                     if TASi is not None:
                         if not TASi == refTAS:
@@ -462,7 +458,7 @@ class MissionProfile:
                             )
                         # end
                     else:
-                        setattr(seg, "initTAS", refTAS)
+                        seg.initTAS = refTAS
                     # end
                     if Alti is not None:
                         if not Alti == refAlt:
@@ -474,7 +470,7 @@ class MissionProfile:
                             )
                         # end
                     else:
-                        setattr(seg, "initAlt", refAlt)
+                        seg.initAlt = refAlt
                     # end
                     if Mi is not None:
                         if not Mi == refMach:
@@ -486,7 +482,7 @@ class MissionProfile:
                             )
                         # end
                     else:
-                        setattr(seg, "initMach", refMach)
+                        seg.initMach = refMach
                     # end
 
                     # Determine the remaining segment parameters (Alt, Mach, CAS, TAS)
@@ -1056,33 +1052,33 @@ class MissionSegment:
         """
         set the data for the current segment in the fortran module
         """
-        h1 = getattr(self, "initAlt")
+        h1 = self.initAlt
         if h1 is None:
             h1 = 0.0
-        h2 = getattr(self, "finalAlt")
+        h2 = self.finalAlt
         if h2 is None:
             h2 = 0.0
-        M1 = getattr(self, "initMach")
+        M1 = self.initMach
         if M1 is None:
             M1 = 0.0
-        M2 = getattr(self, "finalMach")
+        M2 = self.finalMach
         if M2 is None:
             M2 = 0.0
-        deltaTime = getattr(self, "segTime")
+        deltaTime = self.segTime
         if deltaTime is None:
             deltaTime = 0.0
         # end
 
-        rangeFraction = getattr(self, "rangeFraction")
+        rangeFraction = self.rangeFraction
         if rangeFraction is None:
             rangeFraction = 1.0
         # end
 
         # Get the fuel-fraction, if provided, then segment is a generic fuel fraction type
-        fuelFraction = getattr(self, "fuelFraction")
-        throttle = getattr(self, "throttle")
+        fuelFraction = self.fuelFraction
+        throttle = self.throttle
         if fuelFraction is None and throttle is None:
-            segTypeID = segTypeDict[getattr(self, "phase").lower()]
+            segTypeID = segTypeDict[self.phase.lower()]
             fuelFraction = 0.0
             throttle = 0.0
         elif fuelFraction is not None:
@@ -1098,7 +1094,7 @@ class MissionSegment:
             raise Error(f"engType {self.engType} defined in segment {self.phase} not defined in engTypeDict")
         if self.engType is None:
             self.engType = "None"
-        engTypeID = engTypeDict[getattr(self, "engType")]
+        engTypeID = engTypeDict[self.engType]
 
         module.setmissionsegmentdata(
             idx,

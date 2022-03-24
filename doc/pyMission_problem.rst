@@ -1,13 +1,9 @@
-.. _pyMission_problem:
+MissionProblem
+--------------
 
-pyMission_problem
------------------
-
-.. currentmodule:: baseclasses.pyMission_problem
-
-.. autoclass:: MissionProblem
+.. autoclass:: baseclasses.MissionProblem
     :members:
-.. autoclass:: MissionProfile
+.. autoclass:: baseclasses.MissionProfile
     :members:
-.. autoclass:: MissionSegment
+.. autoclass:: baseclasses.MissionSegment
     :members:
