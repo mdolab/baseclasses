@@ -893,7 +893,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         self.nu = self.mu / self.rho
 
         # calculate dynamic pressure
-        self.q = 0.5 * self.rho * self.V ** 2
+        self.q = 0.5 * self.rho * self.V**2
 
     def _updateFromM(self):
         """
@@ -915,7 +915,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         self.nu = self.mu / self.rho
 
         # calculate dynamic pressure
-        self.q = 0.5 * self.rho * self.V ** 2
+        self.q = 0.5 * self.rho * self.V**2
 
     def _updateFromV(self):
         """
@@ -931,7 +931,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         self.nu = self.mu / self.rho
 
         # calculate dynamic pressure
-        self.q = 0.5 * self.rho * self.V ** 2
+        self.q = 0.5 * self.rho * self.V**2
 
         # calculate Mach Number
         self.__dict__["mach"] = self.V / self.a

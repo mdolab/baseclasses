@@ -253,7 +253,7 @@ class BaseRegTest:
         """
         if self.comm is None:
             raise Error("Parallel functionality requires mpi4py!")
-        reducedSum = self.comm.reduce(numpy.sum(values ** 2))
+        reducedSum = self.comm.reduce(numpy.sum(values**2))
         with multi_proc_exception_check(self.comm):
             if self.rank == 0:
                 self._add_values(name, numpy.sqrt(reducedSum), **kwargs)
