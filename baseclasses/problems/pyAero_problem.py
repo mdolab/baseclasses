@@ -269,7 +269,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         self.evalFuncs = sorted(self.evalFuncs)
 
         # these are the possible input values
-        possibleInputStates = {"mach", "V", "P", "T", "rho", "altitude", "reynolds", "reynoldsLength"}
+        possibleInputStates = {"mach", "V", "P", "T", "rho", "altitude", "reynolds", "reynoldsLength", "mu"}
 
         # turn the kwargs into a set
         keys = set(kwargs.keys())
@@ -436,6 +436,9 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             self.__dict__["T"] = self.inputs["T"]
             # calculate pressure
             self.__dict__["P"] = self.rho * self.R * self.T
+            # check if optional dynamic viscosity was given
+            if "mu" in self.inputs:
+                self.__dict__["mu"] = self.inputs["mu"]
             self._updateFromV()
         elif {"V", "rho", "P"} <= inKeys:
             self.__dict__["V"] = self.inputs["V"]
@@ -893,7 +896,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         self.nu = self.mu / self.rho
 
         # calculate dynamic pressure
-        self.q = 0.5 * self.rho * self.V ** 2
+        self.q = 0.5 * self.rho * self.V**2
 
     def _updateFromM(self):
         """
@@ -915,7 +918,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         self.nu = self.mu / self.rho
 
         # calculate dynamic pressure
-        self.q = 0.5 * self.rho * self.V ** 2
+        self.q = 0.5 * self.rho * self.V**2
 
     def _updateFromV(self):
         """
@@ -925,16 +928,20 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         self.a = numpy.sqrt(self.gamma * self.R * self.T)
 
         # Update the dynamic viscosity based on T using Sutherland's Law
-        self.updateViscosity(self.T)
+        if self.mu is None:
+            self.updateViscosity(self.T)
 
         # calculate kinematic viscosity
         self.nu = self.mu / self.rho
 
         # calculate dynamic pressure
-        self.q = 0.5 * self.rho * self.V ** 2
+        self.q = 0.5 * self.rho * self.V**2
 
         # calculate Mach Number
-        self.__dict__["mach"] = self.V / self.a
+        if self.incompressible:
+            self.__dict__["mach"] = 0.1
+        else:
+            self.__dict__["mach"] = self.V / self.a
 
         # calulate reynolds per length
         self.__dict__["re"] = self.rho * self.V / self.mu

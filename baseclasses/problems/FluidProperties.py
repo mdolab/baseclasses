@@ -51,7 +51,7 @@ class FluidProperties:
             Ra2K = 1.8  # official conversion from Rankine to Kelvin
 
             if self.englishUnits:
-                self.R = R_air / Ra2K / m2ft ** 2  # 1716.574 ft-lbf / slug / R
+                self.R = R_air / Ra2K / m2ft**2  # 1716.574 ft-lbf / slug / R
             else:
                 self.R = R_air  # 287.055 J / kg / K
 
@@ -90,6 +90,19 @@ class FluidProperties:
             self.TSuthDim = kwargs["TSuthDim"]
         else:
             self.TSuthDim = 273.15
+
+        # --- Check if we're fixing viscosity ---
+        if "mu" in kwargs:
+            self.mu = kwargs["mu"]
+        else:
+            self.mu = None
+
+        self.incompressible = False  # default to compressible flow
+        if "incompressible" in kwargs:
+            self.incompressible = kwargs["incompressible"]
+            print("+" + 10 * " " + "-----------------------------------------" + 10 * "-" + "+")
+            print("|" + 10 * " " + "Specifying Incompressible Flow (Ma = 0.1)" + 10 * " " + "|")
+            print("+" + 10 * " " + "-----------------------------------------" + 10 * "-" + "+")
 
     def updateViscosity(self, T):
         """
