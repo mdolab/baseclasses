@@ -55,7 +55,7 @@ class FluidProperties:
             Ra2K = 1.8  # official conversion from Rankine to Kelvin
 
             if self.englishUnits:
-                self.R = R_air / Ra2K / m2ft**2  # 1716.574 ft-lbf / slug / R
+                self.R = R_air / Ra2K / m2ft ** 2  # 1716.574 ft-lbf / slug / R
             else:
                 self.R = R_air  # 287.055 J / kg / K
 
