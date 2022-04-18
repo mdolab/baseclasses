@@ -930,7 +930,7 @@ mu=1.22e-3,  # override Sutherland's law \
         self.nu = self.mu / self.rho
 
         # calculate dynamic pressure
-        self.q = 0.5 * self.rho * self.V**2
+        self.q = 0.5 * self.rho * self.V ** 2
 
     def _updateFromM(self):
         """
@@ -953,7 +953,7 @@ mu=1.22e-3,  # override Sutherland's law \
         self.nu = self.mu / self.rho
 
         # calculate dynamic pressure
-        self.q = 0.5 * self.rho * self.V**2
+        self.q = 0.5 * self.rho * self.V ** 2
 
     def _updateFromV(self):
         """
@@ -970,7 +970,7 @@ mu=1.22e-3,  # override Sutherland's law \
         self.nu = self.mu / self.rho
 
         # calculate dynamic pressure
-        self.q = 0.5 * self.rho * self.V**2
+        self.q = 0.5 * self.rho * self.V ** 2
 
         # calculate Mach Number
         self.__dict__["mach"] = self.V / self.a
