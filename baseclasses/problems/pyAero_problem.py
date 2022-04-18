@@ -173,6 +173,12 @@ class AeroProblem(FluidProperties):
     R : float
         The gas constant. By default we use air. R=287.05
 
+    mu : float
+        The dynamic viscosity. By default, this is set to None and is 
+        computed from Sutherland's law. However, you can manually set it 
+        to override the internal calculations here for every method 
+        except for the 'mach'+'altitude' flight specification method.
+
     englishUnits : bool
         Flag to use all English units: pounds, feet, Rankine etc.
 
@@ -199,6 +205,12 @@ xRef=0.0, zRef=0.0, alpha=3.06)
     >>> # Onera M6 Test condition (RANS)
     >>> ap = AeroProblem('m6_tunnel', mach=0.8395, reynolds=11.72e6, reynoldsLength=0.64607, \
 areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
+    >>> # NACA0009 hydrofoil (0.9m semi-span) sailing condition (nearly incompressible flow with fixed viscosity)
+    >>> ap = AeroProblem("cruise_0", areaRef=0.243, alpha=6, chordRef=0.27, T=288.15, V=17, \
+rho=1025, xRef=0.18, yRef=0.0, zRef=0.0, evalFuncs=["cl","cd","lift","drag","cavitation","target_cavitation"], \
+R=100,  # artificially lower R for higher mach number (R=461.9 for water vapor) \
+mu=1.22e-3,  # override Sutherland's law \
+    )
                          """
 
     def __init__(self, name, **kwargs):
@@ -390,6 +402,9 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             self.__dict__["T"] = self.inputs["T"]
             self.__dict__["P"] = self.inputs["P"]
             self.__dict__["rho"] = self.P / (self.R * self.T)
+            # check if optional dynamic viscosity was given
+            if "mu" in self.inputs:
+                self.__dict__["mu"] = self.inputs["mu"]
             # now calculate remaining states
             self._updateFromM()
         elif {"mach", "T", "rho"} <= inKeys:
@@ -397,6 +412,9 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             self.__dict__["T"] = self.inputs["T"]
             self.__dict__["rho"] = self.inputs["rho"]
             self.__dict__["P"] = self.rho * self.R * self.T
+            # check if optional dynamic viscosity was given
+            if "mu" in self.inputs:
+                self.__dict__["mu"] = self.inputs["mu"]
             # now calculate remaining states
             self._updateFromM()
         elif {"mach", "P", "rho"} <= inKeys:
@@ -404,6 +422,9 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             self.__dict__["rho"] = self.inputs["rho"]
             self.__dict__["P"] = self.inputs["P"]
             self.__dict__["T"] = self.P / (self.rho * self.R)
+            # check if optional dynamic viscosity was given
+            if "mu" in self.inputs:
+                self.__dict__["mu"] = self.inputs["mu"]
             # now calculate remaining states
             self._updateFromM()
         elif {"mach", "reynolds", "reynoldsLength", "T"} <= inKeys:
@@ -412,6 +433,9 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             self.__dict__["re"] = self.inputs["reynolds"] / self.inputs["reynoldsLength"]
             self.__dict__["reynolds"] = self.inputs["reynolds"]
             self.__dict__["reynoldsLength"] = self.inputs["reynoldsLength"]
+            # check if optional dynamic viscosity was given
+            if "mu" in self.inputs:
+                self.__dict__["mu"] = self.inputs["mu"]
             # now calculate remaining states
             self._updateFromRe()
         elif {"V", "reynolds", "reynoldsLength", "T"} <= inKeys:
@@ -420,6 +444,9 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             self.__dict__["re"] = self.inputs["reynolds"] / self.inputs["reynoldsLength"]
             self.__dict__["reynolds"] = self.inputs["reynolds"]
             self.__dict__["reynoldsLength"] = self.inputs["reynoldsLength"]
+            # check if optional dynamic viscosity was given
+            if "mu" in self.inputs:
+                self.__dict__["mu"] = self.inputs["mu"]
             # now calculate remaining states
             self._updateFromRe()
         elif {"mach", "altitude"} <= inKeys:
@@ -446,6 +473,9 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             self.__dict__["P"] = self.inputs["P"]
             # start by calculating the T
             self.__dict__["T"] = self.P / (self.rho * self.R)
+            # check if optional dynamic viscosity was given
+            if "mu" in self.inputs:
+                self.__dict__["mu"] = self.inputs["mu"]
             self._updateFromV()
         elif {"V", "T", "P"} <= inKeys:
             self.__dict__["V"] = self.inputs["V"]
@@ -453,6 +483,9 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             self.__dict__["P"] = self.inputs["P"]
             # start by calculating the T
             self.__dict__["rho"] = self.P / (self.R * self.T)
+            # check if optional dynamic viscosity was given
+            if "mu" in self.inputs:
+                self.__dict__["mu"] = self.inputs["mu"]
             self._updateFromV()
         else:
             raise Error(
@@ -878,8 +911,9 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         # calculate the speed of sound
         self.a = numpy.sqrt(self.gamma * self.R * self.T)
 
-        # Update the dynamic viscosity based on T using Sutherland's Law
-        self.updateViscosity(self.T)
+        # Update the dynamic viscosity based on T using Sutherland's Law if mu is not specified first
+        if self.mu is None:
+            self.updateViscosity(self.T)
 
         # calculate Velocity
         if self.V is None:
@@ -905,8 +939,9 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         # calculate the speed of sound
         self.a = numpy.sqrt(self.gamma * self.R * self.T)
 
-        # Update the dynamic viscosity based on T using Sutherland's Law
-        self.updateViscosity(self.T)
+        # Update the dynamic viscosity based on T using Sutherland's Law if mu is not specified first
+        if self.mu is None:
+            self.updateViscosity(self.T)
 
         # calculate Velocity
         self.V = self.mach * self.a
@@ -927,7 +962,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         # calculate the speed of sound
         self.a = numpy.sqrt(self.gamma * self.R * self.T)
 
-        # Update the dynamic viscosity based on T using Sutherland's Law
+        # Update the dynamic viscosity based on T using Sutherland's Law if mu is not specified first
         if self.mu is None:
             self.updateViscosity(self.T)
 
@@ -938,10 +973,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         self.q = 0.5 * self.rho * self.V**2
 
         # calculate Mach Number
-        if self.incompressible:
-            self.__dict__["mach"] = 0.1
-        else:
-            self.__dict__["mach"] = self.V / self.a
+        self.__dict__["mach"] = self.V / self.a
 
         # calulate reynolds per length
         self.__dict__["re"] = self.rho * self.V / self.mu

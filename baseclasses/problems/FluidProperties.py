@@ -20,6 +20,10 @@ class FluidProperties:
     muSuthDim : float (default = 1.716e-5)
 
     TSuthDim : float (default = 273.15)
+
+    mu : float (default = None)
+        If given, the dynamic viscosity is fixed to this
+        value, and we do not compute Sutherland's law.
     """
 
     def __init__(self, **kwargs):
@@ -96,13 +100,6 @@ class FluidProperties:
             self.mu = kwargs["mu"]
         else:
             self.mu = None
-
-        self.incompressible = False  # default to compressible flow
-        if "incompressible" in kwargs:
-            self.incompressible = kwargs["incompressible"]
-            print("+" + 10 * " " + "-----------------------------------------" + 10 * "-" + "+")
-            print("|" + 10 * " " + "Specifying Incompressible Flow (Ma = 0.1)" + 10 * " " + "|")
-            print("+" + 10 * " " + "-----------------------------------------" + 10 * "-" + "+")
 
     def updateViscosity(self, T):
         """
