@@ -93,10 +93,10 @@ class AeroProblem(FluidProperties):
         Set the Mach number for the grid.
 
     alpha : float. Default is 0.0
-        Set the angle of attack
+        Set the angle of attack in degrees.
 
     beta : float. Default is 0.0
-        Set side-slip angle
+        Set the side-slip angle in degrees.
 
     altitude : float. Default is 0.0
         Set all thermodynamic parameters from the 1976 standard atmosphere.
@@ -930,7 +930,7 @@ mu=1.22e-3,  # override Sutherland's law \
         self.nu = self.mu / self.rho
 
         # calculate dynamic pressure
-        self.q = 0.5 * self.rho * self.V ** 2
+        self.q = 0.5 * self.rho * self.V**2
 
     def _updateFromM(self):
         """
@@ -953,7 +953,7 @@ mu=1.22e-3,  # override Sutherland's law \
         self.nu = self.mu / self.rho
 
         # calculate dynamic pressure
-        self.q = 0.5 * self.rho * self.V ** 2
+        self.q = 0.5 * self.rho * self.V**2
 
     def _updateFromV(self):
         """
@@ -970,7 +970,7 @@ mu=1.22e-3,  # override Sutherland's law \
         self.nu = self.mu / self.rho
 
         # calculate dynamic pressure
-        self.q = 0.5 * self.rho * self.V ** 2
+        self.q = 0.5 * self.rho * self.V**2
 
         # calculate Mach Number
         self.__dict__["mach"] = self.V / self.a

@@ -2,8 +2,7 @@
 Helper methods for supporting python3 and python2 at the same time
 """
 import sys
-from pprint import pprint
-from .containers import CaseInsensitiveDict, CaseInsensitiveSet
+from pprint import pformat
 
 
 def getPy3SafeString(string):
@@ -20,14 +19,25 @@ def getPy3SafeString(string):
     return string
 
 
-def pp(obj, comm=None):
+def pp(obj, comm=None, flush=True):
+    """
+    Parallel safe printing routine. This method prints ``obj`` (via pprint) on the root proc of ``self.comm`` if it exists. Otherwise it will just print ``obj``.
+
+    Parameters
+    ----------
+    obj : object
+        Any Python object to be printed
+    comm : MPI comm
+        The MPI comm object on this processor
+    flush : bool
+        If True, the stream will be flushed.
+    """
     if (comm is None) or (comm is not None and comm.rank == 0):
         # use normal print for string so there's no quotes
         if isinstance(obj, str):
-            print(obj)
-        # use pprint for other built-in types (other than string)
-        elif obj.__class__.__module__ == "__builtin__" or isinstance(obj, (CaseInsensitiveDict, CaseInsensitiveSet)):
-            pprint(obj)
-        # use print for everything else
+            print(obj, flush=flush)
+        # use pprint for everything else
         else:
-            print(obj)
+            # we use pformat to get the string and then call print manually, that way we can flush if we need to
+            pprint_str = pformat(obj)
+            print(pprint_str, flush=flush)

@@ -1008,8 +1008,8 @@ class MissionSegment:
         M = TAS / a
 
         # Evaluate the Calibrated air speed, CAS
-        term1 = (1.0 / 8.0) * (1 - PRatio) * M ** 2
-        term2 = (3.0 / 640.0) * (1 - 10 * PRatio + 9 * PRatio ** 2) * M ** 4
+        term1 = (1.0 / 8.0) * (1 - PRatio) * M**2
+        term2 = (3.0 / 640.0) * (1 - 10 * PRatio + 9 * PRatio**2) * M**4
         ECTerm = 1 + term1 + term2
         CAS = EAS * ECTerm
 

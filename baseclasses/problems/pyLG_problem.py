@@ -105,7 +105,7 @@ class LGProblem:
 
         f_stat = self.aircraftMass * self.g / self.nMainGear
 
-        g_load = (self.V_vert ** 2 + (2 * self.g * (1 - self.loadFrac) * (self.tireDef + self.shockDef))) / (
+        g_load = (self.V_vert**2 + (2 * self.g * (1 - self.loadFrac) * (self.tireDef + self.shockDef))) / (
             2.0 * self.g * (self.tireEff * self.tireDef + self.shockEff * self.shockDef)
         )
         # print('gload',self.V_vert**2,(2*self.g*(1-self.loadFrac)*(self.tireDef+self.shockDef)),2.0 , self.g,self.tireEff * self.tireDef,self.shockEff * self.shockDef,self.V_vert**2 /(2.0 * self.g ),  (self.tireEff * self.tireDef + self.shockEff * self.shockDef))

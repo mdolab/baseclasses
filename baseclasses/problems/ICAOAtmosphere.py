@@ -39,10 +39,10 @@ class ICAOAtmosphere:
         def hermite(t, p0, m0, p1, m1):
             """Compute a standard cubic hermite interpolant"""
             return (
-                p0 * (2 * t ** 3 - 3 * t ** 2 + 1)
-                + m0 * (t ** 3 - 2 * t ** 2 + t)
-                + p1 * (-2 * t ** 3 + 3 * t ** 2)
-                + m1 * (t ** 3 - t ** 2)
+                p0 * (2 * t**3 - 3 * t**2 + 1)
+                + m0 * (t**3 - 2 * t**2 + t)
+                + p1 * (-2 * t**3 + 3 * t**2)
+                + m1 * (t**3 - t**2)
             )
 
         def getTP(H, index):
