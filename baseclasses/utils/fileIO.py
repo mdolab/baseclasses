@@ -255,6 +255,10 @@ def redirectingIO(f_out, f_err=None):
     os.dup2(saved_stdout_fd, orig_out)
     os.dup2(saved_stderr_fd, orig_err)
 
+    # close copies
+    os.close(saved_stdout_fd)
+    os.close(saved_stderr_fd)
+
     # reopen the standard streams with original file descriptors
     sys.stdout = io.TextIOWrapper(os.fdopen(orig_out, "wb"))
     sys.stderr = io.TextIOWrapper(os.fdopen(orig_err, "wb"))
