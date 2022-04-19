@@ -262,5 +262,3 @@ def redirectingIO(f_out, f_err=None):
     # reopen the standard streams with original file descriptors
     sys.stdout = io.TextIOWrapper(os.fdopen(orig_out, "wb"))
     sys.stderr = io.TextIOWrapper(os.fdopen(orig_err, "wb"))
-
-
