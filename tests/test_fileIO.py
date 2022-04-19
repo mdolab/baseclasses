@@ -5,13 +5,8 @@ from unittest.mock import patch, MagicMock
 from parameterized import parameterized
 from baseclasses.testing.decorators import require_mpi
 from baseclasses.testing.assertions import assert_equal
-from baseclasses.utils import (
-    readPickle,
-    writePickle,
-    readJSON,
-    writeJSON,
-    redirectingIO,
-)
+from baseclasses.utils import readPickle, writePickle, readJSON, writeJSON, redirectingIO
+
 import numpy as np
 
 try:
