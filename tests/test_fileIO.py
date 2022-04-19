@@ -75,7 +75,7 @@ class TestFileIO(unittest.TestCase):
 
         # This is only here so the test is considered ok if
         # it finishes without error
-        self.assert_(True)
+        self.assertTrue(True)
 
     def tearDown(self):
         if self.comm.rank == 0:
