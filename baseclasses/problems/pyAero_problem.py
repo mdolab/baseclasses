@@ -174,9 +174,9 @@ class AeroProblem(FluidProperties):
         The gas constant. By default we use air. R=287.05
 
     mu : float
-        The dynamic viscosity. By default, this is set to None and is 
-        computed from Sutherland's law. However, you can manually set it 
-        to override the internal calculations here for every method 
+        The dynamic viscosity. By default, this is set to None and is
+        computed from Sutherland's law. However, you can manually set it
+        to override the internal calculations here for every method
         except for the 'mach'+'altitude' flight specification method.
 
     englishUnits : bool
