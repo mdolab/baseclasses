@@ -906,76 +906,77 @@ mu=1.22e-3,  # override Sutherland's law \
 
     def _updateFromRe(self):
         """
-        update the full set of states from M,T,P
+        Update the full set of states from Re, T, and either V or M.
         """
-        # calculate the speed of sound
+        # Calculate the speed of sound
         self.a = numpy.sqrt(self.gamma * self.R * self.T)
 
         # Update the dynamic viscosity based on T using Sutherland's Law if mu is not specified first
         if self.mu is None:
             self.updateViscosity(self.T)
 
-        # calculate Velocity
+        # Calculate velocity or Mach number
         if self.V is None:
             self.V = self.mach * self.a
         else:
             self.__dict__["mach"] = self.V / self.a
 
-        # calculate density
+        # Calculate density
         self.__dict__["rho"] = self.re * self.mu / self.V
-        # calculate pressure
+
+        # Calculate pressure
         self.__dict__["P"] = self.rho * self.R * self.T
 
-        # calculate kinematic viscosity
+        # Calculate kinematic viscosity
         self.nu = self.mu / self.rho
 
-        # calculate dynamic pressure
+        # Calculate dynamic pressure
         self.q = 0.5 * self.rho * self.V**2
 
     def _updateFromM(self):
         """
-        update the full set of states from M,T,P, Rho
+        Update the full set of states from M, T, rho.
         """
-        # calculate the speed of sound
+        # Calculate the speed of sound
         self.a = numpy.sqrt(self.gamma * self.R * self.T)
 
         # Update the dynamic viscosity based on T using Sutherland's Law if mu is not specified first
         if self.mu is None:
             self.updateViscosity(self.T)
 
-        # calculate Velocity
+        # Calculate velocity
         self.V = self.mach * self.a
 
-        # calulate reynolds per length
+        # Calculate Reynolds per length
         self.__dict__["re"] = self.rho * self.V / self.mu
 
-        # calculate kinematic viscosity
+        # Calculate kinematic viscosity
         self.nu = self.mu / self.rho
 
-        # calculate dynamic pressure
+        # Calculate dynamic pressure
         self.q = 0.5 * self.rho * self.V**2
 
     def _updateFromV(self):
         """
-        update the full set of states from V,T,P, Rho
+        Update the full set of states from V, T, rho.
         """
-        # calculate the speed of sound
+        # Calculate the speed of sound
         self.a = numpy.sqrt(self.gamma * self.R * self.T)
 
         # Update the dynamic viscosity based on T using Sutherland's Law if mu is not specified first
         if self.mu is None:
             self.updateViscosity(self.T)
 
-        # calculate kinematic viscosity
+        # Calculate kinematic viscosity
         self.nu = self.mu / self.rho
 
-        # calculate dynamic pressure
+        # Calculate dynamic pressure
         self.q = 0.5 * self.rho * self.V**2
 
-        # calculate Mach Number
+        # Calculate Mach number
         self.__dict__["mach"] = self.V / self.a
 
-        # calulate reynolds per length
+        # Calculate Reynolds per length
         self.__dict__["re"] = self.rho * self.V / self.mu
 
     def _getDVSens(self, func):
