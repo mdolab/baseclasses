@@ -31,29 +31,51 @@ class AeroProblem(FluidProperties):
 
     'mach' + 'reynolds' + 'reynoldsLength' + 'T':
         Used to precisely match Reynolds numbers.
-        Complete thermodynamic state is computed.
+        The remaining thermodynamic states:
+        'rho', 'P'
+        are computed.
 
     'V' + 'reynolds' + 'reynoldsLength' + 'T':
-        Used to precisely match Reynolds numbers for low speed cases.
-        Complete thermodynamic state is computed.
+        Used to precisely match Reynolds numbers for low-speed cases.
+        The remaining thermodynamic states:
+        'rho', 'P'
+        are computed.
 
     'mach' + 'T' + 'P':
         Any arbitrary temperature and pressure.
+        The remaining thermodynamic states:
+        'rho', 'V'
+        are computed.
 
     'mach' + 'T' + 'rho':
         Any arbitrary temperature and density.
+        The remaining thermodynamic states:
+        'P', 'V'
+        are computed.
 
     'mach' + 'rho' + 'P':
         Any arbitrary density and pressure.
+        The remaining thermodynamic states:
+        'T', 'V'
+        are computed.
 
     'V' + 'rho' + 'T'
-        Generally for low speed specifications
+        Generally for low-speed specifications.
+        The remaining thermodynamic states:
+        'P', 'mach'
+        are computed.
 
     'V' + 'rho' + 'P'
-        Generally for low speed specifications
+        Generally for low-speed specifications.
+        The remaining thermodynamic states:
+        'T', 'mach'
+        are computed.        
 
     'V' + 'T' + 'P'
-        Generally for low speed specifications
+        Generally for low-speed specifications.
+        The remaining thermodynamic states:
+        'rho', 'mach'
+        are computed.
 
     The combinations listed above are the **only** valid combinations
     of arguments that are permitted. Furthermore, since the internal
