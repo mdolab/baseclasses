@@ -419,14 +419,15 @@ mu=1.22e-3,  # override Sutherland's law \
         for key in inputDict:
             self.inputs[key] = inputDict[key]
 
+        # first check if optional dynamic viscosity was given
+        if "mu" in self.inputs:
+            self.__dict__["mu"] = self.inputs["mu"]
+        # Now check every possible flow state input
         if {"mach", "T", "P"} <= inKeys:
             self.__dict__["mach"] = self.inputs["mach"]
             self.__dict__["T"] = self.inputs["T"]
             self.__dict__["P"] = self.inputs["P"]
             self.__dict__["rho"] = self.P / (self.R * self.T)
-            # check if optional dynamic viscosity was given
-            if "mu" in self.inputs:
-                self.__dict__["mu"] = self.inputs["mu"]
             # now calculate remaining states
             self._updateFromM()
         elif {"mach", "T", "rho"} <= inKeys:
@@ -434,9 +435,6 @@ mu=1.22e-3,  # override Sutherland's law \
             self.__dict__["T"] = self.inputs["T"]
             self.__dict__["rho"] = self.inputs["rho"]
             self.__dict__["P"] = self.rho * self.R * self.T
-            # check if optional dynamic viscosity was given
-            if "mu" in self.inputs:
-                self.__dict__["mu"] = self.inputs["mu"]
             # now calculate remaining states
             self._updateFromM()
         elif {"mach", "P", "rho"} <= inKeys:
@@ -444,9 +442,6 @@ mu=1.22e-3,  # override Sutherland's law \
             self.__dict__["rho"] = self.inputs["rho"]
             self.__dict__["P"] = self.inputs["P"]
             self.__dict__["T"] = self.P / (self.rho * self.R)
-            # check if optional dynamic viscosity was given
-            if "mu" in self.inputs:
-                self.__dict__["mu"] = self.inputs["mu"]
             # now calculate remaining states
             self._updateFromM()
         elif {"mach", "reynolds", "reynoldsLength", "T"} <= inKeys:
@@ -455,9 +450,6 @@ mu=1.22e-3,  # override Sutherland's law \
             self.__dict__["re"] = self.inputs["reynolds"] / self.inputs["reynoldsLength"]
             self.__dict__["reynolds"] = self.inputs["reynolds"]
             self.__dict__["reynoldsLength"] = self.inputs["reynoldsLength"]
-            # check if optional dynamic viscosity was given
-            if "mu" in self.inputs:
-                self.__dict__["mu"] = self.inputs["mu"]
             # now calculate remaining states
             self._updateFromRe()
         elif {"V", "reynolds", "reynoldsLength", "T"} <= inKeys:
@@ -466,9 +458,6 @@ mu=1.22e-3,  # override Sutherland's law \
             self.__dict__["re"] = self.inputs["reynolds"] / self.inputs["reynoldsLength"]
             self.__dict__["reynolds"] = self.inputs["reynolds"]
             self.__dict__["reynoldsLength"] = self.inputs["reynoldsLength"]
-            # check if optional dynamic viscosity was given
-            if "mu" in self.inputs:
-                self.__dict__["mu"] = self.inputs["mu"]
             # now calculate remaining states
             self._updateFromRe()
         elif {"mach", "altitude"} <= inKeys:
@@ -485,9 +474,7 @@ mu=1.22e-3,  # override Sutherland's law \
             self.__dict__["T"] = self.inputs["T"]
             # calculate pressure
             self.__dict__["P"] = self.rho * self.R * self.T
-            # check if optional dynamic viscosity was given
-            if "mu" in self.inputs:
-                self.__dict__["mu"] = self.inputs["mu"]
+            # now calculate remaining states
             self._updateFromV()
         elif {"V", "rho", "P"} <= inKeys:
             self.__dict__["V"] = self.inputs["V"]
@@ -495,9 +482,7 @@ mu=1.22e-3,  # override Sutherland's law \
             self.__dict__["P"] = self.inputs["P"]
             # start by calculating the T
             self.__dict__["T"] = self.P / (self.rho * self.R)
-            # check if optional dynamic viscosity was given
-            if "mu" in self.inputs:
-                self.__dict__["mu"] = self.inputs["mu"]
+            # now calculate remaining states
             self._updateFromV()
         elif {"V", "T", "P"} <= inKeys:
             self.__dict__["V"] = self.inputs["V"]
@@ -505,9 +490,7 @@ mu=1.22e-3,  # override Sutherland's law \
             self.__dict__["P"] = self.inputs["P"]
             # start by calculating the T
             self.__dict__["rho"] = self.P / (self.R * self.T)
-            # check if optional dynamic viscosity was given
-            if "mu" in self.inputs:
-                self.__dict__["mu"] = self.inputs["mu"]
+            # now calculate remaining states
             self._updateFromV()
         else:
             raise Error(
