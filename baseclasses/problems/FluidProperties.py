@@ -95,15 +95,6 @@ class FluidProperties:
         else:
             self.TSuthDim = 273.15
 
-        # --- Check if we're fixing viscosity ---
-        if "mu" in kwargs:
-            self.mu = kwargs["mu"]
-            print("+", 63 * "-", "+", flush=True)
-            print("| WARNING: You are overriding the internal viscosity computation! |", flush=True)
-            print("+", 63 * "-", "+", flush=True)
-        else:
-            self.mu = None
-
     def updateViscosity(self, T):
         """
         Compute the dynamic viscosity using Sutherland's Law

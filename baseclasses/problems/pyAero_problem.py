@@ -69,7 +69,7 @@ class AeroProblem(FluidProperties):
         Generally for low-speed specifications.
         The remaining thermodynamic states:
         'T', 'mach'
-        are computed.        
+        are computed.
 
     'V' + 'T' + 'P'
         Generally for low-speed specifications.
@@ -422,6 +422,8 @@ mu=1.22e-3,  # override Sutherland's law \
         # first check if optional dynamic viscosity was given
         if "mu" in self.inputs:
             self.__dict__["mu"] = self.inputs["mu"]
+            warnings.warn("You are overriding the internal viscosity calculation from Sutherland's Law")        
+
         # Now check every possible flow state input
         if {"mach", "T", "P"} <= inKeys:
             self.__dict__["mach"] = self.inputs["mach"]
