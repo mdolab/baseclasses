@@ -98,6 +98,9 @@ class FluidProperties:
         # --- Check if we're fixing viscosity ---
         if "mu" in kwargs:
             self.mu = kwargs["mu"]
+            print("+", 63 * "-", "+", flush=True)
+            print("| WARNING: You are overriding the internal viscosity computation! |", flush=True)
+            print("+", 63 * "-", "+", flush=True)
         else:
             self.mu = None
 
