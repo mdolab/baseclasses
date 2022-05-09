@@ -750,7 +750,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         # there are not generally *that* many aero DVs
         for dvName in self.DVs:
             if self.DVs[dvName].key.lower() == key.lower():
-                self.DVs[dvName].value
+                self.DVs[dvName].value = value
 
     @property
     def mach(self):
