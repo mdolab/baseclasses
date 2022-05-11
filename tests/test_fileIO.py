@@ -73,5 +73,5 @@ class TestFileIO(unittest.TestCase):
         self.assertTrue(True)
 
     def tearDown(self):
-        if self.comm.rank == 0:
+        if self.comm is None or self.comm.rank == 0:
             os.remove(self.fileName)
