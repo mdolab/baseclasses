@@ -9,7 +9,7 @@ import numpy
 import warnings
 from .ICAOAtmosphere import ICAOAtmosphere
 from .FluidProperties import FluidProperties
-from .utils import CaseInsensitiveDict, Error
+from ..utils import CaseInsensitiveDict, Error
 from collections import defaultdict
 
 class AeroProblem(FluidProperties):

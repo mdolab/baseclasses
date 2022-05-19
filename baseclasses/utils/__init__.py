@@ -1,6 +1,6 @@
 from .containers import CaseInsensitiveSet, CaseInsensitiveDict
 from .error import Error
-from .utils import getPy3SafeString, pp
+from .utils import getPy3SafeString, pp, printArgs
 from .fileIO import writeJSON, readJSON, writePickle, readPickle, redirectIO, redirectingIO
 
 __all__ = [
@@ -15,4 +15,5 @@ __all__ = [
     "readPickle",
     "redirectIO",
     "redirectingIO",
+    "printArgs",
 ]

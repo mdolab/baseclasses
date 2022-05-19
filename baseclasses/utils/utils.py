@@ -41,3 +41,31 @@ def pp(obj, comm=None, flush=True):
             # we use pformat to get the string and then call print manually, that way we can flush if we need to
             pprint_str = pformat(obj)
             print(pprint_str, flush=flush)
+
+def printArgs(args):
+    """
+    Prints the arguments passed to the script.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        The object holding the arguments passed to the script from
+        args = parser.parse_args()
+    """
+    args_dict = vars(args)
+    longest_key = max(args_dict.keys(), key=len)
+    longest_val = max([str(x) for x in args_dict.values()], key=len)
+    divider = " : "
+
+    box_width = len(longest_key) + len(longest_val) + len(divider)
+
+    bar = "-" * box_width
+
+    # add title in the middle of the bar to create header
+    title = " Arguments "
+    header = bar[:(len(bar) - len(title))//2] + title + bar[(len(bar)+len(title))//2:]
+
+    print(header)
+    for arg, arg_val in args_dict.items():
+        print(f"{arg:{len(longest_key)}}" + divider + f"{arg_val}")
+    print(bar)
