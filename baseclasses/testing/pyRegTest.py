@@ -272,7 +272,7 @@ class BaseRegTest:
         else:
             numpy.testing.assert_allclose(actual, reference, rtol=rtol, atol=atol, err_msg=msg)
 
-    def assert_equal(self, actual, reference, name, full_name=None):
+    def assert_equal(self, actual, reference, name):
         if isinstance(reference, (list, tuple)):
             for i, j in zip(actual, reference):
                 # cast both to
