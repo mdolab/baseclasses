@@ -276,7 +276,7 @@ class BaseRegTest:
         if isinstance(reference, (list, tuple)):
             for i, j in zip(actual, reference):
                 # cast both to tuple
-                if tuple(i) != tuple(j):
+                if i != j:
                     raise AssertionError(f"{i}, {j}")
         elif actual != reference:
             msg = f"Failed value for: {name}"
