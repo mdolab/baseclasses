@@ -134,6 +134,20 @@ class TestBaseRegTest(unittest.TestCase):
         with BaseRegTest(self.ref_file, train=False) as handler:
             self.regression_test_par(handler)
 
+    def test_string(self):
+        self.ref_file = os.path.join(baseDir, "test_string.ref")
+        values = ["A", "B", "C"]
+        with BaseRegTest(self.ref_file, train=True) as handler:
+            handler.root_add_val("list", values)
+
+        test_vals = handler.readRef()
+        # check the two values match
+        self.assertEqual(test_vals, {"list": values})
+
+        # test train=False
+        with BaseRegTest(self.ref_file, train=False) as handler:
+            handler.root_add_val("list", values)
+
     def tearDown(self):
         if self.rank == 0 and hasattr(self, "ref_file"):
             os.remove(self.ref_file)

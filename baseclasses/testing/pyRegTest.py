@@ -3,6 +3,7 @@ try:
 except ImportError:
     # parallel functions will throw errors
     MPI = None
+from pprint import pformat
 import numpy
 import os
 import sys
@@ -265,7 +266,22 @@ class BaseRegTest:
         if full_name is None:
             full_name = name
         msg = f"Failed value for: {full_name}"
-        numpy.testing.assert_allclose(actual, reference, rtol=rtol, atol=atol, err_msg=msg)
+        # special case if we're comparing list of strings
+        if isinstance(reference, list) and isinstance(reference[0], str):
+            self.assert_equal(actual, reference, name)
+        else:
+            numpy.testing.assert_allclose(actual, reference, rtol=rtol, atol=atol, err_msg=msg)
+
+    def assert_equal(self, actual, reference, name):
+        if isinstance(reference, (list, tuple)):
+            for i, j in zip(actual, reference):
+                # cast both to tuple
+                if i != j:
+                    raise AssertionError(f"{i}, {j}")
+        elif actual != reference:
+            msg = f"Failed value for: {name}"
+            msg += f"Expected {pformat(reference)}, but got {pformat(actual)}"
+            raise AssertionError(msg)
 
     def _add_values(self, name, values, db=None, **kwargs):
         """
