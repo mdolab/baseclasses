@@ -275,7 +275,7 @@ class BaseRegTest:
     def assert_equal(self, actual, reference, name):
         if isinstance(reference, (list, tuple)):
             for i, j in zip(actual, reference):
-                # cast both to
+                # cast both to tuple
                 if tuple(i) != tuple(j):
                     raise AssertionError(f"{i}, {j}")
         elif actual != reference:
