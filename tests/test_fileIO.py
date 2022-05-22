@@ -2,7 +2,7 @@ import unittest
 import os
 import io
 from unittest.mock import patch, MagicMock
-from parameterized import parameterized
+from parameterized import parameterized, parameterized_class
 from baseclasses.testing.decorators import require_mpi
 from baseclasses.testing.assertions import assert_equal
 from baseclasses.utils import readPickle, writePickle, readJSON, writeJSON, redirectingIO
@@ -20,9 +20,13 @@ a_numpy_array = np.array([1.2, 3.4])
 a_numpy_dict = {"a": a_numpy_array}
 
 
+@parameterized_class(
+    [
+        {"N_PROCS": 1},
+        {"N_PROCS": 2},
+    ]
+)
 class TestFileIO(unittest.TestCase):
-    N_PROCS = 1
-
     def setUp(self):
         if MPI is not None:
             self.comm = MPI.COMM_WORLD
@@ -38,7 +42,7 @@ class TestFileIO(unittest.TestCase):
     )
     @require_mpi
     def test_pickle(self, name, obj):
-        self.fileName = f"{name}.pkl"
+        self.fileName = f"{name}_{self.N_PROCS}.pkl"
         writePickle(self.fileName, obj, comm=self.comm)
         newObj = readPickle(self.fileName, comm=self.comm)
         assert_equal(obj, newObj)
@@ -51,8 +55,9 @@ class TestFileIO(unittest.TestCase):
     )
     @require_mpi
     def test_JSON(self, name, obj):
-        self.fileName = f"{name}.json"
+        self.fileName = f"{name}_{self.N_PROCS}.json"
         writeJSON(self.fileName, obj, comm=self.comm)
+        self.comm.barrier()
         newObj = readJSON(self.fileName, comm=self.comm)
         assert_equal(obj, newObj)
 
