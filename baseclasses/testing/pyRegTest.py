@@ -275,10 +275,10 @@ class BaseRegTest:
         # special case where we treat tuples and lists the same
         # we compare each element
         if isinstance(reference, (list, tuple)):
-            for i, j in zip(actual, reference):
+            for i, j in zip(reference, actual):
                 # cast both to tuple
                 if i != j:
-                    raise AssertionError(f"The elements do not match! Expected {j}, but got {j} instead.")
+                    raise AssertionError(f"The elements do not match! Expected {i}, but got {j} instead.")
         # otherwise use the builtin __eq__ comparison
         elif actual != reference:
             msg = f"Failed value for: {full_name}"
