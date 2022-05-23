@@ -102,6 +102,9 @@ def readJSON(fname, comm=None):
             return np.array(data, dct["dtype"]).reshape(dct["shape"])
         return dct
 
+    if not os.path.isfile(fname):
+        raise FileNotFoundError(f"The JSON file {fname} cannot be found.")
+
     data = None
     if (comm is None) or (comm is not None and comm.rank == 0):
         with open(fname, "r") as json_file:
@@ -128,6 +131,9 @@ def readPickle(fname, comm=None):
     -------
     obj : The object stored in the pickle file
     """
+    if not os.path.isfile(fname):
+        raise FileNotFoundError(f"The pickle file {fname} cannot be found.")
+
     obj = None
     if (comm is None) or (comm is not None and comm.rank == 0):
         try:
