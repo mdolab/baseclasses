@@ -77,6 +77,14 @@ class TestFileIO(unittest.TestCase):
         # it finishes without error
         self.assertTrue(True)
 
+    def test_nonexistant_file(self):
+        fileName = "something_that_does_not_exist"
+        with self.assertRaises(FileNotFoundError):
+            readJSON(fileName + ".json", comm=self.comm)
+        with self.assertRaises(FileNotFoundError):
+            readPickle(fileName + ".pkl", comm=self.comm)
+
     def tearDown(self):
         if self.comm is None or self.comm.rank == 0:
-            os.remove(self.fileName)
+            if hasattr(self, "fileName"):
+                os.remove(self.fileName)
