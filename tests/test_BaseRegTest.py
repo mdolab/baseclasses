@@ -140,6 +140,9 @@ class TestBaseRegTest(unittest.TestCase):
             ("list_of_str", ["A", "B", "C"]),
             ("str", "SOME STRING"),
             ("dict_of_str", {"KEY": "VALUES"}),
+            ("None", None),
+            ("list_of_None", [None, None]),
+            ("dict_of_None", {"None": None}),
         ]
     )
     def test_equality_compare(self, name, values):
