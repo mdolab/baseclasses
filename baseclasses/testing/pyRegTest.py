@@ -263,23 +263,25 @@ class BaseRegTest:
     # Private functions
     # *****************
     def assert_allclose(self, actual, reference, name, rtol, atol, full_name=None):
+        """This is basically a wrapper on numpy.testing.assert_allclose with a generated error message"""
         if full_name is None:
             full_name = name
         msg = f"Failed value for: {full_name}"
-        # special case if we're comparing list of strings
-        if isinstance(reference, list) and isinstance(reference[0], str):
-            self.assert_equal(actual, reference, name)
-        else:
-            numpy.testing.assert_allclose(actual, reference, rtol=rtol, atol=atol, err_msg=msg)
+        numpy.testing.assert_allclose(actual, reference, rtol=rtol, atol=atol, err_msg=msg)
 
-    def assert_equal(self, actual, reference, name):
+    def assert_equal(self, actual, reference, name, full_name=None):
+        if full_name is None:
+            full_name = name
+        # special case where we treat tuples and lists the same
+        # we compare each element
         if isinstance(reference, (list, tuple)):
             for i, j in zip(actual, reference):
                 # cast both to tuple
                 if i != j:
-                    raise AssertionError(f"{i}, {j}")
+                    raise AssertionError(f"The elements do not match! Expected {j}, but got {j} instead.")
+        # otherwise use the builtin __eq__ comparison
         elif actual != reference:
-            msg = f"Failed value for: {name}"
+            msg = f"Failed value for: {full_name}"
             msg += f"Expected {pformat(reference)}, but got {pformat(actual)}"
             raise AssertionError(msg)
 
@@ -314,7 +316,12 @@ class BaseRegTest:
         if db is None:
             db = self.db
         if not self.train or (self.train and compare):
-            self.assert_allclose(values, db[name], name, rtol, atol, full_name)
+            # if we can compare the values numerically within some tolerance
+            if numpy.can_cast(numpy.array(values), float):
+                self.assert_allclose(values, db[name], name, rtol, atol, full_name)
+            # otherwise perform equality comparison
+            else:
+                self.assert_equal(values, db[name], name, full_name)
         else:
             if name in db.keys():
                 raise KeyError(f"The name {name} is already in the training database. Please give UNIQUE keys.")
