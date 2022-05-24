@@ -316,8 +316,8 @@ class BaseRegTest:
         if db is None:
             db = self.db
         if not self.train or (self.train and compare):
-            # if we can compare the values numerically within some tolerance
-            if numpy.can_cast(numpy.array(values), float):
+            # if the values contain numeric data
+            if numpy.issubdtype(numpy.array(values).dtype, numpy.number):
                 self.assert_allclose(values, db[name], name, rtol, atol, full_name)
             # otherwise perform equality comparison
             else:
