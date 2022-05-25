@@ -2,4 +2,4 @@
 set -e
 
 cd tests
-testflo -v --coverage --coverpkg baseclasses
+testflo -v -n 1 --coverage --coverpkg baseclasses

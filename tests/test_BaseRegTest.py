@@ -5,6 +5,7 @@ from baseclasses import BaseRegTest
 from baseclasses.testing import getTol
 from baseclasses.testing.decorators import require_mpi
 from baseclasses.utils import CaseInsensitiveDict
+from parameterized import parameterized
 
 try:
     from mpi4py import MPI
@@ -133,6 +134,29 @@ class TestBaseRegTest(unittest.TestCase):
         self.assertEqual(test_vals, par_vals)
         with BaseRegTest(self.ref_file, train=False) as handler:
             self.regression_test_par(handler)
+
+    @parameterized.expand(
+        [
+            ("list_of_str", ["A", "B", "C"]),
+            ("str", "SOME STRING"),
+            ("dict_of_str", {"KEY": "VALUES"}),
+            ("None", None),
+            ("list_of_None", [None, None]),
+            ("dict_of_None", {"None": None}),
+        ]
+    )
+    def test_equality_compare(self, name, values):
+        self.ref_file = os.path.join(baseDir, f"{name}_test.ref")
+        with BaseRegTest(self.ref_file, train=True) as handler:
+            handler.root_add_val("value", values)
+
+        test_vals = handler.readRef()
+        # check the two values match
+        self.assertEqual(test_vals, {"value": values})
+
+        # test train=False
+        with BaseRegTest(self.ref_file, train=False) as handler:
+            handler.root_add_val("value", values)
 
     def tearDown(self):
         if self.rank == 0 and hasattr(self, "ref_file"):
