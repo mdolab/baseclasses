@@ -41,6 +41,10 @@ class AeroSolver(BaseSolver):
         """
         AeroSolver Class Initialization
         """
+
+        self.families = CaseInsensitiveDict()
+        self.familyGroups = CaseInsensitiveDict()
+
         # Setup option info
         super().__init__(
             name,
@@ -284,10 +288,25 @@ class AeroSolver(BaseSolver):
 
         pass
 
-    def addFamilyGroup(self, groupName, families):
+    def addFamilyGroup(self, groupName, groups):
         """Add a custom grouping of families called groupName. The groupName
-        must be distinct from the existing families. All families must
-        in the 'families' list must be present in the CGNS file.
+        must be distinct from the existing family groups names.
+        # All group in the 'families' list must be present in the CGNS file.
+
+
+
+                                    ----------------------------------
+        self.families              | 'inlet'  'outlet' 'nozzle_wall'  |
+        (from surface definition)  |   [1]       [2]       [3]        |
+                                    ----------------------------------
+
+                           -----------------------------------------------------------------
+        self.familyGroups | 'inlet'  'outlet' 'nozzle_wall' 'allwalls' 'allsurfaces'        |
+        (collection of    |   [1]       [2]       [3]          [3]       [1, 2, 3]          |
+         families)         -----------------------------------------------------------------
+
+        all familes are family groups since each is a collection of a single
+        family (itself)
 
         Parameters
         ----------
@@ -306,23 +325,23 @@ class AeroSolver(BaseSolver):
         # We can actually allow for nested groups. That is, an entry
         # in families may already be a group added in a previous call.
         indices = []
-        for fam in families:
-            if fam not in self.families:
-                raise Error(
-                    "The specified family '%s' for group '%s', does "
-                    "not exist in the cgns file or has "
-                    "not already been added. The current list of "
-                    "families (original and grouped) is: %s" % (fam, groupName, repr(self.families.keys()))
-                )
+        for group in groups:
+            if group.lower() not in self.familyGroups:
+                raise Error("The specified familyGroup '%s' for group '%s', does "
+                            "not exist in the cgns file or has "
+                            "not already been added. The current list of "
+                            "families is: %s and the current list of family"
+                            "groups is: %s"%(group, groupName, repr(self.families.keys()),
+                                                             repr(self.familyGroups.keys())) )
 
-            indices.extend(self.families[fam])
+            indices.extend(self.familyGroups[group])
 
         # It is very important that the list of families is sorted
         # becuase in fortran we always use a binary search to check if
         # a famID is in the list.
-        self.families[groupName] = sorted(numpy.unique(indices))
+        self.familyGroups[groupName] = sorted(numpy.unique(indices))
 
-    def getSurfaceCoordinates(self, group_name):
+    def getSurfaceCoordinates(self,group_name):
         """
         Return the set of surface coordinates cooresponding to a
         Particular group name
@@ -473,6 +492,18 @@ class AeroSolver(BaseSolver):
 
         pprint(self.families)
 
+    def printFamilyGroupList(self):
+        """
+        Print a nicely formatted dictionary of the family names
+        """
+        from pprint import pprint
+        pprint(self.familyGroups)
+
+
+# --------------------------
+# Private Utility functions
+# --------------------------
+
     # --------------------------
     # Private Utility functions
     # --------------------------
@@ -482,10 +513,19 @@ class AeroSolver(BaseSolver):
         if groupName is None:
             groupName = self.allFamilies
 
-        if groupName not in self.families:
-            raise Error(
-                "'%s' is not a family in the CGNS file or has not been added"
-                " as a combination of families" % groupName
-            )
+        if groupName not in self.familyGroups:
+            raise Error("'%s' is not a family in the CGNS file or has not been added"
+                        " as a combination of families"%groupName)
 
-        return self.families[groupName]
+        return self.familyGroups[groupName]
+
+    def _getFamiliesInFamilyGroup(self, groupName):
+        famlist = self._getFamilyList(groupName)
+
+        groupFamilies = []
+        for famID in famlist:
+            for family in self.families:
+                if famID == self.families[family]:
+                    groupFamilies.append(family)
+
+        return groupFamilies
