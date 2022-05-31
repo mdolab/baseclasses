@@ -85,6 +85,14 @@ class AeroProblem(FluidProperties):
     Mach number is given, an error will be raised if the user tries to
     set the 'P' (pressure) variable.
 
+    For our compressible RANS solver, ADflow, the inputs from ``AeroProblem`` are the dimensional freestream values:
+
+    :math:`Ma`, :math:`p`, :math:`T`, 
+    :math:`\\rho`, and :math:`R_{\\text{gas}}`
+
+    unless other reference values for :math:`p`, :math:`T`, and :math:`\\rho` are specified.
+    The non-dimensionalized inputs used in the actual ADflow CFD computations are derived from these inherited inputs.
+
     All parameters are optional except for the `name` argument which
     is required. All of the parameters listed below can be acessed and
     set directly after class creation by calling::
@@ -422,7 +430,7 @@ mu=1.22e-3,  # override Sutherland's law \
         # first check if optional dynamic viscosity was given
         if "mu" in self.inputs:
             self.__dict__["mu"] = self.inputs["mu"]
-            warnings.warn("You are overriding the internal viscosity calculation from Sutherland's Law")        
+            warnings.warn("You are overriding the internal viscosity calculation from Sutherland's Law")
 
         # Now check every possible flow state input
         if {"mach", "T", "P"} <= inKeys:

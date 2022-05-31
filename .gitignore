@@ -3,3 +3,6 @@
 *.DS_Store
 *.out
 doc/_build
+
+# VS code configurations
+*.vscode
