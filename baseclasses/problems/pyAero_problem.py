@@ -801,7 +801,7 @@ mu=1.22e-3,  # override Sutherland's law \
         # there are not generally *that* many aero DVs
         for dvName in self.DVs:
             if self.DVs[dvName].key.lower() == key.lower():
-                self.DVs[dvName].value
+                self.DVs[dvName].value = value
 
     @property
     def mach(self):
