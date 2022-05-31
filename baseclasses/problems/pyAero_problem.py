@@ -240,8 +240,8 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 rho=1025, xRef=0.18, yRef=0.0, zRef=0.0, evalFuncs=["cl","cd","lift","drag","cavitation","target_cavitation"], \
 R=100,  # artificially lower R for higher mach number (R=461.9 for water vapor) \
 mu=1.22e-3,  # override Sutherland's law \
-    )
-                         """
+)
+"""
 
     def __init__(self, name, **kwargs):
 
