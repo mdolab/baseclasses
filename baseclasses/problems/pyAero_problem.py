@@ -87,10 +87,15 @@ class AeroProblem(FluidProperties):
 
     For our compressible RANS solver, ADflow, the inputs from ``AeroProblem`` are the dimensional freestream values:
 
-    :math:`Ma`, :math:`p`, :math:`T`,
+    :math:`Ma`, :math:`p`, :math:`T`, :math: `\gamma`
     :math:`\\rho`, and :math:`R_{\\text{gas}}`
+    
+    Sutherland's Law constants:
+    :math:`S`, :math:`T_{ref}`, :math:`\mu_{ref}` 
+    
+    and the Prandtl number:
+    :math:`Pr`
 
-    unless other reference values for :math:`p`, :math:`T`, and :math:`\\rho` are specified.
     The non-dimensionalized inputs used in the actual ADflow CFD computations are derived from these inherited inputs.
 
     All parameters are optional except for the `name` argument which
@@ -228,11 +233,12 @@ xRef=0.0, zRef=0.0, alpha=3.06)
     >>> # Onera M6 Test condition (RANS)
     >>> ap = AeroProblem('m6_tunnel', mach=0.8395, reynolds=11.72e6, reynoldsLength=0.64607, \
 areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
-    >>> # NACA0009 hydrofoil (0.9m semi-span) sailing condition (nearly incompressible flow with fixed viscosity)
-    >>> ap = AeroProblem("cruise_0", areaRef=0.243, alpha=6, chordRef=0.27, T=288.15, V=17, \
+    >>> # NACA0009 hydrofoil (0.9m semi-span) sailing condition (hacked for incompressible flow and viscosity)
+    >>> ap = AeroProblem("hydrofoil", areaRef=0.243, alpha=6, chordRef=0.27, T=288.15, V=17, \
 rho=1025, xRef=0.18, yRef=0.0, zRef=0.0, evalFuncs=["cl","cd","lift","drag","cavitation","target_cavitation"], \
-R=100,  # artificially lower R for higher mach number (R=461.9 for water vapor) \
-mu=1.22e-3,  # override Sutherland's law \
+R=100,  # ``Hack'' lower R for higher mach no. (R=461.9 for water vapor) \
+muSuthDim=1.22e-3, TSuthDim=288.15 \
+# ``Hack'' to get the dynamic viscosity of water, TSuthDim must equal T for this to work! \
 )
 """
 
