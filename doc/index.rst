@@ -36,6 +36,7 @@ Or from source, by cloning the repo and then running (from the repo root)::
    :caption: Problem Classes
 
    pyAero_problem
+   FluidProperties
    pyStruct_problem
    pyAeroStruct_problem
    pyMission_problem

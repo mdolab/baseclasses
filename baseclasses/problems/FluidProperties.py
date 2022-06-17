@@ -16,14 +16,14 @@ class FluidProperties:
         The specific gas constant. By default we use air.
 
     SSuthDim : float (default = 110.55)
+        The Sutherland temperature for Sutherland's Law.
 
     muSuthDim : float (default = 1.716e-5)
+        The viscosity at the reference temperature for Sutherland's Law.
 
     TSuthDim : float (default = 273.15)
+        The reference temperature for Sutherland's Law.
 
-    mu : float (default = None)
-        If given, the dynamic viscosity is fixed to this
-        value, and we do not compute Sutherland's law.
     """
 
     def __init__(self, **kwargs):

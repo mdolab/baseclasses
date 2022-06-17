@@ -87,7 +87,7 @@ class AeroProblem(FluidProperties):
 
     For our compressible RANS solver, ADflow, the inputs from ``AeroProblem`` are the dimensional freestream values:
 
-    :math:`Ma`, :math:`p`, :math:`T`, 
+    :math:`Ma`, :math:`p`, :math:`T`,
     :math:`\\rho`, and :math:`R_{\\text{gas}}`
 
     unless other reference values for :math:`p`, :math:`T`, and :math:`\\rho` are specified.
@@ -200,15 +200,6 @@ class AeroProblem(FluidProperties):
         Default is [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]
         Set the reference axis for non-x/y/z based moment calculations
 
-    R : float
-        The gas constant. By default we use air. R=287.05
-
-    mu : float
-        The dynamic viscosity. By default, this is set to None and is
-        computed from Sutherland's law. However, you can manually set it
-        to override the internal calculations here for every method
-        except for the 'mach'+'altitude' flight specification method.
-
     englishUnits : bool
         Flag to use all English units: pounds, feet, Rankine etc.
 
@@ -218,6 +209,8 @@ class AeroProblem(FluidProperties):
         the solver followed by a dictionary of options for that solver. For example
         ``solverOptions={'adflow':{'vis4':0.018}}``. Currently, the only solver
         supported is 'adflow' and must use the specific key 'adflow'.
+
+    See FluidProperties for more parameters that can be set.
 
     Examples
     --------
