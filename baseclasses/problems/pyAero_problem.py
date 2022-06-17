@@ -310,7 +310,7 @@ muSuthDim=1.22e-3, TSuthDim=288.15 \
         self.evalFuncs = sorted(self.evalFuncs)
 
         # these are the possible input values
-        possibleInputStates = {"mach", "V", "P", "T", "rho", "altitude", "reynolds", "reynoldsLength", "mu"}
+        possibleInputStates = {"mach", "V", "P", "T", "rho", "altitude", "reynolds", "reynoldsLength"}
 
         # turn the kwargs into a set
         keys = set(kwargs.keys())
@@ -426,12 +426,6 @@ muSuthDim=1.22e-3, TSuthDim=288.15 \
         for key in inputDict:
             self.inputs[key] = inputDict[key]
 
-        # first check if optional dynamic viscosity was given
-        if "mu" in self.inputs:
-            self.__dict__["mu"] = self.inputs["mu"]
-            warnings.warn("You are overriding the internal viscosity calculation from Sutherland's Law")
-
-        # Now check every possible flow state input
         if {"mach", "T", "P"} <= inKeys:
             self.__dict__["mach"] = self.inputs["mach"]
             self.__dict__["T"] = self.inputs["T"]
@@ -925,9 +919,8 @@ muSuthDim=1.22e-3, TSuthDim=288.15 \
         # Calculate the speed of sound
         self.a = numpy.sqrt(self.gamma * self.R * self.T)
 
-        # Update the dynamic viscosity based on T using Sutherland's Law if mu is not specified first
-        if self.mu is None:
-            self.updateViscosity(self.T)
+        # Update the dynamic viscosity based on T using Sutherland's Law
+        self.updateViscosity(self.T)
 
         # Calculate velocity or Mach number
         if self.V is None:
@@ -954,9 +947,8 @@ muSuthDim=1.22e-3, TSuthDim=288.15 \
         # Calculate the speed of sound
         self.a = numpy.sqrt(self.gamma * self.R * self.T)
 
-        # Update the dynamic viscosity based on T using Sutherland's Law if mu is not specified first
-        if self.mu is None:
-            self.updateViscosity(self.T)
+        # Update the dynamic viscosity based on T using Sutherland's Law
+        self.updateViscosity(self.T)
 
         # Calculate velocity
         self.V = self.mach * self.a
@@ -977,9 +969,8 @@ muSuthDim=1.22e-3, TSuthDim=288.15 \
         # Calculate the speed of sound
         self.a = numpy.sqrt(self.gamma * self.R * self.T)
 
-        # Update the dynamic viscosity based on T using Sutherland's Law if mu is not specified first
-        if self.mu is None:
-            self.updateViscosity(self.T)
+        # Update the dynamic viscosity based on T using Sutherland's Law
+        self.updateViscosity(self.T)
 
         # Calculate kinematic viscosity
         self.nu = self.mu / self.rho
