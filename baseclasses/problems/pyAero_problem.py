@@ -89,10 +89,10 @@ class AeroProblem(FluidProperties):
 
     :math:`Ma`, :math:`p`, :math:`T`, :math: `\gamma`
     :math:`\\rho`, and :math:`R_{\\text{gas}}`
-    
+
     Sutherland's Law constants:
-    :math:`S`, :math:`T_{ref}`, :math:`\mu_{ref}` 
-    
+    :math:`S`, :math:`T_{ref}`, :math:`\mu_{ref}`
+
     and the Prandtl number:
     :math:`Pr`
 
