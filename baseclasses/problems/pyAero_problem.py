@@ -228,7 +228,7 @@ chordRef=275.8*.0254, xRef=1325.9*0.0254, zRef=177.95*.0254)
 areaRef=594720*.0254**2, chordRef=275.8*.0254, \
 xRef=1325.9*0.0254, zRef=177.95*.0254)
     >>> # Onera M6 Test condition (Euler)
-    >>> ap = AeroProblem('m6_tunnel', mach=0.8395, areaRef=0.772893541, chordRef=0.64607 \
+    >>> ap = AeroProblem('m6_tunnel', mach=0.8395, areaRef=0.772893541, chordRef=0.64607, \
 xRef=0.0, zRef=0.0, alpha=3.06)
     >>> # Onera M6 Test condition (RANS)
     >>> ap = AeroProblem('m6_tunnel', mach=0.8395, reynolds=11.72e6, reynoldsLength=0.64607, \
@@ -239,7 +239,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     >>> ap = AeroProblem("hydrofoil", areaRef=0.243, alpha=6, chordRef=0.27, T=288.15, V=17, \
 rho=1025, xRef=0.18, yRef=0.0, zRef=0.0, evalFuncs=["cl","cd","lift","drag","cavitation","target_cavitation"], \
 R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
-"""
+    """
 
     def __init__(self, name, **kwargs):
 
