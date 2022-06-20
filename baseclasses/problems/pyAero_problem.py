@@ -5,7 +5,7 @@ pyAero_problem
 # =============================================================================
 # Imports
 # =============================================================================
-import numpy
+import numpy as np
 import warnings
 from .ICAOAtmosphere import ICAOAtmosphere
 from .FluidProperties import FluidProperties
@@ -678,7 +678,7 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
         for dvName in self.DVs:
             dv = self.DVs[dvName]
             if dv.addToPyOpt:
-                if type(dv.value) == numpy.ndarray:
+                if type(dv.value) == np.ndarray:
                     optProb.addVarGroup(
                         dvName,
                         dv.value.size,
@@ -873,7 +873,7 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
     #     """
 
     #     if self.T is not None:
-    #         self.a = numpy.sqrt(self.gamma*self.R*self.T)
+    #         self.a = np.sqrt(self.gamma*self.R*self.T)
     #         if self.englishUnits:
     #             mu = (self.muSuthDim * (
     #                     (self.TSuthDim + self.SSuthDim) / (self.T/1.8 + self.SSuthDim)) *
@@ -916,7 +916,7 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
         Update the full set of states from Re, T, and either V or M.
         """
         # Calculate the speed of sound
-        self.a = numpy.sqrt(self.gamma * self.R * self.T)
+        self.a = np.sqrt(self.gamma * self.R * self.T)
 
         # Update the dynamic viscosity based on T using Sutherland's Law
         self.updateViscosity(self.T)
@@ -944,7 +944,7 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
         Update the full set of states from M, T, rho.
         """
         # Calculate the speed of sound
-        self.a = numpy.sqrt(self.gamma * self.R * self.T)
+        self.a = np.sqrt(self.gamma * self.R * self.T)
 
         # Update the dynamic viscosity based on T using Sutherland's Law
         self.updateViscosity(self.T)
@@ -966,7 +966,7 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
         Update the full set of states from V, T, rho.
         """
         # Calculate the speed of sound
-        self.a = numpy.sqrt(self.gamma * self.R * self.T)
+        self.a = np.sqrt(self.gamma * self.R * self.T)
 
         # Update the dynamic viscosity based on T using Sutherland's Law
         self.updateViscosity(self.T)
@@ -996,8 +996,8 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
             family = self.DVs[dvName].family
             if family is None:
                 setattr(self, key, getattr(self, key) + h)
-                rDict[dvName] = numpy.imag(self.__dict__[func]) / hr
-                setattr(self, key, numpy.real(getattr(self, key)))
+                rDict[dvName] = np.imag(self.__dict__[func]) / hr
+                setattr(self, key, np.real(getattr(self, key)))
 
         return rDict
 
