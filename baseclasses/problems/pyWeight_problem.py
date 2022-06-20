@@ -4,7 +4,7 @@ pyWeight_problem
 Holds the weightProblem class for weightandbalance solvers.
 """
 
-import numpy
+import numpy as np
 import copy
 
 try:
@@ -133,9 +133,9 @@ class WeightProblem:
         """
 
         if type(surf) == list:
-            self.p0 = numpy.array(surf[0])
-            self.v1 = numpy.array(surf[1])
-            self.v2 = numpy.array(surf[2])
+            self.p0 = np.array(surf[0])
+            self.v1 = np.array(surf[1])
+            self.v2 = np.array(surf[2])
         else:
             if geo_utils is None:
                 raise Error("Unable to find pygeo module, which is required for this functionality.")
@@ -179,9 +179,9 @@ class WeightProblem:
                     v1.append(P2 - P3)
                     v2.append(P1 - P3)
 
-        self.p0 = numpy.array(p0)
-        self.v1 = numpy.array(v1)
-        self.v2 = numpy.array(v2)
+        self.p0 = np.array(p0)
+        self.v1 = np.array(v1)
+        self.v2 = np.array(v2)
 
     def writeSurfaceTecplot(self, fileName):
         """
@@ -506,10 +506,10 @@ class WeightProblem:
             for key in self.components.keys():
                 CG = self.components[key].getCG(loc)
                 mass = self.components[key].getMass()
-                x = numpy.real(CG[0])
-                y = numpy.real(CG[1])
-                z = numpy.real(CG[2])
-                m = numpy.real(mass)
+                x = np.real(CG[0])
+                y = np.real(CG[1])
+                z = np.real(CG[2])
+                m = np.real(mass)
 
                 f.write(f"{x:f} {y:f} {z:f} {m:f}\n")
 
@@ -520,10 +520,10 @@ class WeightProblem:
         # textOffset = 0.5
         # for loc in locList:
         #     for name in self.nameList:
-        #         x= numpy.real(self.componentDict[name].CG[loc][0])
-        #         y= numpy.real(self.componentDict[name].CG[loc][1])
-        #         z= numpy.real(self.componentDict[name].CG[loc][2])+textOffset
-        #         m= numpy.real(self.componentDict[name].W)
+        #         x= np.real(self.componentDict[name].CG[loc][0])
+        #         y= np.real(self.componentDict[name].CG[loc][1])
+        #         z= np.real(self.componentDict[name].CG[loc][2])+textOffset
+        #         m= np.real(self.componentDict[name].W)
 
         #         f.write('TEXT CS=GRID3D, HU=POINT, X=%f, Y=%f, Z=%f, H=12, T="%s"\n'%(x,y,z,name+' '+loc))
         #     # end
