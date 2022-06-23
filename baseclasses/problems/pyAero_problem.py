@@ -114,7 +114,7 @@ class AeroProblem(FluidProperties):
     name : str
         Name of this aerodynamic problem.
 
-    funcs : iteratble object containing strings
+    evalFuncs : iterable object containing strings
         The names of the functions the user wants evaluated with this
         aeroProblem.
 
@@ -742,7 +742,7 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
         Parameters
         ----------
         funcs : dict
-            Dictionary into which the functions are save
+            Dictionary into which the functions are saved
         evalFuncs : iterable object containing strings
             The functions that the user wants evaluated
         """
