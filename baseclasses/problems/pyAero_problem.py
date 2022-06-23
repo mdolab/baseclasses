@@ -25,57 +25,49 @@ class AeroProblem(FluidProperties):
 
     'mach' + 'altitude'
         This is the preferred method for specifying flight conditions.
-        The 1976 standard atmosphere is used to generate all thermodynamic properties in a consistent manner.
-        The resulting Reynolds number depends on the scale of the mesh.
         This is suitable for all aerodynamic analysis codes, including aerostructural analysis.
+        The 1976 standard atmosphere is used to compute :math:`P` and :math:`T`.
+        We then compute :math:`\\rho = P / RT`.
+        The remaining quantities are computed with :meth:`baseclasses.AeroProblem._updateFromM`.
+        The resulting Reynolds number depends on the scale of the mesh.
 
     'mach' + 'reynolds' + 'reynoldsLength' + 'T':
         Used to precisely match Reynolds numbers.
-        The remaining thermodynamic states:
-        'rho', 'P'
-        are computed.
+        The remaining quantities are computed with :meth:`baseclasses.AeroProblem._updateFromRe`.
 
     'V' + 'reynolds' + 'reynoldsLength' + 'T':
         Used to precisely match Reynolds numbers for low-speed cases.
-        The remaining thermodynamic states:
-        'rho', 'P'
-        are computed.
+        The remaining quantities are computed with :meth:`baseclasses.AeroProblem._updateFromRe`.
 
     'mach' + 'T' + 'P':
         Any arbitrary temperature and pressure.
-        The remaining thermodynamic states:
-        'rho', 'V'
-        are computed.
+        The inputs are first used to compute :math:`\\rho = P / RT`.
+        The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromM`.
 
     'mach' + 'T' + 'rho':
         Any arbitrary temperature and density.
-        The remaining thermodynamic states:
-        'P', 'V'
-        are computed.
+        The inputs are first used to compute :math:`P = \\rho RT`.
+        The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromM`.
 
-    'mach' + 'rho' + 'P':
+    'mach' + 'P' + 'rho':
         Any arbitrary density and pressure.
-        The remaining thermodynamic states:
-        'T', 'V'
-        are computed.
+        The inputs are first used to compute :math:`T = P / \\rho R`.
+        The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromM`.
 
     'V' + 'rho' + 'T'
         Generally for low-speed specifications.
-        The remaining thermodynamic states:
-        'P', 'mach'
-        are computed.
+        The inputs are first used to compute :math:`P = \\rho RT`.
+        The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromV`.
 
     'V' + 'rho' + 'P'
         Generally for low-speed specifications.
-        The remaining thermodynamic states:
-        'T', 'mach'
-        are computed.
+        The inputs are first used to compute :math:`T = P / \\rho R`.
+        The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromV`.
 
     'V' + 'T' + 'P'
         Generally for low-speed specifications.
-        The remaining thermodynamic states:
-        'rho', 'mach'
-        are computed.
+        The inputs are first used to compute :math:`\\rho = P / RT`.
+        The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromV`.
 
     The combinations listed above are the **only** valid combinations
     of arguments that are permitted. Furthermore, since the internal
@@ -85,20 +77,12 @@ class AeroProblem(FluidProperties):
     Mach number is given, an error will be raised if the user tries to
     set the 'P' (pressure) variable.
 
-    For our compressible RANS solver, ADflow, the inputs from ``AeroProblem`` are the dimensional freestream values:
-
-    :math:`Ma`, :math:`p`, :math:`T`, :math: `\gamma`
-    :math:`\\rho`, and :math:`R_{\\text{gas}}`
-
-    Sutherland's Law constants:
-    :math:`S`, :math:`T_{ref}`, :math:`\mu_{ref}`
-
-    and the Prandtl number:
-    :math:`Pr`
-
+    For our compressible RANS solver, ADflow, the inputs from ``AeroProblem`` are the dimensional freestream values
+    :math:`M`, :math:`P`, :math:`T`, :math:`\\gamma`, :math:`\\rho`, :math:`R_{\\text{gas}}`,
+    Sutherland's law constants :math:`S`, :math:`T_{ref}`, :math:`\mu_{ref}`, and the Prandtl number :math:`Pr`.
     The non-dimensionalized inputs used in the actual ADflow CFD computations are derived from these inherited inputs.
 
-    All parameters are optional except for the `name` argument which
+    All parameters are optional except for the ``name`` argument which
     is required. All of the parameters listed below can be acessed and
     set directly after class creation by calling::
 
@@ -215,7 +199,9 @@ class AeroProblem(FluidProperties):
         ``solverOptions={'adflow':{'vis4':0.018}}``. Currently, the only solver
         supported is 'adflow' and must use the specific key 'adflow'.
 
-    See FluidProperties for more parameters that can be set.
+    Notes
+    -----
+    See :class:`baseclasses.FluidProperties` for more parameters that can be set.
 
     Examples
     --------
@@ -913,12 +899,20 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
 
     def _updateFromRe(self):
         """
-        Update the full set of states from Re, T, and either V or M.
+        Update the full set of states from Re, T, and either V or M with the following steps:
+
+        #. :math:`a = \sqrt{\\gamma RT}`
+        #. Compute :math:`\\mu(T)` from Sutherland's law.
+        #. :math:`V = M a` or :math:`M = V / a`
+        #. :math:`\\rho = \\frac{Re \\mu}{V L}`
+        #. :math:`P = \\rho R T`
+        #. :math:`q = 0.5 \\rho V^2`
+
         """
         # Calculate the speed of sound
         self.a = np.sqrt(self.gamma * self.R * self.T)
 
-        # Update the dynamic viscosity based on T using Sutherland's Law
+        # Update the dynamic viscosity based on T using Sutherland's law
         self.updateViscosity(self.T)
 
         # Calculate velocity or Mach number
@@ -941,12 +935,20 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
 
     def _updateFromM(self):
         """
-        Update the full set of states from M, T, rho.
+        Update the full set of states from M, T, rho with the following steps:
+
+        #. :math:`a = \sqrt{\\gamma RT}`
+        #. Compute :math:`\\mu(T)` from Sutherland's law.
+        #. :math:`V = M a`
+        #. :math:`Re/L = \\rho V / \\mu`
+        #. :math:`\\nu = \\mu / \\rho`
+        #. :math:`q = 0.5 \\rho V^2`
+
         """
         # Calculate the speed of sound
         self.a = np.sqrt(self.gamma * self.R * self.T)
 
-        # Update the dynamic viscosity based on T using Sutherland's Law
+        # Update the dynamic viscosity based on T using Sutherland's law
         self.updateViscosity(self.T)
 
         # Calculate velocity
@@ -963,12 +965,20 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
 
     def _updateFromV(self):
         """
-        Update the full set of states from V, T, rho.
+        Update the full set of states from V, T, rho with the following steps:
+
+        #. :math:`a = \sqrt{\\gamma RT}`
+        #. Compute :math:`\\mu(T)` from Sutherland's law.
+        #. :math:`\\nu = \\mu / \\rho`
+        #. :math:`q = 0.5 \\rho V^2`
+        #. :math:`M = V / a`
+        #. :math:`Re/L = \\rho V / \\mu`
+
         """
         # Calculate the speed of sound
         self.a = np.sqrt(self.gamma * self.R * self.T)
 
-        # Update the dynamic viscosity based on T using Sutherland's Law
+        # Update the dynamic viscosity based on T using Sutherland's law
         self.updateViscosity(self.T)
 
         # Calculate kinematic viscosity
