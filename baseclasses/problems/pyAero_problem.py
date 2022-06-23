@@ -220,7 +220,7 @@ xRef=0.0, zRef=0.0, alpha=3.06)
     >>> ap = AeroProblem('m6_tunnel', mach=0.8395, reynolds=11.72e6, reynoldsLength=0.64607, \
 areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     >>> # NACA0009 hydrofoil (0.9m semi-span) sailing condition (hacked for incompressible flow and viscosity)
-    >>> # R=461.9 for water vapor but we can lower it to get a higher mach no
+    >>> # R=461.9 for water vapor, but we can lower it to get a higher Mach number
     >>> # Hack to get the dynamic viscosity of water, TSuthDim must equal T for this to work!
     >>> ap = AeroProblem("hydrofoil", areaRef=0.243, alpha=6, chordRef=0.27, T=288.15, V=17, \
 rho=1025, xRef=0.18, yRef=0.0, zRef=0.0, evalFuncs=["cl","cd","lift","drag","cavitation","target_cavitation"], \

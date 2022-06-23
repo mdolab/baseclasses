@@ -20,9 +20,9 @@ class FluidProperties:
 
     muSuthDim : float (default = 1.716e-5)
         The viscosity at the reference temperature for Sutherland's Law.
-        Note, if you want to specify a viscosity for your fluid (e.g., running a case in water),
-        a hack to achieve this is to set `muSuthDim` to the desired viscosity and setting
-        `T` to `TSuthDim` this way the free stream dynamic viscosity is what you want.
+        If you want to directly specify a viscosity for your fluid (e.g., running a case in water),
+        a hack to achieve this is to set `muSuthDim` to the desired viscosity and `T` to `TSuthDim`.
+        By doing so, `mu` will be equal to `muSuthDim`.
 
     TSuthDim : float (default = 273.15)
         The reference temperature for Sutherland's Law.
