@@ -4,7 +4,7 @@ except ImportError:
     # parallel functions will throw errors
     MPI = None
 from pprint import pformat
-import numpy
+import numpy as np
 import os
 import sys
 from contextlib import contextmanager
@@ -234,7 +234,7 @@ class BaseRegTest:
         """
         if self.comm is None:
             raise Error("Parallel functionality requires mpi4py!")
-        reducedSum = self.comm.reduce(numpy.sum(values))
+        reducedSum = self.comm.reduce(np.sum(values))
         with multi_proc_exception_check(self.comm):
             if self.rank == 0:
                 self._add_values(name, reducedSum, **kwargs)
@@ -254,10 +254,10 @@ class BaseRegTest:
         """
         if self.comm is None:
             raise Error("Parallel functionality requires mpi4py!")
-        reducedSum = self.comm.reduce(numpy.sum(values**2))
+        reducedSum = self.comm.reduce(np.sum(values**2))
         with multi_proc_exception_check(self.comm):
             if self.rank == 0:
-                self._add_values(name, numpy.sqrt(reducedSum), **kwargs)
+                self._add_values(name, np.sqrt(reducedSum), **kwargs)
 
     # *****************
     # Private functions
@@ -267,7 +267,7 @@ class BaseRegTest:
         if full_name is None:
             full_name = name
         msg = f"Failed value for: {full_name}"
-        numpy.testing.assert_allclose(actual, reference, rtol=rtol, atol=atol, err_msg=msg)
+        np.testing.assert_allclose(actual, reference, rtol=rtol, atol=atol, err_msg=msg)
 
     def assert_equal(self, actual, reference, name, full_name=None):
         if full_name is None:
@@ -317,7 +317,7 @@ class BaseRegTest:
             db = self.db
         if not self.train or (self.train and compare):
             # if the values contain numeric data
-            if numpy.issubdtype(numpy.array(values).dtype, numpy.number):
+            if np.issubdtype(np.array(values).dtype, np.number):
                 self.assert_allclose(values, db[name], name, rtol, atol, full_name)
             # otherwise perform equality comparison
             else:
@@ -325,7 +325,7 @@ class BaseRegTest:
         else:
             if name in db.keys():
                 raise KeyError(f"The name {name} is already in the training database. Please give UNIQUE keys.")
-            if isinstance(values, numpy.ndarray):
+            if isinstance(values, np.ndarray):
                 db[name] = values.copy()
             else:
                 db[name] = values

@@ -348,8 +348,8 @@ class FieldPerformanceProblem:
     #     h = 1e-40j; hr = 1e-40
     #     for key in self.DVNames:
     #         setattr(self, key, getattr(self, key) + h)
-    #         rDict[self.DVNames[key]] = numpy.imag(self.__dict__[func])/hr
-    #         setattr(self, key, numpy.real(getattr(self, key)))
+    #         rDict[self.DVNames[key]] = np.imag(self.__dict__[func])/hr
+    #         setattr(self, key, np.real(getattr(self, key)))
 
     #     return rDict
 
