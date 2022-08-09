@@ -6,7 +6,7 @@ pyAeroStruct_problem
 # ======================================================================
 from .pyAero_problem import AeroProblem
 from .pyStruct_problem import StructProblem
-from ..utils import Error
+from ..utils import Error, SolverHist
 
 
 class AeroStructProblem:
@@ -45,6 +45,9 @@ class AeroStructProblem:
             )
         self.name = self.AP.name
         self.funcNames = {}
+
+        # Solver History
+        self.history = SolverHist()
 
     def setDesignVars(self, x):
         """
