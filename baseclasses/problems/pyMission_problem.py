@@ -5,15 +5,15 @@ Holds the Segment, Profile and Problem classes for the mission solvers.
 """
 
 import sys
-import numpy
+import numpy as np
 import copy
 
 from .ICAOAtmosphere import ICAOAtmosphere
 from .FluidProperties import FluidProperties
-from .utils import Error
+from ..utils import Error
 
 
-class MissionProblem(object):
+class MissionProblem:
     """
     Mission Problem Object:
 
@@ -151,8 +151,8 @@ class MissionProblem(object):
                 profile.setDesignVars(self.currentDVs)
 
             # Replace the NaNs with 0
-            profSens = numpy.array(profSens)
-            indNaNs = numpy.isnan(profSens)
+            profSens = np.array(profSens)
+            indNaNs = np.isnan(profSens)
             profSens[indNaNs] = 0.0
 
             profSens = profSens.imag / stepSize
@@ -239,7 +239,7 @@ class MissionProblem(object):
         return string
 
 
-class MissionProfile(object):
+class MissionProfile:
     """
     Mission Profile Object:
 
@@ -294,13 +294,13 @@ class MissionProfile(object):
                     if dvName in self.dvList:
                         raise Error(
                             "User-defined design variable name "
-                            + "{} has already been added".format(dvName)
+                            + f"{dvName} has already been added"
                             + " to this profile."
                         )
                     dvNameGlobal = dvName
                 else:
                     # Prepend profile name and segment ID
-                    dvNameGlobal = "{}_seg{}_{}".format(self.name, segID, dvName)
+                    dvNameGlobal = f"{self.name}_seg{segID}_{dvName}"
                 # Save a reference of the DV object and set its segment ID
                 self.dvList[dvNameGlobal] = seg.dvList[dvName]
                 self.dvList[dvNameGlobal].setSegmentID(segID)
@@ -366,7 +366,7 @@ class MissionProfile(object):
 
         nSeg = len(self.segments)
 
-        segParameters = numpy.zeros(4 * nSeg, dtype="D")
+        segParameters = np.zeros(4 * nSeg, dtype="D")
         for i in range(nSeg):
             seg = self.segments[i]
             segParameters[4 * i] = seg.initMach
@@ -397,13 +397,13 @@ class MissionProfile(object):
                 pass
             else:
                 if not self.firstSegSet:
-                    setattr(seg, "isFirstStateSeg", True)
+                    seg.isFirstStateSeg = True
                     self.firstSegSet = True
                 # end
                 if seg.isFirstStateSeg:
                     # this is the first segment.
                     # Need to have at least the start alt and V or M
-                    if getattr(seg, "initAlt") is None:
+                    if seg.initAlt is None:
                         raise Error(
                             "%s: Initial altitude must be\
                                      specified for the first non fuel fraction\
@@ -412,11 +412,7 @@ class MissionProfile(object):
                         )
                     # end
 
-                    if (
-                        (getattr(seg, "initMach") is None)
-                        and (getattr(seg, "initCAS") is None)
-                        and (getattr(seg, "initTAS") is None)
-                    ):
+                    if (seg.initMach is None) and (seg.initCAS is None) and (seg.initTAS is None):
                         raise Error(
                             "%s: One of initCAS,initTAS or initMach needs to be\
                                      specified for the first non fuelfraction\
@@ -430,14 +426,14 @@ class MissionProfile(object):
 
                 else:
                     prevSeg = self.segments[i - 1]
-                    refAlt = getattr(prevSeg, "finalAlt")
-                    refCAS = getattr(prevSeg, "finalCAS")
-                    refTAS = getattr(prevSeg, "finalTAS")
-                    refMach = getattr(prevSeg, "finalMach")
-                    TASi = getattr(seg, "initTAS")
-                    CASi = getattr(seg, "initCAS")
-                    Mi = getattr(seg, "initMach")
-                    Alti = getattr(seg, "initAlt")
+                    refAlt = prevSeg.finalAlt
+                    refCAS = prevSeg.finalCAS
+                    refTAS = prevSeg.finalTAS
+                    refMach = prevSeg.finalMach
+                    TASi = seg.initTAS
+                    CASi = seg.initCAS
+                    Mi = seg.initMach
+                    Alti = seg.initAlt
                     if CASi is not None:
                         if not CASi == refCAS:
                             raise Error(
@@ -449,7 +445,7 @@ class MissionProfile(object):
                             )
                         # end
                     else:
-                        setattr(seg, "initCAS", refCAS)
+                        seg.initCAS = refCAS
                     # end
                     if TASi is not None:
                         if not TASi == refTAS:
@@ -462,7 +458,7 @@ class MissionProfile(object):
                             )
                         # end
                     else:
-                        setattr(seg, "initTAS", refTAS)
+                        seg.initTAS = refTAS
                     # end
                     if Alti is not None:
                         if not Alti == refAlt:
@@ -474,7 +470,7 @@ class MissionProfile(object):
                             )
                         # end
                     else:
-                        setattr(seg, "initAlt", refAlt)
+                        seg.initAlt = refAlt
                     # end
                     if Mi is not None:
                         if not Mi == refMach:
@@ -486,7 +482,7 @@ class MissionProfile(object):
                             )
                         # end
                     else:
-                        setattr(seg, "initMach", refMach)
+                        seg.initMach = refMach
                     # end
 
                     # Determine the remaining segment parameters (Alt, Mach, CAS, TAS)
@@ -508,7 +504,7 @@ class MissionProfile(object):
         return string
 
 
-class MissionSegment(object):
+class MissionSegment:
     """
     Mission Segment Object:
 
@@ -527,28 +523,26 @@ class MissionSegment(object):
         self.phase = phase
 
         # These are the parameters that can be simply set directly in the class.
-        paras = set(
-            (
-                "initMach",
-                "initAlt",
-                "initCAS",
-                "initTAS",
-                "finalMach",
-                "finalAlt",
-                "finalCAS",
-                "finalTAS",
-                "fuelFraction",
-                "rangeFraction",
-                "segTime",
-                "engType",
-                "throttle",
-                "nIntervals",
-                "residualclimbrate",
-                "descentrate",
-                "climbtdratio",
-                "descenttdratio",
-            )
-        )
+        paras = {
+            "initMach",
+            "initAlt",
+            "initCAS",
+            "initTAS",
+            "finalMach",
+            "finalAlt",
+            "finalCAS",
+            "finalTAS",
+            "fuelFraction",
+            "rangeFraction",
+            "segTime",
+            "engType",
+            "throttle",
+            "nIntervals",
+            "residualclimbrate",
+            "descentrate",
+            "climbtdratio",
+            "descenttdratio",
+        }
 
         # By default everything is None
         for para in paras:
@@ -793,12 +787,12 @@ class MissionSegment(object):
             # Requires either (v, hi, hf), (v, hi, Mf), or (v, Mi, hf)
             self.finalCAS = self.initCAS
 
-            if set(["initCAS", "initAlt", "finalAlt"]).issubset(self.segInputs):
+            if {"initCAS", "initAlt", "finalAlt"}.issubset(self.segInputs):
                 # (v, hi, hf): Solve for the TAS and then for Mach
                 self._calculateSpeed(endPoint="start")
                 self._calculateSpeed(endPoint="end")
 
-            elif set(["initCAS", "initAlt", "finalMach"]).issubset(self.segInputs):
+            elif {"initCAS", "initAlt", "finalMach"}.issubset(self.segInputs):
                 # (v, hi, Mf): Solve for finalAlt and then TAS
                 self.finalAlt = self._solveMachCASIntercept(self.initCAS, self.finalMach)
                 self.finalTAS = self._CAS2TAS(self.finalCAS, self.finalAlt)
@@ -806,7 +800,7 @@ class MissionSegment(object):
                 a = self._getSoundSpeed(self.initAlt)
                 self.initMach = self.initTAS / a
 
-            elif set(["initCAS", "initMach", "finalAlt"]).issubset(self.segInputs):
+            elif {"initCAS", "initMach", "finalAlt"}.issubset(self.segInputs):
                 # (v, Mi, hf): Solve for initAlt and then TAS
                 self.initAlt = self._solveMachCASIntercept(self.initCAS, self.initMach)
                 self.initTAS = self._CAS2TAS(self.initCAS, self.initAlt)
@@ -821,12 +815,12 @@ class MissionSegment(object):
             # Requires either (M, hi, hf), (M, vi, hf), or (M, hi, vf)
             self.finalMach = self.initMach
 
-            if set(["initMach", "initAlt", "finalAlt"]).issubset(self.segInputs):
+            if {"initMach", "initAlt", "finalAlt"}.issubset(self.segInputs):
                 # (M, hi, hf): Solve for the TAS and then CAS
                 self._calculateSpeed(endPoint="start")
                 self._calculateSpeed(endPoint="end")
 
-            elif set(["initMach", "initCAS", "finalAlt"]).issubset(self.segInputs):
+            elif {"initMach", "initCAS", "finalAlt"}.issubset(self.segInputs):
                 # (M, vi, hf): Solve for initAlt and then initTAS, finalTAS then finalCAS
                 self.initAlt = self._solveMachCASIntercept(self.initCAS, self.initMach)
                 self.initTAS = self._CAS2TAS(self.initCAS, self.initAlt)
@@ -834,7 +828,7 @@ class MissionSegment(object):
                 self.finalTAS = self.finalMach * a
                 self.finalCAS = self._TAS2CAS(self.finalTAS, self.finalAlt)
 
-            elif set(["initMach", "initAlt", "finalCAS"]).issubset(self.segInputs):
+            elif {"initMach", "initAlt", "finalCAS"}.issubset(self.segInputs):
                 # (M, hi, vf): Solve for finalAlt and then finalTAS, initTAS then initCAS
                 self.finalAlt = self._solveMachCASIntercept(self.finalCAS, self.finalMach)
                 self.finalTAS = self._CAS2TAS(self.finalCAS, self.finalAlt)
@@ -952,7 +946,7 @@ class MissionSegment(object):
         """
         # evaluate the atmosphere model
         P, T = self.atm(alt)
-        a = numpy.sqrt(self.gamma * self.R * T)
+        a = np.sqrt(self.gamma * self.R * T)
 
         return copy.copy(a)
 
@@ -1008,14 +1002,14 @@ class MissionSegment(object):
         RhoRatio = rho / rho0
 
         # Convert the TAS to EAS
-        EAS = TAS * numpy.sqrt(RhoRatio)
+        EAS = TAS * np.sqrt(RhoRatio)
 
         # Evaluate the current M based on TAS
         M = TAS / a
 
         # Evaluate the Calibrated air speed, CAS
-        term1 = (1.0 / 8.0) * (1 - PRatio) * M ** 2
-        term2 = (3.0 / 640.0) * (1 - 10 * PRatio + 9 * PRatio ** 2) * M ** 4
+        term1 = (1.0 / 8.0) * (1 - PRatio) * M**2
+        term2 = (3.0 / 640.0) * (1 - 10 * PRatio + 9 * PRatio**2) * M**4
         ECTerm = 1 + term1 + term2
         CAS = EAS * ECTerm
 
@@ -1034,7 +1028,7 @@ class MissionSegment(object):
         # Differential pressure: Units of CAS and a0 must be consistent
         DP = P0 * ((1 + 0.2 * (CAS / a0) ** 2) ** (7.0 / 2.0) - 1)  # impact pressure
 
-        M = numpy.sqrt(5 * ((DP / P + 1) ** (2.0 / 7.0) - 1))
+        M = np.sqrt(5 * ((DP / P + 1) ** (2.0 / 7.0) - 1))
 
         if M > 1:
             raise Error(
@@ -1046,7 +1040,7 @@ class MissionSegment(object):
             # while M_diff > 1e-4:
             #     # computing Mach number in a supersonic compressible flow by using the
             #     # Rayleigh Supersonic Pitot equation using parameters for air
-            #     M_new = 0.88128485 * numpy.sqrt((DP/P + 1) * (1 - 1/(7*M**2))**2.5)
+            #     M_new = 0.88128485 * np.sqrt((DP/P + 1) * (1 - 1/(7*M**2))**2.5)
             #     M_diff = abs(M_new - M)
             #     M = M_new
 
@@ -1058,33 +1052,33 @@ class MissionSegment(object):
         """
         set the data for the current segment in the fortran module
         """
-        h1 = getattr(self, "initAlt")
+        h1 = self.initAlt
         if h1 is None:
             h1 = 0.0
-        h2 = getattr(self, "finalAlt")
+        h2 = self.finalAlt
         if h2 is None:
             h2 = 0.0
-        M1 = getattr(self, "initMach")
+        M1 = self.initMach
         if M1 is None:
             M1 = 0.0
-        M2 = getattr(self, "finalMach")
+        M2 = self.finalMach
         if M2 is None:
             M2 = 0.0
-        deltaTime = getattr(self, "segTime")
+        deltaTime = self.segTime
         if deltaTime is None:
             deltaTime = 0.0
         # end
 
-        rangeFraction = getattr(self, "rangeFraction")
+        rangeFraction = self.rangeFraction
         if rangeFraction is None:
             rangeFraction = 1.0
         # end
 
         # Get the fuel-fraction, if provided, then segment is a generic fuel fraction type
-        fuelFraction = getattr(self, "fuelFraction")
-        throttle = getattr(self, "throttle")
+        fuelFraction = self.fuelFraction
+        throttle = self.throttle
         if fuelFraction is None and throttle is None:
-            segTypeID = segTypeDict[getattr(self, "phase").lower()]
+            segTypeID = segTypeDict[self.phase.lower()]
             fuelFraction = 0.0
             throttle = 0.0
         elif fuelFraction is not None:
@@ -1097,10 +1091,10 @@ class MissionSegment(object):
 
         # Get the engine type and ensure the engine type is defined in engTypeDict
         if self.engType not in engTypeDict and self.engType is not None:
-            raise Error("engType %s defined in segment %s not defined in engTypeDict" % (self.engType, self.phase))
+            raise Error(f"engType {self.engType} defined in segment {self.phase} not defined in engTypeDict")
         if self.engType is None:
             self.engType = "None"
-        engTypeID = engTypeDict[getattr(self, "engType")]
+        engTypeID = engTypeDict[self.engType]
 
         module.setmissionsegmentdata(
             idx,
@@ -1243,17 +1237,17 @@ class MissionSegment(object):
             idTag = "%02d:" % segNum
 
         # Putting the states into an array automatically convert Nones to nans
-        states = numpy.zeros([2, 4])
+        states = np.zeros([2, 4])
         states[0, :] = [self.initAlt, self.initMach, self.initCAS, self.initTAS]
         states[1, :] = [self.finalAlt, self.finalMach, self.finalCAS, self.finalTAS]
         if self.fuelFraction is None:
             fuelFrac = self.fuelFraction
         else:
-            fuelFrac = numpy.nan
+            fuelFrac = np.nan
 
-        string = "%3s %18s  " % (idTag, self.phase)
-        string += "%8s  %8s  %8s  %8s  %8s \n" % ("Alt", "Mach", "CAS", "TAS", "FuelFrac")
-        string += "%22s  %8.2f  %8.6f  %8.4f  %8.4f  %8.4f \n" % (
+        string = f"{idTag:>3} {self.phase:>18}  "
+        string += "{:>8}  {:>8}  {:>8}  {:>8}  {:>8} \n".format("Alt", "Mach", "CAS", "TAS", "FuelFrac")
+        string += "{:>22}  {:8.2f}  {:8.6f}  {:8.4f}  {:8.4f}  {:8.4f} \n".format(
             "",
             states[0, 0],
             states[0, 1],
@@ -1261,12 +1255,14 @@ class MissionSegment(object):
             states[0, 3],
             fuelFrac,
         )
-        string += "%22s  %8.2f  %8.6f  %8.4f  %8.4f \n" % ("", states[1, 0], states[1, 1], states[1, 2], states[1, 3])
+        string += "{:>22}  {:8.2f}  {:8.6f}  {:8.4f}  {:8.4f} \n".format(
+            "", states[1, 0], states[1, 1], states[1, 2], states[1, 3]
+        )
 
         return string
 
 
-class SegmentDV(object):
+class SegmentDV:
     """
     A container storing information regarding a mission profile variable.
     """

@@ -2,8 +2,10 @@ import os
 import unittest
 import numpy as np
 from baseclasses import BaseRegTest
-from baseclasses.BaseRegTest import getTol
-from baseclasses.decorators import require_mpi
+from baseclasses.testing import getTol
+from baseclasses.testing.decorators import require_mpi
+from baseclasses.utils import CaseInsensitiveDict
+from parameterized import parameterized
 
 try:
     from mpi4py import MPI
@@ -75,17 +77,17 @@ class TestBaseRegTest(unittest.TestCase):
         if handler.train:
             # check non-unique training value will throw ValueError
             # due to context manager, need to check for the generic Exception rather than specific ValueError
-            with self.assertRaises(Exception):
+            with self.assertRaises(Exception):  # noqa: B017
                 handler.root_add_val("scalar", 2.0)
-            with self.assertRaises(Exception):
+            with self.assertRaises(Exception):  # noqa: B017
                 handler.root_add_val("simple dictionary", {"c": -1})
         else:
-            with self.assertRaises(Exception):
+            with self.assertRaises(Exception):  # noqa: B017
                 handler.root_add_val("nonexisting dictionary", {"c": -1})
 
         # check if the compare argument works in training mode
         handler.root_add_val("scalar", 1.0, compare=True)
-        with self.assertRaises(Exception):
+        with self.assertRaises(Exception):  # noqa: B017
             handler.root_add_val("scalar", 2.0, compare=True)
 
     def regression_test_par(self, handler):
@@ -103,7 +105,7 @@ class TestBaseRegTest(unittest.TestCase):
         Also tests read/write in the process
         """
         self.ref_file = os.path.join(baseDir, "test_root.ref")
-        metadata = {"options": None}
+        metadata = {"options": CaseInsensitiveDict({})}
         with BaseRegTest(self.ref_file, train=True) as handler:
             self.regression_test_root(handler)
             handler.add_metadata(metadata)
@@ -132,6 +134,29 @@ class TestBaseRegTest(unittest.TestCase):
         self.assertEqual(test_vals, par_vals)
         with BaseRegTest(self.ref_file, train=False) as handler:
             self.regression_test_par(handler)
+
+    @parameterized.expand(
+        [
+            ("list_of_str", ["A", "B", "C"]),
+            ("str", "SOME STRING"),
+            ("dict_of_str", {"KEY": "VALUES"}),
+            ("None", None),
+            ("list_of_None", [None, None]),
+            ("dict_of_None", {"None": None}),
+        ]
+    )
+    def test_equality_compare(self, name, values):
+        self.ref_file = os.path.join(baseDir, f"{name}_test.ref")
+        with BaseRegTest(self.ref_file, train=True) as handler:
+            handler.root_add_val("value", values)
+
+        test_vals = handler.readRef()
+        # check the two values match
+        self.assertEqual(test_vals, {"value": values})
+
+        # test train=False
+        with BaseRegTest(self.ref_file, train=False) as handler:
+            handler.root_add_val("value", values)
 
     def tearDown(self):
         if self.rank == 0 and hasattr(self, "ref_file"):

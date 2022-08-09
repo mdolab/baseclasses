@@ -5,11 +5,11 @@ pyAero_problem
 # =============================================================================
 # Imports
 # =============================================================================
-import numpy
+import numpy as np
 import warnings
 from .ICAOAtmosphere import ICAOAtmosphere
 from .FluidProperties import FluidProperties
-from .utils import CaseInsensitiveDict, Error
+from ..utils import CaseInsensitiveDict, Error
 
 
 class AeroProblem(FluidProperties):
@@ -25,35 +25,49 @@ class AeroProblem(FluidProperties):
 
     'mach' + 'altitude'
         This is the preferred method for specifying flight conditions.
-        The 1976 standard atmosphere is used to generate all thermodynamic properties in a consistent manner.
-        The resulting Reynolds number depends on the scale of the mesh.
         This is suitable for all aerodynamic analysis codes, including aerostructural analysis.
+        The 1976 standard atmosphere is used to compute :math:`P` and :math:`T`.
+        We then compute :math:`\\rho = P / RT`.
+        The remaining quantities are computed with :meth:`baseclasses.AeroProblem._updateFromM`.
+        The resulting Reynolds number depends on the scale of the mesh.
 
     'mach' + 'reynolds' + 'reynoldsLength' + 'T':
         Used to precisely match Reynolds numbers.
-        Complete thermodynamic state is computed.
+        The remaining quantities are computed with :meth:`baseclasses.AeroProblem._updateFromRe`.
 
     'V' + 'reynolds' + 'reynoldsLength' + 'T':
-        Used to precisely match Reynolds numbers for low speed cases.
-        Complete thermodynamic state is computed.
+        Used to precisely match Reynolds numbers for low-speed cases.
+        The remaining quantities are computed with :meth:`baseclasses.AeroProblem._updateFromRe`.
 
     'mach' + 'T' + 'P':
         Any arbitrary temperature and pressure.
+        The inputs are first used to compute :math:`\\rho = P / RT`.
+        The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromM`.
 
     'mach' + 'T' + 'rho':
         Any arbitrary temperature and density.
+        The inputs are first used to compute :math:`P = \\rho RT`.
+        The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromM`.
 
-    'mach' + 'rho' + 'P':
+    'mach' + 'P' + 'rho':
         Any arbitrary density and pressure.
+        The inputs are first used to compute :math:`T = P / \\rho R`.
+        The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromM`.
 
     'V' + 'rho' + 'T'
-        Generally for low speed specifications
+        Generally for low-speed specifications.
+        The inputs are first used to compute :math:`P = \\rho RT`.
+        The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromV`.
 
     'V' + 'rho' + 'P'
-        Generally for low speed specifications
+        Generally for low-speed specifications.
+        The inputs are first used to compute :math:`T = P / \\rho R`.
+        The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromV`.
 
     'V' + 'T' + 'P'
-        Generally for low speed specifications
+        Generally for low-speed specifications.
+        The inputs are first used to compute :math:`\\rho = P / RT`.
+        The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromV`.
 
     The combinations listed above are the **only** valid combinations
     of arguments that are permitted. Furthermore, since the internal
@@ -63,7 +77,12 @@ class AeroProblem(FluidProperties):
     Mach number is given, an error will be raised if the user tries to
     set the 'P' (pressure) variable.
 
-    All parameters are optional except for the `name` argument which
+    For our compressible RANS solver, ADflow, the inputs from ``AeroProblem`` are the dimensional freestream values
+    :math:`M`, :math:`P`, :math:`T`, :math:`\\gamma`, :math:`\\rho`, :math:`R_{\\text{gas}}`,
+    Sutherland's law constants :math:`S`, :math:`T_{ref}`, :math:`\mu_{ref}`, and the Prandtl number :math:`Pr`.
+    The non-dimensionalized inputs used in the actual ADflow CFD computations are derived from these inherited inputs.
+
+    All parameters are optional except for the ``name`` argument which
     is required. All of the parameters listed below can be acessed and
     set directly after class creation by calling::
 
@@ -79,7 +98,7 @@ class AeroProblem(FluidProperties):
     name : str
         Name of this aerodynamic problem.
 
-    funcs : iteratble object containing strings
+    evalFuncs : iterable object containing strings
         The names of the functions the user wants evaluated with this
         aeroProblem.
 
@@ -93,10 +112,10 @@ class AeroProblem(FluidProperties):
         Set the Mach number for the grid.
 
     alpha : float. Default is 0.0
-        Set the angle of attack
+        Set the angle of attack in degrees.
 
     beta : float. Default is 0.0
-        Set side-slip angle
+        Set the side-slip angle in degrees.
 
     altitude : float. Default is 0.0
         Set all thermodynamic parameters from the 1976 standard atmosphere.
@@ -170,9 +189,6 @@ class AeroProblem(FluidProperties):
         Default is [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]
         Set the reference axis for non-x/y/z based moment calculations
 
-    R : float
-        The gas constant. By default we use air. R=287.05
-
     englishUnits : bool
         Flag to use all English units: pounds, feet, Rankine etc.
 
@@ -182,6 +198,10 @@ class AeroProblem(FluidProperties):
         the solver followed by a dictionary of options for that solver. For example
         ``solverOptions={'adflow':{'vis4':0.018}}``. Currently, the only solver
         supported is 'adflow' and must use the specific key 'adflow'.
+
+    Notes
+    -----
+    See :class:`baseclasses.FluidProperties` for more parameters that can be set.
 
     Examples
     --------
@@ -194,12 +214,18 @@ chordRef=275.8*.0254, xRef=1325.9*0.0254, zRef=177.95*.0254)
 areaRef=594720*.0254**2, chordRef=275.8*.0254, \
 xRef=1325.9*0.0254, zRef=177.95*.0254)
     >>> # Onera M6 Test condition (Euler)
-    >>> ap = AeroProblem('m6_tunnel', mach=0.8395, areaRef=0.772893541, chordRef=0.64607 \
+    >>> ap = AeroProblem('m6_tunnel', mach=0.8395, areaRef=0.772893541, chordRef=0.64607, \
 xRef=0.0, zRef=0.0, alpha=3.06)
     >>> # Onera M6 Test condition (RANS)
     >>> ap = AeroProblem('m6_tunnel', mach=0.8395, reynolds=11.72e6, reynoldsLength=0.64607, \
 areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
-                         """
+    >>> # NACA0009 hydrofoil (0.9m semi-span) sailing condition (hacked for incompressible flow and viscosity)
+    >>> # R=461.9 for water vapor, but we can lower it to get a higher Mach number
+    >>> # Hack to get the dynamic viscosity of water, TSuthDim must equal T for this to work!
+    >>> ap = AeroProblem("hydrofoil", areaRef=0.243, alpha=6, chordRef=0.27, T=288.15, V=17, \
+rho=1025, xRef=0.18, yRef=0.0, zRef=0.0, evalFuncs=["cl","cd","lift","drag","cavitation","target_cavitation"], \
+R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
+    """
 
     def __init__(self, name, **kwargs):
 
@@ -211,33 +237,31 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
         # These are the parameters that can be simply set directly in
         # the class.
-        paras = set(
-            (
-                "alpha",
-                "beta",
-                "areaRef",
-                "chordRef",
-                "spanRef",
-                "xRef",
-                "yRef",
-                "zRef",
-                "xRot",
-                "yRot",
-                "zRot",
-                "phat",
-                "qhat",
-                "rhat",
-                "momentAxis",
-                "degreePol",
-                "coefPol",
-                "degreeFourier",
-                "omegaFourier",
-                "cosCoefFourier",
-                "sinCoefFourier",
-                "machRef",
-                "machGrid",
-            )
-        )
+        paras = {
+            "alpha",
+            "beta",
+            "areaRef",
+            "chordRef",
+            "spanRef",
+            "xRef",
+            "yRef",
+            "zRef",
+            "xRot",
+            "yRot",
+            "zRot",
+            "phat",
+            "qhat",
+            "rhat",
+            "momentAxis",
+            "degreePol",
+            "coefPol",
+            "degreeFourier",
+            "omegaFourier",
+            "cosCoefFourier",
+            "sinCoefFourier",
+            "machRef",
+            "machGrid",
+        }
 
         # By default everything is None
         for para in paras:
@@ -268,10 +292,10 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             self.evalFuncs = set(kwargs["funcs"])
 
         # we cast the set to a sorted list, so that each proc can loop over in the same order
-        self.evalFuncs = sorted(list(self.evalFuncs))
+        self.evalFuncs = sorted(self.evalFuncs)
 
         # these are the possible input values
-        possibleInputStates = set(["mach", "V", "P", "T", "rho", "altitude", "reynolds", "reynoldsLength"])
+        possibleInputStates = {"mach", "V", "P", "T", "rho", "altitude", "reynolds", "reynoldsLength"}
 
         # turn the kwargs into a set
         keys = set(kwargs.keys())
@@ -283,9 +307,21 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                 self.inputs[key] = kwargs[key]
 
         # full list of states in the class
-        self.fullState = set(
-            ["mach", "V", "P", "T", "rho", "mu", "nu", "a", "q", "altitude", "re", "reynolds", "reynoldsLength"]
-        )
+        self.fullState = {
+            "mach",
+            "V",
+            "P",
+            "T",
+            "rho",
+            "mu",
+            "nu",
+            "a",
+            "q",
+            "altitude",
+            "re",
+            "reynolds",
+            "reynoldsLength",
+        }
 
         # now call the routine to setup the states
         self._setStates(self.inputs)
@@ -375,28 +411,28 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         for key in inputDict:
             self.inputs[key] = inputDict[key]
 
-        if set(("mach", "T", "P")) <= inKeys:
+        if {"mach", "T", "P"} <= inKeys:
             self.__dict__["mach"] = self.inputs["mach"]
             self.__dict__["T"] = self.inputs["T"]
             self.__dict__["P"] = self.inputs["P"]
             self.__dict__["rho"] = self.P / (self.R * self.T)
             # now calculate remaining states
             self._updateFromM()
-        elif set(("mach", "T", "rho")) <= inKeys:
+        elif {"mach", "T", "rho"} <= inKeys:
             self.__dict__["mach"] = self.inputs["mach"]
             self.__dict__["T"] = self.inputs["T"]
             self.__dict__["rho"] = self.inputs["rho"]
             self.__dict__["P"] = self.rho * self.R * self.T
             # now calculate remaining states
             self._updateFromM()
-        elif set(("mach", "P", "rho")) <= inKeys:
+        elif {"mach", "P", "rho"} <= inKeys:
             self.__dict__["mach"] = self.inputs["mach"]
             self.__dict__["rho"] = self.inputs["rho"]
             self.__dict__["P"] = self.inputs["P"]
             self.__dict__["T"] = self.P / (self.rho * self.R)
             # now calculate remaining states
             self._updateFromM()
-        elif set(("mach", "reynolds", "reynoldsLength", "T")) <= inKeys:
+        elif {"mach", "reynolds", "reynoldsLength", "T"} <= inKeys:
             self.__dict__["mach"] = self.inputs["mach"]
             self.__dict__["T"] = self.inputs["T"]
             self.__dict__["re"] = self.inputs["reynolds"] / self.inputs["reynoldsLength"]
@@ -404,7 +440,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             self.__dict__["reynoldsLength"] = self.inputs["reynoldsLength"]
             # now calculate remaining states
             self._updateFromRe()
-        elif set(("V", "reynolds", "reynoldsLength", "T")) <= inKeys:
+        elif {"V", "reynolds", "reynoldsLength", "T"} <= inKeys:
             self.__dict__["V"] = self.inputs["V"]
             self.__dict__["T"] = self.inputs["T"]
             self.__dict__["re"] = self.inputs["reynolds"] / self.inputs["reynoldsLength"]
@@ -412,7 +448,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             self.__dict__["reynoldsLength"] = self.inputs["reynoldsLength"]
             # now calculate remaining states
             self._updateFromRe()
-        elif set(("mach", "altitude")) <= inKeys:
+        elif {"mach", "altitude"} <= inKeys:
             self.__dict__["mach"] = self.inputs["mach"]
             self.__dict__["altitude"] = self.inputs["altitude"]
             P, T = self.atm(self.inputs["altitude"])
@@ -420,26 +456,29 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             self.__dict__["P"] = P
             self.__dict__["rho"] = self.P / (self.R * self.T)
             self._updateFromM()
-        elif set(("V", "rho", "T")) <= inKeys:
+        elif {"V", "rho", "T"} <= inKeys:
             self.__dict__["V"] = self.inputs["V"]
             self.__dict__["rho"] = self.inputs["rho"]
             self.__dict__["T"] = self.inputs["T"]
             # calculate pressure
             self.__dict__["P"] = self.rho * self.R * self.T
+            # now calculate remaining states
             self._updateFromV()
-        elif set(("V", "rho", "P")) <= inKeys:
+        elif {"V", "rho", "P"} <= inKeys:
             self.__dict__["V"] = self.inputs["V"]
             self.__dict__["rho"] = self.inputs["rho"]
             self.__dict__["P"] = self.inputs["P"]
             # start by calculating the T
             self.__dict__["T"] = self.P / (self.rho * self.R)
+            # now calculate remaining states
             self._updateFromV()
-        elif set(("V", "T", "P")) <= inKeys:
+        elif {"V", "T", "P"} <= inKeys:
             self.__dict__["V"] = self.inputs["V"]
             self.__dict__["T"] = self.inputs["T"]
             self.__dict__["P"] = self.inputs["P"]
             # start by calculating the T
             self.__dict__["rho"] = self.P / (self.R * self.T)
+            # now calculate remaining states
             self._updateFromV()
         else:
             raise Error(
@@ -555,7 +594,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
                 raise Error("The family must be given for BC design variables")
 
             if name is None:
-                dvName = "%s_%s_%s" % (key, family, self.name)
+                dvName = f"{key}_{family}_{self.name}"
             else:
                 dvName = name
 
@@ -625,7 +664,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         for dvName in self.DVs:
             dv = self.DVs[dvName]
             if dv.addToPyOpt:
-                if type(dv.value) == numpy.ndarray:
+                if type(dv.value) == np.ndarray:
                     optProb.addVarGroup(
                         dvName,
                         dv.value.size,
@@ -656,7 +695,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     def __str__(self):
         output_str = ""
         for key, val in self.__dict__.items():
-            output_str += "{0:20} : {1:<16}\n".format(key, val)
+            output_str += f"{key:20} : {val:<16}\n"
         return output_str
 
     def evalFunctions(self, funcs, evalFuncs, ignoreMissing=False):
@@ -689,7 +728,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         Parameters
         ----------
         funcs : dict
-            Dictionary into which the functions are save
+            Dictionary into which the functions are saved
         evalFuncs : iterable object containing strings
             The functions that the user wants evaluated
         """
@@ -740,7 +779,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
         # there are not generally *that* many aero DVs
         for dvName in self.DVs:
             if self.DVs[dvName].key.lower() == key.lower():
-                self.DVs[dvName].value
+                self.DVs[dvName].value = value
 
     @property
     def mach(self):
@@ -820,7 +859,7 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     #     """
 
     #     if self.T is not None:
-    #         self.a = numpy.sqrt(self.gamma*self.R*self.T)
+    #         self.a = np.sqrt(self.gamma*self.R*self.T)
     #         if self.englishUnits:
     #             mu = (self.muSuthDim * (
     #                     (self.TSuthDim + self.SSuthDim) / (self.T/1.8 + self.SSuthDim)) *
@@ -860,73 +899,98 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
 
     def _updateFromRe(self):
         """
-        update the full set of states from M,T,P
-        """
-        # calculate the speed of sound
-        self.a = numpy.sqrt(self.gamma * self.R * self.T)
+        Update the full set of states from Re, T, and either V or M with the following steps:
 
-        # Update the dynamic viscosity based on T using Sutherland's Law
+        #. :math:`a = \sqrt{\\gamma RT}`
+        #. Compute :math:`\\mu(T)` from Sutherland's law.
+        #. :math:`V = M a` or :math:`M = V / a`
+        #. :math:`\\rho = \\frac{Re \\mu}{V L}`
+        #. :math:`P = \\rho R T`
+        #. :math:`q = 0.5 \\rho V^2`
+
+        """
+        # Calculate the speed of sound
+        self.a = np.sqrt(self.gamma * self.R * self.T)
+
+        # Update the dynamic viscosity based on T using Sutherland's law
         self.updateViscosity(self.T)
 
-        # calculate Velocity
+        # Calculate velocity or Mach number
         if self.V is None:
             self.V = self.mach * self.a
         else:
             self.__dict__["mach"] = self.V / self.a
 
-        # calculate density
+        # Calculate density
         self.__dict__["rho"] = self.re * self.mu / self.V
-        # calculate pressure
+
+        # Calculate pressure
         self.__dict__["P"] = self.rho * self.R * self.T
 
-        # calculate kinematic viscosity
+        # Calculate kinematic viscosity
         self.nu = self.mu / self.rho
 
-        # calculate dynamic pressure
-        self.q = 0.5 * self.rho * self.V ** 2
+        # Calculate dynamic pressure
+        self.q = 0.5 * self.rho * self.V**2
 
     def _updateFromM(self):
         """
-        update the full set of states from M,T,P, Rho
-        """
-        # calculate the speed of sound
-        self.a = numpy.sqrt(self.gamma * self.R * self.T)
+        Update the full set of states from M, T, rho with the following steps:
 
-        # Update the dynamic viscosity based on T using Sutherland's Law
+        #. :math:`a = \sqrt{\\gamma RT}`
+        #. Compute :math:`\\mu(T)` from Sutherland's law.
+        #. :math:`V = M a`
+        #. :math:`Re/L = \\rho V / \\mu`
+        #. :math:`\\nu = \\mu / \\rho`
+        #. :math:`q = 0.5 \\rho V^2`
+
+        """
+        # Calculate the speed of sound
+        self.a = np.sqrt(self.gamma * self.R * self.T)
+
+        # Update the dynamic viscosity based on T using Sutherland's law
         self.updateViscosity(self.T)
 
-        # calculate Velocity
+        # Calculate velocity
         self.V = self.mach * self.a
 
-        # calulate reynolds per length
+        # Calculate Reynolds per length
         self.__dict__["re"] = self.rho * self.V / self.mu
 
-        # calculate kinematic viscosity
+        # Calculate kinematic viscosity
         self.nu = self.mu / self.rho
 
-        # calculate dynamic pressure
-        self.q = 0.5 * self.rho * self.V ** 2
+        # Calculate dynamic pressure
+        self.q = 0.5 * self.rho * self.V**2
 
     def _updateFromV(self):
         """
-        update the full set of states from V,T,P, Rho
-        """
-        # calculate the speed of sound
-        self.a = numpy.sqrt(self.gamma * self.R * self.T)
+        Update the full set of states from V, T, rho with the following steps:
 
-        # Update the dynamic viscosity based on T using Sutherland's Law
+        #. :math:`a = \sqrt{\\gamma RT}`
+        #. Compute :math:`\\mu(T)` from Sutherland's law.
+        #. :math:`\\nu = \\mu / \\rho`
+        #. :math:`q = 0.5 \\rho V^2`
+        #. :math:`M = V / a`
+        #. :math:`Re/L = \\rho V / \\mu`
+
+        """
+        # Calculate the speed of sound
+        self.a = np.sqrt(self.gamma * self.R * self.T)
+
+        # Update the dynamic viscosity based on T using Sutherland's law
         self.updateViscosity(self.T)
 
-        # calculate kinematic viscosity
+        # Calculate kinematic viscosity
         self.nu = self.mu / self.rho
 
-        # calculate dynamic pressure
-        self.q = 0.5 * self.rho * self.V ** 2
+        # Calculate dynamic pressure
+        self.q = 0.5 * self.rho * self.V**2
 
-        # calculate Mach Number
+        # Calculate Mach number
         self.__dict__["mach"] = self.V / self.a
 
-        # calulate reynolds per length
+        # Calculate Reynolds per length
         self.__dict__["re"] = self.rho * self.V / self.mu
 
     def _getDVSens(self, func):
@@ -942,13 +1006,13 @@ areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
             family = self.DVs[dvName].family
             if family is None:
                 setattr(self, key, getattr(self, key) + h)
-                rDict[dvName] = numpy.imag(self.__dict__[func]) / hr
-                setattr(self, key, numpy.real(getattr(self, key)))
+                rDict[dvName] = np.imag(self.__dict__[func]) / hr
+                setattr(self, key, np.real(getattr(self, key)))
 
         return rDict
 
 
-class aeroDV(object):
+class aeroDV:
     """
     A container storing information regarding an 'aerodynamic' variable.
     """

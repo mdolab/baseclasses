@@ -3,8 +3,6 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. _baseClasses:
-
 ===========
 baseClasses
 ===========
@@ -38,6 +36,7 @@ Or from source, by cloning the repo and then running (from the repo root)::
    :caption: Problem Classes
 
    pyAero_problem
+   FluidProperties
    pyStruct_problem
    pyAeroStruct_problem
    pyMission_problem
@@ -50,3 +49,16 @@ Or from source, by cloning the repo and then running (from the repo root)::
 
    BaseSolver
    pyAero_solver
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Testing Classes
+
+   BaseRegTest
+   regression_example
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Utilities
+
+   utils

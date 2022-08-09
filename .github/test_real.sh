@@ -1,4 +1,5 @@
 #!/bin/bash
 set -e
 
-testflo -v
+cd tests
+testflo -v -n 1 --coverage --coverpkg baseclasses

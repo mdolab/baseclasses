@@ -25,7 +25,7 @@ class CaseInsensitiveDict(MutableMapping):
     --------
     This container preserves the initial capitalization, such that
     any operation which operates on an existing entry will not modify it.
-    This means that add() and update() will NOT update the original capitalization.
+    This means that for example :meth:`__setitem__()` will NOT update the original capitalization.
     """
 
     def __init__(self, *args, **kwargs):
@@ -119,7 +119,7 @@ class CaseInsensitiveSet(MutableSet):
     --------
     This container preserves the initial capitalization, such that
     any operation which operates on an existing entry will not modify it.
-    This means that add() and update() will NOT update the original capitalization.
+    This means that :meth:`add()` and :meth:`update()` will NOT update the original capitalization.
     """
 
     def __init__(self, *args, **kwargs):
@@ -166,8 +166,8 @@ class CaseInsensitiveSet(MutableSet):
         """We convert both to regular set, and compare their lower case values"""
         if not all([isinstance(i, str) for i in other]):
             raise TypeError("All items must be strings!")
-        a = set([s.lower() for s in list(self)])
-        b = set([o.lower() for o in list(other)])
+        a = {s.lower() for s in list(self)}
+        b = {o.lower() for o in list(other)}
         return a.__eq__(b)
 
     def __len__(self) -> int:
@@ -192,36 +192,15 @@ class CaseInsensitiveSet(MutableSet):
         return new_set
 
     def update(self, d):
-        """Just call add() iteratively"""
+        """Just call :meth:`add()` iteratively"""
         for item in d:
             self.add(item)
 
     def issubset(self, other) -> bool:
         """We convert both to regular set, and compare their lower case values"""
-        lowerSelf = set([s.lower() for s in self])
-        lowerOther = set([s.lower() for s in other])
+        lowerSelf = {s.lower() for s in self}
+        lowerOther = {s.lower() for s in other}
         return lowerSelf.issubset(lowerOther)
 
     def __repr__(self):
         return pformat(self.data)
-
-
-class Error(Exception):
-    """
-    Format the error message in a box to make it clear this
-    was a explicitly raised exception.
-    """
-
-    def __init__(self, message):
-        self.message = message
-        msg = "\n+" + "-" * 78 + "+" + "\n" + "| Error: "
-        i = 8
-        for word in message.split():
-            if len(word) + i + 1 > 78:  # Finish line and start new one
-                msg += " " * (78 - i) + "|\n| " + word + " "
-                i = 1 + len(word) + 1
-            else:
-                msg += word + " "
-                i += len(word) + 1
-        msg += " " * (78 - i) + "|\n" + "+" + "-" * 78 + "+" + "\n"
-        super().__init__(msg)

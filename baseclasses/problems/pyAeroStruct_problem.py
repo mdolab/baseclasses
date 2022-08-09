@@ -6,10 +6,10 @@ pyAeroStruct_problem
 # ======================================================================
 from .pyAero_problem import AeroProblem
 from .pyStruct_problem import StructProblem
-from .utils import Error
+from ..utils import Error
 
 
-class AeroStructProblem(object):
+class AeroStructProblem:
     """
     The main purpose of this class is to represent all relevant
     information for a coupled aero-structural analysis. To this end,

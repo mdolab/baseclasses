@@ -4,15 +4,14 @@ BaseSolver
 Holds a basic Python Analysis Classes (base and inherited).
 """
 from difflib import get_close_matches
-from pprint import pprint
 import copy
 import warnings
-from .utils import CaseInsensitiveDict, CaseInsensitiveSet, Error
+from ..utils import CaseInsensitiveDict, CaseInsensitiveSet, Error, pp
 
 # =============================================================================
 # BaseSolver Class
 # =============================================================================
-class BaseSolver(object):
+class BaseSolver:
     """
     Abstract Class for a basic Solver Object
     """
@@ -224,7 +223,7 @@ class BaseSolver(object):
         modifiedOptions = self.getModifiedOptions()
         self.pp(modifiedOptions)
 
-    def pp(self, obj):
+    def pp(self, obj, flush=True):
         """
         This method prints ``obj`` (via pprint) on the root proc of ``self.comm`` if it exists.
         Otherwise it will just print ``obj``.
@@ -232,10 +231,10 @@ class BaseSolver(object):
         Parameters
         ----------
         obj : object
-            any Python object to be printed
+            Any Python object to be printed
+        flush : bool
+            If True, the stream will be flushed.
         """
-        if (self.comm is not None and self.comm.rank == 0) or self.comm is None:
-            if isinstance(obj, str):
-                print(obj)
-            else:
-                pprint(obj)
+
+        # Call the parallel safe pp routine defined in utils
+        pp(obj, self.comm, flush=flush)

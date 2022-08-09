@@ -4,17 +4,17 @@ pyWeight_problem
 Holds the weightProblem class for weightandbalance solvers.
 """
 
-import numpy
+import numpy as np
 import copy
 
 try:
     from pygeo import geo_utils
 except ImportError:
     geo_utils = None
-from .utils import Error
+from ..utils import Error
 
 
-class WeightProblem(object):
+class WeightProblem:
     """
     Weight Problem Object:
 
@@ -133,9 +133,9 @@ class WeightProblem(object):
         """
 
         if type(surf) == list:
-            self.p0 = numpy.array(surf[0])
-            self.v1 = numpy.array(surf[1])
-            self.v2 = numpy.array(surf[2])
+            self.p0 = np.array(surf[0])
+            self.v1 = np.array(surf[1])
+            self.v2 = np.array(surf[2])
         else:
             if geo_utils is None:
                 raise Error("Unable to find pygeo module, which is required for this functionality.")
@@ -179,9 +179,9 @@ class WeightProblem(object):
                     v1.append(P2 - P3)
                     v2.append(P1 - P3)
 
-        self.p0 = numpy.array(p0)
-        self.v1 = numpy.array(v1)
-        self.v2 = numpy.array(v2)
+        self.p0 = np.array(p0)
+        self.v1 = np.array(v1)
+        self.v2 = np.array(v2)
 
     def writeSurfaceTecplot(self, fileName):
         """
@@ -206,7 +206,7 @@ class WeightProblem(object):
             points.append(self.p0[i] + self.v1[i])
             points.append(self.p0[i] + self.v2[i])
             for i in range(len(points)):
-                f.write("%f %f %f\n" % (points[i][0], points[i][1], points[i][2]))
+                f.write(f"{points[i][0]:f} {points[i][1]:f} {points[i][2]:f}\n")
 
         for i in range(len(self.p0)):
             f.write("%d %d %d\n" % (3 * i + 1, 3 * i + 2, 3 * i + 3))
@@ -506,12 +506,12 @@ class WeightProblem(object):
             for key in self.components.keys():
                 CG = self.components[key].getCG(loc)
                 mass = self.components[key].getMass()
-                x = numpy.real(CG[0])
-                y = numpy.real(CG[1])
-                z = numpy.real(CG[2])
-                m = numpy.real(mass)
+                x = np.real(CG[0])
+                y = np.real(CG[1])
+                z = np.real(CG[2])
+                m = np.real(mass)
 
-                f.write("%f %f %f %f\n" % (x, y, z, m))
+                f.write(f"{x:f} {y:f} {z:f} {m:f}\n")
 
             # end
             f.write("\n")
@@ -520,10 +520,10 @@ class WeightProblem(object):
         # textOffset = 0.5
         # for loc in locList:
         #     for name in self.nameList:
-        #         x= numpy.real(self.componentDict[name].CG[loc][0])
-        #         y= numpy.real(self.componentDict[name].CG[loc][1])
-        #         z= numpy.real(self.componentDict[name].CG[loc][2])+textOffset
-        #         m= numpy.real(self.componentDict[name].W)
+        #         x= np.real(self.componentDict[name].CG[loc][0])
+        #         y= np.real(self.componentDict[name].CG[loc][1])
+        #         z= np.real(self.componentDict[name].CG[loc][2])+textOffset
+        #         m= np.real(self.componentDict[name].W)
 
         #         f.write('TEXT CS=GRID3D, HU=POINT, X=%f, Y=%f, Z=%f, H=12, T="%s"\n'%(x,y,z,name+' '+loc))
         #     # end
@@ -545,7 +545,7 @@ class WeightProblem(object):
             mass = self.components[key].getMass(self.units)
             W = self.components[key].getWeight(self.units)
             name = self.components[key].name
-            f.write("%s: %f, %f, %f %f %f \n" % (name, W, mass, CG[0], CG[1], CG[2]))
+            f.write(f"{name}: {W:f}, {mass:f}, {CG[0]:f} {CG[1]:f} {CG[2]:f} \n")
         # end
 
         f.close()
@@ -562,7 +562,7 @@ class WeightProblem(object):
         return " "
 
 
-class FuelCase(object):
+class FuelCase:
     """
     class to handle individual fuel cases.
     """
@@ -649,9 +649,7 @@ class FuelCase(object):
 
         # First check if we are allowed to add the DV:
         if key not in self.possibleDVs:
-            raise Error(
-                "The DV '%s' could not be added.  The list of possible DVs are: %s." % (key, repr(self.possibleDVs))
-            )
+            raise Error(f"The DV '{key}' could not be added.  The list of possible DVs are: {repr(self.possibleDVs)}.")
 
         if name is None:
             dvName = "%s_" % self.name + key
@@ -799,7 +797,7 @@ class FuelCase(object):
         return args
 
 
-class fuelCaseDV(object):
+class fuelCaseDV:
     """
     A container storing information regarding a fuel case variable.
     """

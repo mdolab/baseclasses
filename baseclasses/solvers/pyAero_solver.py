@@ -7,13 +7,13 @@ Holds the Python Aerodynamic Analysis Classes (base).
 # =============================================================================
 # Standard Python modules
 # =============================================================================
-import numpy
+import numpy as np
 
 # =============================================================================
 # Extension modules
 # =============================================================================
 from .BaseSolver import BaseSolver
-from .utils import CaseInsensitiveDict, Error
+from ..utils import CaseInsensitiveDict, Error
 
 # =============================================================================
 # AeroSolver Class
@@ -55,6 +55,9 @@ class AeroSolver(BaseSolver):
         self.families = CaseInsensitiveDict()
         self._updateGeomInfo = False
 
+        # Initialize kwargs for addPointSet
+        self.pointSetKwargs = None
+
     def setMesh(self, mesh):
         """
         Set the mesh object to the aero_solver to do geometric deformations
@@ -77,7 +80,7 @@ class AeroSolver(BaseSolver):
         pts = self.getSurfaceCoordinates(self.meshFamilyGroup)
         self.mesh.setSurfaceDefinition(pts, conn, faceSizes)
 
-    def setDVGeo(self, DVGeo):
+    def setDVGeo(self, DVGeo, pointSetKwargs=None):
         """
         Set the DVGeometry object that will manipulate 'geometry' in
         this object. Note that <SOLVER> does not **strictly** need a
@@ -86,9 +89,12 @@ class AeroSolver(BaseSolver):
 
         Parameters
         ----------
-        dvGeo : A DVGeometry object.
-            Object responsible for manipulating the constraints that
-            this object is responsible for.
+        DVGeo : A DVGeometry object.
+            Object responsible for manipulating the geometry.
+
+        pointSetKwargs : dict
+            Keyword arguments to be passed to the DVGeo addPointSet call.
+            Useful for DVGeometryMulti, specifying FFD projection tolerances, etc.
 
         Examples
         --------
@@ -97,6 +103,11 @@ class AeroSolver(BaseSolver):
         """
 
         self.DVGeo = DVGeo
+
+        if pointSetKwargs is None:
+            self.pointSetKwargs = {}
+        else:
+            self.pointSetKwargs = pointSetKwargs
 
     def getTriangulatedMeshSurface(self, groupName=None, **kwargs):
         """
@@ -118,7 +129,7 @@ class AeroSolver(BaseSolver):
         # groupName
         pts = self.comm.allgather(self.getSurfaceCoordinates(groupName, **kwargs))
         conn, faceSizes = self.getSurfaceConnectivity(groupName)
-        conn = numpy.array(conn).flatten()
+        conn = np.array(conn).flatten()
         conn = self.comm.allgather(conn)
         faceSizes = self.comm.allgather(faceSizes)
 
@@ -191,7 +202,7 @@ class AeroSolver(BaseSolver):
                 points.append(p0[i] + v1[i])
                 points.append(p0[i] + v2[i])
                 for i in range(len(points)):
-                    f.write("%f %f %f\n" % (points[i][0], points[i][1], points[i][2]))
+                    f.write(f"{points[i][0]:f} {points[i][1]:f} {points[i][2]:f}\n")
 
             for i in range(len(p0)):
                 f.write("%d %d %d\n" % (3 * i + 1, 3 * i + 2, 3 * i + 3))
@@ -309,7 +320,7 @@ class AeroSolver(BaseSolver):
         # It is very important that the list of families is sorted
         # becuase in fortran we always use a binary search to check if
         # a famID is in the list.
-        self.families[groupName] = sorted(numpy.unique(indices))
+        self.families[groupName] = sorted(np.unique(indices))
 
     def getSurfaceCoordinates(self, group_name):
         """
@@ -427,7 +438,7 @@ class AeroSolver(BaseSolver):
         pass
 
     def setStates(self, states):
-        """ Set the states on this processor."""
+        """Set the states on this processor."""
 
         pass
 

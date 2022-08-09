@@ -1,9 +1,5 @@
-.. _BaseSolver:
-
 BaseSolver
 ----------
 
-.. currentmodule:: baseclasses.BaseSolver
-
-.. autoclass:: BaseSolver
+.. autoclass:: baseclasses.BaseSolver
     :members:

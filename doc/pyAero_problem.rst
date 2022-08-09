@@ -1,9 +1,6 @@
-.. _pyAero_problem:
+AeroProblem
+-----------
 
-pyAero_problem
---------------
-
-.. currentmodule:: baseclasses.pyAero_problem
-
-.. autoclass:: AeroProblem
+.. autoclass:: baseclasses.AeroProblem
     :members:
+    :private-members: _updateFromRe, _updateFromM, _updateFromV
