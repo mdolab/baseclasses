@@ -2,6 +2,7 @@ from .containers import CaseInsensitiveSet, CaseInsensitiveDict
 from .error import Error
 from .utils import getPy3SafeString, pp
 from .fileIO import writeJSON, readJSON, writePickle, readPickle, redirectIO, redirectingIO
+from .solverHist import SolverHist
 
 __all__ = [
     "CaseInsensitiveSet",
@@ -15,4 +16,5 @@ __all__ = [
     "readPickle",
     "redirectIO",
     "redirectingIO",
+    "SolverHist",
 ]
