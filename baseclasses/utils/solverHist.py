@@ -37,12 +37,8 @@ class SolverHist(object):
         Create an empty history dictionary based on the current solver options
         """
 
-        if options["writeconvergencehist"]:
-            length = int(options["maxiter"] + 1)
-            self.storeValues = True
-        else:
-            length = 1
-            self.storeValues = False
+        length = options["maxincrements"] * (options["nnliter"] + 1)
+        self.storeValues = True
 
         # Make a local copy of the options
         self.options = options
@@ -61,6 +57,8 @@ class SolverHist(object):
         self.hist = {"values": {}, "valueFormat": {}, "nameFormat": {}, "varType": {}}
         self.varsToPrint = []
         self.latestIter = 0
+
+        self.addField(Name="Iter", Type=int, ValueFormat=None, NameFormat=None, Print=True)
 
     def addField(self, Name, Type, ValueFormat=None, NameFormat=None, Print=False):
         """Add a field to the solution history"""
@@ -142,7 +140,7 @@ class SolverHist(object):
             try:
                 self.hist["values"][key][i] = val
             except KeyError:
-                Error("Option '%-30s' is not a valid history variable." % (key))
+                raise KeyError("Option '%-30s' is not a valid history variable." % (key))
 
         self.latestIter += 1
 
