@@ -2,7 +2,7 @@
 ==============================================================================
 BaseClasses: Solver History Class
 ==============================================================================
-@File    :   solverHist-New.py
+@File    :   SolverHistory-New.py
 @Date    :   2022/08/09
 @Author  :   Alasdair Christison Gray
 @Description : A general solver history class for storing values from a nonlinear solution.
@@ -12,11 +12,10 @@ BaseClasses: Solver History Class
 # Standard Python modules
 # ==============================================================================
 from collections import OrderedDict
-from warnings import warn
 import copy
 import os
 import time
-from typing import Optional, Type, Dict, Any
+from typing import Optional, Type, Dict, Any, List
 import pickle
 
 # ==============================================================================
@@ -37,6 +36,17 @@ class SolverHistory(object):
     object on.
     """
 
+    __slots__ = [
+        "variables",
+        "data",
+        "iter",
+        "startTime",
+        "defaultFormat",
+        "testValues",
+        "DEFAULT_OTHER_FORMAT",
+        "DEFAULT_OTHER_VALUE",
+    ]
+
     def __init__(self) -> None:
         # Dictionaries for storing variable information and values
         self.variables: Dict = OrderedDict()
@@ -45,10 +55,6 @@ class SolverHistory(object):
         # Initialise iteration counter and solve start time
         self.iter: int = 0
         self.startTime: float = -1.0
-
-        # Add fields for the iteration number and time, the only two variables that are always stored
-        self.addVariable("Time", varType=float, printVar=True)
-        self.addVariable("Iter", varType=int, printVar=True)
 
         # --- Define default print formatting for some common types ---
         self.defaultFormat: Dict[Type, str] = {}
@@ -66,16 +72,9 @@ class SolverHistory(object):
         self.DEFAULT_OTHER_FORMAT: str = "{:^10}"
         self.DEFAULT_OTHER_VALUE: str = "a"
 
-        self.__slots__ = [
-            "variables",
-            "data",
-            "iter",
-            "startTime",
-            "defaultFormat",
-            "testValues",
-            "DEFAULT_OTHER_FORMAT",
-            "DEFAULT_OTHER_VALUE",
-        ]
+        # Add fields for the iteration number and time, the only two variables that are always stored
+        self.addVariable("Time", varType=float, printVar=True)
+        self.addVariable("Iter", varType=int, printVar=True)
 
     def reset(self) -> None:
         """Reset the history"""
@@ -93,9 +92,9 @@ class SolverHistory(object):
     def addVariable(
         self,
         name: str,
-        varType: Optional[Type] = None,
         printVar: bool = False,
-        valueFormat: Optional[str] = None,
+        varType: Optional[Type] = None,
+        printFormat: Optional[str] = None,
     ) -> None:
         """Define a new field to be stored in the history.
 
@@ -108,7 +107,7 @@ class SolverHistory(object):
         varType : Type, optional
             Variable type, i.e int, float, str etc, used for formatting when printing, by default None, not used if
             `printVar` is False
-        valueFormat : str, optional
+        printFormat : str, optional
             Format string valid for use with the str.format() method (e.g "{:17.11e}" for a float or "{:03d}" for an
             int), by default None, in which case a default format for the given `varType` is used, not used if
             `printVar` is False
@@ -125,8 +124,8 @@ class SolverHistory(object):
                     f"Type of variable {name} not supplied, must be specified if variable is to be printed"
                 )
             self.variables[name]["type"] = varType
-            if valueFormat is not None:
-                self.variables[name]["format"] = valueFormat
+            if printFormat is not None:
+                self.variables[name]["format"] = printFormat
             elif varType in self.defaultFormat:
                 self.variables[name]["format"] = self.defaultFormat[varType]
                 testValue = self.testValues[varType]
@@ -134,11 +133,16 @@ class SolverHistory(object):
                 self.variables[name]["format"] = self.DEFAULT_OTHER_FORMAT
                 testValue = self.DEFAULT_OTHER_VALUE
 
-            # --- Figure out column width, the maximum of the length of the name and the formatted value ---
-            testString = self.variables[name]["format"].format(testValue)
+            # Figure out column width, the maximum of the length of the name and the formatted value, also check that
+            # the format string is valid
+            try:
+                testString = self.variables[name]["format"].format(testValue)
+            except ValueError as e:
+                raise ValueError(f"Supplied format string \"{self.variables[name]['format']}\" is invalid") from e
+
             dataLen = len(testString)
             nameLen = len(name)
-            self.variables[name]["format"]["columnWidth"] = max(dataLen, nameLen)
+            self.variables[name]["columnWidth"] = max(dataLen, nameLen)
 
     def startTiming(self) -> None:
         """Record the start time of the solver
@@ -160,17 +164,15 @@ class SolverHistory(object):
             Dictionary of values to record, with variable names as keys
         """
 
+        # Store time
         if self.startTime < 0.0:
             self.startTiming()
-
-        # Store time
-        self.data["Time"].append(time.time() - self.startTime)
-
-        # Increment iteration counter
-        self.iter += 1
+            data["Time"] = 0.0
+        else:
+            data["Time"] = time.time() - self.startTime
 
         # Store iteration number
-        self.data["Iter"].append(self.iter)
+        data["Iter"] = self.iter
 
         # Store data, only if the supplied data is of the correct type
         for varName in self.variables:
@@ -189,8 +191,11 @@ class SolverHistory(object):
         # Any remaining entries in the data dictionary are variables that have not been defined using addVariable(), throw an error
         if len(data) > 0:
             raise ValueError(
-                f"Unknown variables {data.keys()} supplied to Solution History recorder, recorded variables are {self.variables.keys()}"
+                f"Unknown variables {data.keys()} supplied to Solution History recorder, recorded variables are {self.getVariables()}"
             )
+
+        # Increment iteration counter
+        self.iter += 1
 
     def writeFullVariableHistory(self, varName: str, values: list) -> None:
         pass
@@ -214,4 +219,24 @@ class SolverHistory(object):
         base = os.path.splitext(fileName)[0]
         fileName = base + ".pkl"
         with open(fileName, "wb") as file:
-            pickle.dump(self.data, file, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.getData(), file, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def getData(self) -> Dict[str, List]:
+        """Get the recorded data
+
+        Returns
+        -------
+        dict
+            Dictionary of recorded data
+        """
+        return copy.deepcopy(self.data)
+
+    def getVariables(self) -> List[str]:
+        """Get the recorded variables
+
+        Returns
+        -------
+        dict
+            Dictionary of recorded variables
+        """
+        return list(self.variables.keys())
