@@ -12,6 +12,8 @@ Solver History unit tests
 # Standard Python modules
 # ==============================================================================
 import os
+import sys
+import io
 import random
 import unittest
 import pickle
@@ -85,6 +87,10 @@ class TestSolverHistoryWriting(unittest.TestCase):
         self.solverHistory.addVariable("Random String", varType=str, printVar=True)
         self.solverHistory.addVariable("Random List", varType=list, printVar=True)
 
+        self.metadata = {"Some very important metadata": "Important metadata"}
+        metadataKey = list(self.metadata.keys())[0]
+        self.solverHistory.addMetadata(metadataKey, self.metadata[metadataKey])
+
         self.numIters = 10
 
         for _ in range(self.numIters):
@@ -125,9 +131,13 @@ class TestSolverHistoryWriting(unittest.TestCase):
         self.solverHistory.save(baseName)
         try:
             data = self.solverHistory.getData()
+            metadata = self.solverHistory.getMetadata()
             with open(baseName + ".pkl", "rb") as f:
-                loadedData = pickle.load(f)
+                loadedFile = pickle.load(f)
+                loadedData = loadedFile["data"]
+                loadedMetadata = loadedFile["metadata"]
             self.assertEqual(data, loadedData)
+            self.assertEqual(metadata, loadedMetadata)
         finally:
             os.remove(baseName + ".pkl")
 
@@ -144,6 +154,22 @@ class TestSolverHistoryWriting(unittest.TestCase):
         self.assertEqual(data["Time"], [0.0])
         for var in ["Random Int", "Random Float", "Random String", "Random List"]:
             self.assertEqual(data[var], [np.nan])
+
+        # Check metadata clearing
+        self.assertEqual(self.solverHistory.getMetadata(), self.metadata)
+        self.solverHistory.reset(clearMetadata=True)
+        self.assertEqual(self.solverHistory.getMetadata(), {})
+
+    def test_printHeader(self) -> None:
+        """Check that the header is printed as expected"""
+        capturedOutput = io.StringIO()
+        sys.stdout = capturedOutput
+        self.solverHistory.printHeader()
+        sys.stdout = sys.__stdout__
+        expectedHeader = """+------------------------------------------------------------------------------------------------------+
+|        Time         |  Iter   |  Random Int  |    Random Float     |  Random String  |  Random List  |
++------------------------------------------------------------------------------------------------------+\n"""
+        self.assertEqual(capturedOutput.getvalue(), expectedHeader)
 
 
 if __name__ == "__main__":

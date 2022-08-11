@@ -34,11 +34,14 @@ class SolverHistory(object):
     NOTE: The implementation of this class contains no consideration of parallelism. If you are using a solverHistory
     object in your parallel solver, you will need to take care over which procs you make calls to the SolverHistory
     object on.
+
+    TODO: Add ability to store arbitrary metadata
     """
 
     __slots__ = [
         "variables",
         "data",
+        "metadata",
         "iter",
         "startTime",
         "defaultFormat",
@@ -49,8 +52,9 @@ class SolverHistory(object):
 
     def __init__(self) -> None:
         # Dictionaries for storing variable information and values
-        self.variables: Dict = OrderedDict()
-        self.data: Dict = OrderedDict()
+        self.variables: Dict[str, Any] = OrderedDict()
+        self.data: Dict[str, List] = OrderedDict()
+        self.metadata: Dict[str, Any] = {}
 
         # Initialise iteration counter and solve start time
         self.iter: int = 0
@@ -63,7 +67,7 @@ class SolverHistory(object):
         self.defaultFormat[float] = "{:17.11e}"
         self.testValues[float] = 0.0
         # int
-        self.defaultFormat[int] = "{:04d}"
+        self.defaultFormat[int] = "{:5d}"
         self.testValues[int] = 0
         # str
         self.defaultFormat[str] = "{:^10}"
@@ -76,7 +80,7 @@ class SolverHistory(object):
         self.addVariable("Time", varType=float, printVar=True)
         self.addVariable("Iter", varType=int, printVar=True)
 
-    def reset(self) -> None:
+    def reset(self, clearMetadata: bool = False) -> None:
         """Reset the history"""
 
         # Reset iteration counter
@@ -88,6 +92,25 @@ class SolverHistory(object):
         # Clear recorded data
         for varName in self.data:
             self.data[varName] = []
+
+        # Clear metadata if required
+        if clearMetadata:
+            self.metadata = {}
+
+    def addMetadata(self, name: str, data: Any) -> None:
+        """Add a piece of metadata to the history
+
+        The metadata attribute is simply a dictionary that can be used to store arbitrary information related to the
+        solution being recorded, e.g solver options
+
+        Parameters
+        ----------
+        name : str
+            Item name/key
+        data : Any
+            Item to store
+        """
+        self.metadata[name] = data
 
     def addVariable(
         self,
@@ -143,6 +166,7 @@ class SolverHistory(object):
             dataLen = len(testString)
             nameLen = len(name)
             self.variables[name]["columnWidth"] = max(dataLen, nameLen)
+            self.variables[name]["headerFormat"] = "{:^%i}" % (self.variables[name]["columnWidth"] + 4)
 
     def startTiming(self) -> None:
         """Record the start time of the solver
@@ -201,7 +225,27 @@ class SolverHistory(object):
         pass
 
     def printHeader(self) -> None:
-        pass
+        """Print the header of the iteration printout
+
+        The header will look something like this:
+
+        +--------------------------------------------------------------------------...------+
+        | Iter  |       Time        |       Var 1       |       Var 2       |      ...      |
+        +--------------------------------------------------------------------------...------+
+        """
+
+        # Each field will be `columnWidth` characters wide plus 2 spaces each side, plus the vertical bar between each
+        # field
+        headerString = "|"
+        for var in self.variables:
+            headerString += self.variables[var]["headerFormat"].format(var)
+            headerString += "|"
+        headerWidth = len(headerString)
+
+        headerBar = "+" + "-" * (headerWidth - 2) + "+"
+        print(headerBar)
+        print(headerString)
+        print(headerBar)
 
     def printData(self) -> None:
         pass
@@ -218,8 +262,10 @@ class SolverHistory(object):
         """
         base = os.path.splitext(fileName)[0]
         fileName = base + ".pkl"
+
+        dataToSave = {"data": self.getData(), "metadata": self.getMetadata()}
         with open(fileName, "wb") as file:
-            pickle.dump(self.getData(), file, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(dataToSave, file, protocol=pickle.HIGHEST_PROTOCOL)
 
     def getData(self) -> Dict[str, List]:
         """Get the recorded data
@@ -230,6 +276,16 @@ class SolverHistory(object):
             Dictionary of recorded data
         """
         return copy.deepcopy(self.data)
+
+    def getMetadata(self) -> Dict[str, Any]:
+        """Get the recorded metadata
+
+        Returns
+        -------
+        dict
+            Dictionary of recorded metadata
+        """
+        return copy.deepcopy(self.metadata)
 
     def getVariables(self) -> List[str]:
         """Get the recorded variables
