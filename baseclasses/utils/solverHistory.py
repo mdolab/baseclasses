@@ -272,8 +272,6 @@ class SolverHistory(object):
     def printData(self, iters: Optional[Union[int, Iterable[int]]] = None) -> None:
         """Print a selection of lines from the history
 
-        _extended_summary_
-
         Parameters
         ----------
         iters : int or Iterable of ints, optional
