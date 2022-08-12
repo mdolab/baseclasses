@@ -14,10 +14,9 @@ Solver History unit tests
 import os
 import sys
 import io
-import random
 import unittest
 import pickle
-from typing import Optional, Type
+from typing import Type
 
 # ==============================================================================
 # External Python modules
@@ -101,7 +100,7 @@ class TestSolverHistoryWriting(unittest.TestCase):
         for _ in range(self.numIters):
             iterData = {
                 "Random Int": rng.integers(low=-100, high=100),
-                "Random Float": rng.random()-0.5,
+                "Random Float": rng.random() - 0.5,
                 "Random String": str(rng.integers(low=-100, high=100)),
                 "Random List": [rng.integers(low=-100, high=100)],
                 "Don't print": rng.random(),
@@ -178,25 +177,26 @@ class TestSolverHistoryWriting(unittest.TestCase):
         self.assertEqual(capturedOutput.getvalue(), expectedHeader)
 
     def test_printData(self) -> None:
-        """Test that printing of iteration data
-        """
+        """Test that printing of iteration data"""
 
         # Test that trying to print an iteration outside the range of recorded iterations throws an error
         with self.assertRaises(ValueError):
-            self.solverHistory.printData(iters=self.numIters+1)
+            self.solverHistory.printData(iters=self.numIters + 1)
         with self.assertRaises(ValueError):
-            self.solverHistory.printData(iters=-(self.numIters+1))
+            self.solverHistory.printData(iters=-(self.numIters + 1))
 
         # Test that printing the last line works correctly
         # Need to everwrite the time values so that they are deterministic
-        timeList = [0.1]*self.numIters
+        timeList = [0.1] * self.numIters
         timeList[0] = None
         self.solverHistory.writeFullVariableHistory(name="Time", values=timeList)
         capturedOutput = io.StringIO()
         sys.stdout = capturedOutput
         self.solverHistory.printData()
         sys.stdout = sys.__stdout__
-        expectedLine = "|      9  |  1.000e-01  |       37     |  -3.64903494978e-01  |       15        |      [44]       |\n"
+        expectedLine = (
+            "|      9  |  1.000e-01  |       37     |  -3.64903494978e-01  |       15        |      [44]       |\n"
+        )
         self.assertEqual(capturedOutput.getvalue(), expectedLine)
 
         # Same thing but for the first iteration
@@ -204,7 +204,9 @@ class TestSolverHistoryWriting(unittest.TestCase):
         sys.stdout = capturedOutput
         self.solverHistory.printData(0)
         sys.stdout = sys.__stdout__
-        expectedLine = "|      0  |      -      |       70     |  -2.30213286236e-01  |       27        |      [-39]      |\n"
+        expectedLine = (
+            "|      0  |      -      |       70     |  -2.30213286236e-01  |       27        |      [-39]      |\n"
+        )
         self.assertEqual(capturedOutput.getvalue(), expectedLine)
 
     def test_writeFullVariableHistory(self) -> None:
@@ -232,6 +234,7 @@ class TestSolverHistoryWriting(unittest.TestCase):
         newIntHistoryList[3] = "Not an int"
         with self.assertRaises(TypeError):
             self.solverHistory.writeFullVariableHistory("Random Int", newIntHistoryList)
+
 
 if __name__ == "__main__":
     unittest.main()

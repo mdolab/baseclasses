@@ -934,7 +934,7 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
         self.nu = self.mu / self.rho
 
         # Calculate dynamic pressure
-        self.q = 0.5 * self.rho * self.V ** 2
+        self.q = 0.5 * self.rho * self.V**2
 
     def _updateFromM(self):
         """
@@ -964,7 +964,7 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
         self.nu = self.mu / self.rho
 
         # Calculate dynamic pressure
-        self.q = 0.5 * self.rho * self.V ** 2
+        self.q = 0.5 * self.rho * self.V**2
 
     def _updateFromV(self):
         """
@@ -988,7 +988,7 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
         self.nu = self.mu / self.rho
 
         # Calculate dynamic pressure
-        self.q = 0.5 * self.rho * self.V ** 2
+        self.q = 0.5 * self.rho * self.V**2
 
         # Calculate Mach number
         self.__dict__["mach"] = self.V / self.a

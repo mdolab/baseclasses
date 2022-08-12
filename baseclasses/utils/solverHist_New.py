@@ -21,7 +21,6 @@ import pickle
 # ==============================================================================
 # External Python modules
 # ==============================================================================
-import numpy as np
 
 # ==============================================================================
 # Extension modules
@@ -238,8 +237,8 @@ class SolverHistory(object):
         """
         if name not in self.variables:
             raise ValueError(
-                    f"Unknown variables {name} supplied to Solution History recorder, recorded variables are {self.getVariables()}"
-                )
+                f"Unknown variables {name} supplied to Solution History recorder, recorded variables are {self.getVariables()}"
+            )
         try:
             self.data[name] = [None if v is None else self.variables[name]["type"](v) for v in values]
         except ValueError as e:
