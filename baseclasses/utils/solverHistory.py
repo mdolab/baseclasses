@@ -23,8 +23,6 @@ class SolverHistory(object):
     NOTE: The implementation of this class contains no consideration of parallelism. If you are using a solverHistory
     object in your parallel solver, you will need to take care over which procs you make calls to the SolverHistory
     object on.
-
-    TODO: Add ability to store arbitrary metadata
     """
 
     __slots__ = [
