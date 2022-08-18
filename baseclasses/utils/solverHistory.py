@@ -2,9 +2,7 @@
 ==============================================================================
 BaseClasses: Solver History Class
 ==============================================================================
-@File    :   SolverHistory-New.py
-@Date    :   2022/08/09
-@Author  :   Alasdair Christison Gray
+
 @Description : A general solver history class for storing values from a nonlinear solution.
 """
 
