@@ -116,7 +116,7 @@ class SolverHistory(object):
         ----------
         name : str
             Variable name
-        varType : Type, optional
+        varType : Type
             Variable type, i.e int, float, str etc
         printVar : bool, optional
             Whether to include the variable in the iteration printout, by default False
@@ -141,7 +141,7 @@ class SolverHistory(object):
 
             # Get test value for figuring out how long a string is using the supplied format
             try:
-                testValue = testValue = self.testValues[varType]
+                testValue = self.testValues[varType]
             except KeyError:
                 testValue = self.DEFAULT_OTHER_VALUE
 
