@@ -16,14 +16,6 @@ import time
 from typing import Optional, Type, Dict, Any, List, Iterable, Union
 import pickle
 
-# ==============================================================================
-# External Python modules
-# ==============================================================================
-
-# ==============================================================================
-# Extension modules
-# ==============================================================================
-
 
 class SolverHistory(object):
     """The SolverHistory class can be used to store and print various useful values during the execution of a solver.
@@ -59,6 +51,8 @@ class SolverHistory(object):
 
         # --- Define default print formatting for some common types ---
         self.defaultFormat: Dict[Type, str] = {}
+        # Test values are used to check how wide the printed formatted values of a variable will be, so that we can make
+        # sure the columns in the iteration printout are wide enough
         self.testValues: Dict[Type, Any] = {}
         # float
         self.defaultFormat[float] = "{: 17.11e}"
