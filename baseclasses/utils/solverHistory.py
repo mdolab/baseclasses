@@ -243,9 +243,12 @@ class SolverHistory(object):
 
         The header will look something like this:
 
-        +--------------------------------------------------------------------------...------+
-        | Iter  |       Time        |       Var 1       |       Var 2       |      ...      |
-        +--------------------------------------------------------------------------...------+
+        .. code-block:: text
+
+            +--------------------------------------------------------------------------...------+
+            | Iter  |       Time        |       Var 1       |       Var 2       |      ...      |
+            +--------------------------------------------------------------------------...------+
+
         """
 
         # Each field will be `columnWidth` characters wide plus 2 spaces each side, plus the vertical bar between each
