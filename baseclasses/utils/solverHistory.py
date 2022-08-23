@@ -73,7 +73,13 @@ class SolverHistory(object):
         self.addVariable("Time", varType=float, printVar=True, printFormat="{:9.3e}")
 
     def reset(self, clearMetadata: bool = False) -> None:
-        """Reset the history"""
+        """Reset the history to its initial state.
+
+        Parameters
+        ----------
+        clearMetadata : bool, optional
+            Whether to clear the metadata too, by default False
+        """ """"""
 
         # Reset iteration counter
         self._iter = 0
