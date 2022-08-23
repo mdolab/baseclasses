@@ -87,6 +87,7 @@ class TestSolverHistoryWriting(unittest.TestCase):
         self.solverHistory = SolverHistory()
         self.solverHistory.addVariable("Random Int", varType=int, printVar=True)
         self.solverHistory.addVariable("Random Float", varType=float, printVar=True)
+        self.solverHistory.addVariable("Random Complex", varType=complex, printVar=True)
         self.solverHistory.addVariable("Random String", varType=str, printVar=True)
         self.solverHistory.addVariable("Random List", varType=list, printVar=True)
         self.solverHistory.addVariable("Don't print", varType=float, printVar=False)
@@ -101,6 +102,7 @@ class TestSolverHistoryWriting(unittest.TestCase):
             iterData = {
                 "Random Int": rng.integers(low=-100, high=100),
                 "Random Float": rng.random() - 0.5,
+                "Random Complex": complex(rng.random() - 0.5, rng.random() - 0.5),
                 "Random String": str(rng.integers(low=-100, high=100)),
                 "Random List": [rng.integers(low=-100, high=100)],
                 "Don't print": rng.random(),
@@ -109,8 +111,8 @@ class TestSolverHistoryWriting(unittest.TestCase):
 
     def test_dataListLength(self) -> None:
         """Check that the data list has the correct length"""
-        for var in self.solverHistory._variables:
-            self.assertEqual(len(self.solverHistory._data[var]), self.numIters)
+        for var in self.solverHistory.getData().values():
+            self.assertEqual(len(var), self.numIters)
 
     def test_writeWrongVariableType(self) -> None:
         """Check that writing with a wrong variable type throws an error"""
@@ -171,9 +173,9 @@ class TestSolverHistoryWriting(unittest.TestCase):
         sys.stdout = capturedOutput
         self.solverHistory.printHeader()
         sys.stdout = sys.__stdout__
-        expectedHeader = """+-------------------------------------------------------------------------------------------------+
-|  Iter   |    Time     |  Random Int  |     Random Float     |  Random String  |   Random List   |
-+-------------------------------------------------------------------------------------------------+\n"""
+        expectedHeader = """+---------------------------------------------------------------------------------------------------------------------------+
+|  Iter   |    Time     |  Random Int  |     Random Float     |     Random Complex      |  Random String  |   Random List   |
++---------------------------------------------------------------------------------------------------------------------------+\n"""
         self.assertEqual(capturedOutput.getvalue(), expectedHeader)
 
     def test_printData(self) -> None:
@@ -194,9 +196,7 @@ class TestSolverHistoryWriting(unittest.TestCase):
         sys.stdout = capturedOutput
         self.solverHistory.printData()
         sys.stdout = sys.__stdout__
-        expectedLine = (
-            "|      9  |  1.000e-01  |       37     |  -3.64903494978e-01  |       15        |      [44]       |\n"
-        )
+        expectedLine = "|      9  |  1.000e-01  |      -84     |   2.87098307489e-01  |  -2.606e-01+3.765e-01j  |      -85        |      [-89]      |\n"
         self.assertEqual(capturedOutput.getvalue(), expectedLine)
 
         # Same thing but for the first iteration
@@ -204,13 +204,11 @@ class TestSolverHistoryWriting(unittest.TestCase):
         sys.stdout = capturedOutput
         self.solverHistory.printData(0)
         sys.stdout = sys.__stdout__
-        expectedLine = (
-            "|      0  |      -      |       70     |  -2.30213286236e-01  |       27        |      [-39]      |\n"
-        )
+        expectedLine = "|      0  |      -      |       70     |  -2.30213286236e-01  |  -4.590e-01-4.835e-01j  |       27        |      [-65]      |\n"
         self.assertEqual(capturedOutput.getvalue(), expectedLine)
 
     def test_writeFullVariableHistory(self) -> None:
-        """Test the ability to write the entire histro y of a variable in one go with various types"""
+        """Test the ability to write the entire history of a variable in one go with various types"""
         newIntHistory = range(self.numIters)
         newIntHistoryList = list(newIntHistory)
 
