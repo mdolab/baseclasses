@@ -80,6 +80,19 @@ class TestSolverHistoryVariableAdding(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.solverHistory.addVariable(name="test", varType=list, printVar=True, printFormat="{:.2f}")
 
+    def test_overwriteVariable(self) -> None:
+        """Check that overwriting a variable works as expected"""
+        name = "TestVar"
+        varType = float
+        printVar = False
+        self.solverHistory.addVariable(name, varType=varType, printVar=printVar)
+        self.checkVariableAddedCorrectly(name=name, varType=varType, printVar=printVar)
+        # Trying to add same variable with print=True should not change anything unless we set overwirte=True
+        self.solverHistory.addVariable(name, varType=varType, printVar=True)
+        self.checkVariableAddedCorrectly(name=name, varType=varType, printVar=False)
+        self.solverHistory.addVariable(name, varType=varType, printVar=True, overwrite=True)
+        self.checkVariableAddedCorrectly(name=name, varType=varType, printVar=True)
+
 
 class TestSolverHistoryWriting(unittest.TestCase):
     def setUp(self):
@@ -153,8 +166,12 @@ class TestSolverHistoryWriting(unittest.TestCase):
         self.solverHistory.reset()
         self.assertEqual(self.solverHistory._iter, 0)
         self.assertTrue(self.solverHistory._startTime < 0.0)
-        for var in self.solverHistory._variables:
-            self.assertEqual(self.solverHistory._data[var], [])
+        data = self.solverHistory.getData()
+        for var in data.values():
+            self.assertEqual(var, [])
+
+        # Now if we write a single iteration but provide no data then the iteration and time should be set, but all
+        # other variables should be given a None value
         self.solverHistory.write({})
         data = self.solverHistory.getData()
         self.assertEqual(data["Iter"], [0])
