@@ -301,13 +301,13 @@ class SolverHistory(object):
         elif isinstance(iters, int):
             iters = [iters]
 
-        if max(iters) >= self._iter:
+        if max(iters) >= self._iter or min(iters) < -self._iter:
+            if max(iters) >= self._iter:
+                badIter = max(iters)
+            else:
+                badIter = min(iters)
             raise ValueError(
-                f"Requested iteration {max(iters)} is not in the history, only {self._iter} iterations in history"
-            )
-        if min(iters) < -self._iter:
-            raise ValueError(
-                f"Requested iteration {min(iters)} is not in the history, only {self._iter} iterations in history"
+                f"Requested iteration {badIter} is not in the history, only {self._iter} iterations in history"
             )
 
         for i in iters:
