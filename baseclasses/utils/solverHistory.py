@@ -312,12 +312,12 @@ class SolverHistory(object):
 
         for i in iters:
             lineString = "|"
-            for var in self._variablesToPrint:
-                if self._data[var][i] is None:
-                    lineString += self._variables[var]["headerFormat"].format("-")
+            for varName in self._variablesToPrint:
+                if self._data[varName][i] is None:
+                    lineString += self._variables[varName]["headerFormat"].format("-")
                 else:
-                    valueString = self._variables[var]["format"].format(self._data[var][i])
-                    lineString += self._variables[var]["headerFormat"].format(valueString)
+                    valueString = self._variables[varName]["format"].format(self._data[varName][i])
+                    lineString += self._variables[varName]["headerFormat"].format(valueString)
                 lineString += "|"
             print(lineString)
 
@@ -377,4 +377,4 @@ class SolverHistory(object):
         list
             List of variables to print
         """
-        return [var for var in self._variables if self._variables[var]["print"]]
+        return [varName for varName in self._variables if self._variables[varName]["print"]]
