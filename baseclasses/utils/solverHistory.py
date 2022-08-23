@@ -55,6 +55,9 @@ class SolverHistory(object):
         # float
         self._defaultFormat[float] = "{: 17.11e}"
         self._testValues[float] = 0.0
+        # complex
+        self._defaultFormat[complex] = "{: 9.3e}"
+        self._testValues[complex] = complex(0.0)
         # int
         self._defaultFormat[int] = "{: 5d}"
         self._testValues[int] = 0
