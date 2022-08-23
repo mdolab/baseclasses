@@ -278,8 +278,8 @@ class SolverHistory(object):
         # Each field will be `columnWidth` characters wide plus 2 spaces each side, plus the vertical bar between each
         # field
         headerString = "|"
-        for var in self._variablesToPrint:
-            headerString += self._variables[var]["headerFormat"].format(var)
+        for varName in self._variablesToPrint:
+            headerString += self._variables[varName]["headerFormat"].format(varName)
             headerString += "|"
         headerWidth = len(headerString)
 
