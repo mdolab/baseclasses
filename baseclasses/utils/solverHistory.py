@@ -167,8 +167,8 @@ class SolverHistory(object):
                 except KeyError:
                     testValue = self._DEFAULT_OTHER_VALUE
 
-                # Figure out column width, the maximum of the length of the name and the formatted value, also check that
-                # the format string is valid
+                # Figure out column width, the maximum of the length of the name and the formatted value, also check
+                # that the format string is valid
                 try:
                     testString = self._variables[name]["format"].format(testValue)
                 except (ValueError, TypeError) as e:
