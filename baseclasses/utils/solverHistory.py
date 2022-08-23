@@ -38,7 +38,16 @@ class SolverHistory(object):
         "_DEFAULT_OTHER_VALUE",
     ]
 
-    def __init__(self) -> None:
+    def __init__(self, printIter: bool = True, printTime: bool = True) -> None:
+        """Create a solver history instance
+
+        Parameters
+        ----------
+        printIter : bool, optional
+            Whether to include the history's internal iteration variable in the iteration printout, by default True
+        printTime : bool, optional
+            Whether to include the history's internal timing variable in the iteration printout, by default True
+        """
         # Dictionaries for storing variable information and values
         self._variables: Dict[str, Any] = OrderedDict()
         self._data: Dict[str, List] = OrderedDict()
@@ -70,8 +79,8 @@ class SolverHistory(object):
         self._DEFAULT_OTHER_VALUE: list = [2, "b", 3.0]
 
         # Add fields for the iteration number and time, the only two variables that are always stored
-        self.addVariable("Iter", varType=int, printVar=True)
-        self.addVariable("Time", varType=float, printVar=True, printFormat="{:9.3e}")
+        self.addVariable("Iter", varType=int, printVar=printIter)
+        self.addVariable("Time", varType=float, printVar=printTime, printFormat="{:9.3e}")
 
     def reset(self, clearMetadata: bool = False) -> None:
         """Reset the history to its initial state.
@@ -186,8 +195,8 @@ class SolverHistory(object):
     def write(self, data: dict) -> None:
         """Record data for a single iteration
 
-        Note that each call to this method is treated as a new iteration. All data to be recorded for an iteration must
-        therefore be recorded in a single call to this method.
+        Note that each call to this method is treated as a new iteration. All data to be recorded for a single solver
+        iteration must therefore be recorded in a single call to this method.
 
         Parameters
         ----------
