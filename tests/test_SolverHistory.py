@@ -42,26 +42,26 @@ class TestSolverHistoryVariableAdding(unittest.TestCase):
         """Check that a variable is added correctly"""
 
         # Check for corresponding keys in the variables and data dictionaries
-        self.assertIn(name, self.solverHistory.variables)
-        self.assertIn(name, self.solverHistory.data)
+        self.assertIn(name, self.solverHistory._variables)
+        self.assertIn(name, self.solverHistory._data)
 
         # Check that the print variable is correct
-        self.assertIn("print", self.solverHistory.variables[name])
-        self.assertEqual(self.solverHistory.variables[name]["print"], printVar)
+        self.assertIn("print", self.solverHistory._variables[name])
+        self.assertEqual(self.solverHistory._variables[name]["print"], printVar)
 
         # Check that the type variable is correct
-        self.assertIn("type", self.solverHistory.variables[name])
-        self.assertEqual(self.solverHistory.variables[name]["type"], varType)
+        self.assertIn("type", self.solverHistory._variables[name])
+        self.assertEqual(self.solverHistory._variables[name]["type"], varType)
 
         # If the variable is printed we should have values for the "format", "type" and "columnWidth" keys in the
         # variables dictionary, otherwiuse we should not
         if printVar:
-            self.assertEqual(self.solverHistory.variables[name]["type"], varType)
-            self.assertIn("format", self.solverHistory.variables[name])
-            self.assertIn("columnWidth", self.solverHistory.variables[name])
+            self.assertEqual(self.solverHistory._variables[name]["type"], varType)
+            self.assertIn("format", self.solverHistory._variables[name])
+            self.assertIn("columnWidth", self.solverHistory._variables[name])
         else:
-            self.assertNotIn("format", self.solverHistory.variables[name])
-            self.assertNotIn("columnWidth", self.solverHistory.variables[name])
+            self.assertNotIn("format", self.solverHistory._variables[name])
+            self.assertNotIn("columnWidth", self.solverHistory._variables[name])
 
     def test_addNoPrintVariable(self) -> None:
         """Check that adding a variable that is not to be printed goes as expected"""
@@ -109,8 +109,8 @@ class TestSolverHistoryWriting(unittest.TestCase):
 
     def test_dataListLength(self) -> None:
         """Check that the data list has the correct length"""
-        for var in self.solverHistory.variables:
-            self.assertEqual(len(self.solverHistory.data[var]), self.numIters)
+        for var in self.solverHistory._variables:
+            self.assertEqual(len(self.solverHistory._data[var]), self.numIters)
 
     def test_writeWrongVariableType(self) -> None:
         """Check that writing with a wrong variable type throws an error"""
@@ -125,10 +125,10 @@ class TestSolverHistoryWriting(unittest.TestCase):
     def test_getData(self) -> None:
         """Test the getData returns a copy of the recorded data"""
         data = self.solverHistory.getData()
-        self.assertEqual(data, self.solverHistory.data)
+        self.assertEqual(data, self.solverHistory._data)
 
         data["NewKey"] = 10
-        self.assertNotEqual(data, self.solverHistory.data)
+        self.assertNotEqual(data, self.solverHistory._data)
 
     def test_saveData(self) -> None:
         """Check that the data saved to a file is the same as that returned by getData"""
@@ -149,10 +149,10 @@ class TestSolverHistoryWriting(unittest.TestCase):
     def test_historyReset(self) -> None:
         """Check that the history is reset correctly"""
         self.solverHistory.reset()
-        self.assertEqual(self.solverHistory.iter, 0)
-        self.assertTrue(self.solverHistory.startTime < 0.0)
-        for var in self.solverHistory.variables:
-            self.assertEqual(self.solverHistory.data[var], [])
+        self.assertEqual(self.solverHistory._iter, 0)
+        self.assertTrue(self.solverHistory._startTime < 0.0)
+        for var in self.solverHistory._variables:
+            self.assertEqual(self.solverHistory._data[var], [])
         self.solverHistory.write({})
         data = self.solverHistory.getData()
         self.assertEqual(data["Iter"], [0])
