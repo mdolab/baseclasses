@@ -15,6 +15,7 @@ import os
 import time
 from typing import Optional, Type, Dict, Any, List, Iterable, Union
 import pickle
+import warnings
 
 
 class SolverHistory(object):
@@ -116,6 +117,7 @@ class SolverHistory(object):
         varType: Type,
         printVar: bool = False,
         printFormat: Optional[str] = None,
+        overwrite: bool = False,
     ) -> None:
         """Define a new field to be stored in the history.
 
@@ -129,43 +131,49 @@ class SolverHistory(object):
             Whether to include the variable in the iteration printout, by default False
         printFormat : str, optional
             Format string valid for use with the str.format() method (e.g "{:17.11e}" for a float or "{:03d}" for an
-            int), by default None, in which case a default format for the given `varType` is used, not used if
-            `printVar` is False
+            int), only important for variables that are to be printed, by default a predefined format for the given
+            `varType` is used
+        overwrite : bool, optional
+            Whether to overwrite any existing variables with the same name, by default False
         """
-        self._variables[name] = {"print": printVar, "type": varType}
 
-        # Create variable data list
-        self._data[name] = []
+        if name not in self._variables or overwrite:
+            self._variables[name] = {"print": printVar, "type": varType}
 
-        # Only store variable's string format if it's going to be printed
-        if printVar:
-            if printFormat is not None:
-                self._variables[name]["format"] = printFormat
-            elif varType in self._defaultFormat:
-                self._variables[name]["format"] = self._defaultFormat[varType]
+            # Create variable data list
+            self._data[name] = []
+
+            # Only store variable's string format if it's going to be printed
+            if printVar:
+                if printFormat is not None:
+                    self._variables[name]["format"] = printFormat
+                elif varType in self._defaultFormat:
+                    self._variables[name]["format"] = self._defaultFormat[varType]
+                else:
+                    self._variables[name]["format"] = self._DEFAULT_OTHER_FORMAT
+
+                # Get test value for figuring out how long a string is using the supplied format
+                try:
+                    testValue = self._testValues[varType]
+                except KeyError:
+                    testValue = self._DEFAULT_OTHER_VALUE
+
+                # Figure out column width, the maximum of the length of the name and the formatted value, also check that
+                # the format string is valid
+                try:
+                    testString = self._variables[name]["format"].format(testValue)
+                except (ValueError, TypeError) as e:
+                    raise ValueError(f"Supplied format string \"{self._variables[name]['format']}\" is invalid") from e
+
+                dataLen = len(testString)
+                nameLen = len(name)
+                self._variables[name]["columnWidth"] = max(dataLen, nameLen)
+
+                # --- Now figure out the format strings for the iteration printout header and values ---
+                # The header is simply centred in the available width, which is actually columnWidth + 4
+                self._variables[name]["headerFormat"] = f"{{:^{(self._variables[name]['columnWidth'] + 4)}s}}"
             else:
-                self._variables[name]["format"] = self._DEFAULT_OTHER_FORMAT
-
-            # Get test value for figuring out how long a string is using the supplied format
-            try:
-                testValue = self._testValues[varType]
-            except KeyError:
-                testValue = self._DEFAULT_OTHER_VALUE
-
-            # Figure out column width, the maximum of the length of the name and the formatted value, also check that
-            # the format string is valid
-            try:
-                testString = self._variables[name]["format"].format(testValue)
-            except (ValueError, TypeError) as e:
-                raise ValueError(f"Supplied format string \"{self._variables[name]['format']}\" is invalid") from e
-
-            dataLen = len(testString)
-            nameLen = len(name)
-            self._variables[name]["columnWidth"] = max(dataLen, nameLen)
-
-            # --- Now figure out the format strings for the iteration printout header and values ---
-            # The header is simply centred in the available width, which is actually columnWidth + 4
-            self._variables[name]["headerFormat"] = f"{{:^{(self._variables[name]['columnWidth'] + 4)}s}}"
+                warnings.warn(f"Variable '{name}' already defined, set `overwrite=True` to overwrite")
 
     def startTiming(self) -> None:
         """Record the start time of the solver
