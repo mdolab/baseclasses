@@ -89,7 +89,7 @@ class SolverHistory(object):
         ----------
         clearMetadata : bool, optional
             Whether to clear the metadata too, by default False
-        """ """"""
+        """
 
         # Reset iteration counter
         self._iter = 0
