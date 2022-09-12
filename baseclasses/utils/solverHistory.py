@@ -140,7 +140,7 @@ class SolverHistory(object):
             Whether to include the variable in the iteration printout, by default False
         printFormat : str, optional
             Format string valid for use with the str.format() method (e.g "{:17.11e}" for a float or "{:03d}" for an
-            int), only important for variables that are to be printed, by default a predefined format for the given
+            int), only important for variables that are to be printed. By default a predefined format for the given
             `varType` is used
         overwrite : bool, optional
             Whether to overwrite any existing variables with the same name, by default False
