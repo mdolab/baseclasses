@@ -18,6 +18,54 @@ import pickle
 import warnings
 
 
+class HistoryVariable(object):
+    def __init__(self, name: str, varType: Type, printFormat: Optional[str] = None, headerFormat: Optional[str] = None):
+        self.name: str = name
+        self.type: Type = varType
+        self.printFormat: Optional[str] = printFormat
+        self.headerFormat: Optional[str] = headerFormat
+        self.data: List = []
+
+    def reset(self) -> None:
+        self.data = []
+
+    def write(self, value: Any) -> None:
+        if value is None:
+            self.data.append(None)
+        else:
+            # Store data, only if the supplied data can be converted to the correct type
+            try:
+                convertedValue = self.type(value)
+                self.data.append(convertedValue)
+            except ValueError as e:
+                raise TypeError(
+                    f"Value '{value}' provided for variable '{self.name}' could not be converted to the type declared for this variable: {self.type}"
+                ) from e
+
+    def writeFullHistory(self, values: Iterable) -> None:
+        try:
+            self.data = [None if v is None else self.type(v) for v in values]
+        except ValueError as e:
+            raise TypeError(
+                f"A value provided for variable '{self.name}' could not be converted to the type declared for this variable: {self.type}"
+            ) from e
+
+    def getData(self) -> List:
+        return copy.deepcopy(self.data)
+
+    def getFormattedHeaderString(self, string: Optional[str] = None) -> str:
+        if self.headerFormat is None:
+            raise ValueError(f"No header format specified for variable {self.name}")
+        if string is None:
+            string = self.name
+        return self.headerFormat.format(string)
+
+    def getFormattedValueString(self, val) -> str:
+        if self.printFormat is None:
+            raise ValueError(f"No print format specified for variable {self.name}")
+        return self.printFormat.format(val)
+
+
 class SolverHistory(object):
     """The SolverHistory class can be used to store and print various useful values during the execution of a solver.
 
@@ -373,51 +421,3 @@ class SolverHistory(object):
             List of variables to print
         """
         return [self._variables[varName] for varName in self._printVariables if self._printVariables[varName]]
-
-
-class HistoryVariable(object):
-    def __init__(self, name: str, varType: Type, printFormat: Optional[str] = None, headerFormat: Optional[str] = None):
-        self.name: str = name
-        self.type: Type = varType
-        self.printFormat: Optional[str] = printFormat
-        self.headerFormat: Optional[str] = headerFormat
-        self.data: List = []
-
-    def reset(self) -> None:
-        self.data = []
-
-    def write(self, value: Any) -> None:
-        if value is None:
-            self.data.append(None)
-        else:
-            # Store data, only if the supplied data can be converted to the correct type
-            try:
-                convertedValue = self.type(value)
-                self.data.append(convertedValue)
-            except ValueError as e:
-                raise TypeError(
-                    f"Value '{value}' provided for variable '{self.name}' could not be converted to the type declared for this variable: {self.type}"
-                ) from e
-
-    def writeFullHistory(self, values: Iterable) -> None:
-        try:
-            self.data = [None if v is None else self.type(v) for v in values]
-        except ValueError as e:
-            raise TypeError(
-                f"A value provided for variable '{self.name}' could not be converted to the type declared for this variable: {self.type}"
-            ) from e
-
-    def getData(self) -> List:
-        return copy.deepcopy(self.data)
-
-    def getFormattedHeaderString(self, string: Optional[str] = None) -> str:
-        if self.headerFormat is None:
-            raise ValueError(f"No header format specified for variable {self.name}")
-        if string is None:
-            string = self.name
-        return self.headerFormat.format(string)
-
-    def getFormattedValueString(self, val) -> str:
-        if self.printFormat is None:
-            raise ValueError(f"No print format specified for variable {self.name}")
-        return self.printFormat.format(val)
