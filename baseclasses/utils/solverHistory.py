@@ -155,19 +155,21 @@ class SolverHistory(object):
         "_startTime",
         "_defaultFormat",
         "_testValues",
+        "_includeIter",
+        "_includeTime",
         "_DEFAULT_OTHER_FORMAT",
         "_DEFAULT_OTHER_VALUE",
     ]
 
-    def __init__(self, printIter: bool = True, printTime: bool = True) -> None:
+    def __init__(self, includeIter: bool = True, includeTime: bool = True) -> None:
         """Create a solver history instance
 
         Parameters
         ----------
-        printIter : bool, optional
-            Whether to include the history's internal iteration variable in the iteration printout, by default True
-        printTime : bool, optional
-            Whether to include the history's internal timing variable in the iteration printout, by default True
+        includeIter : bool, optional
+            Whether to include the history's internal iteration variable in the history, by default True
+        includeTime : bool, optional
+            Whether to include the history's internal timing variable in the history, by default True
         """
         # Dictionaries for storing variable information and values
         self._variables: Dict[str, HistoryVariable] = OrderedDict()
@@ -199,9 +201,14 @@ class SolverHistory(object):
         self._DEFAULT_OTHER_FORMAT: str = "{}"
         self._DEFAULT_OTHER_VALUE: list = [2, "b", 3.0]
 
-        # Add fields for the iteration number and time, the only two variables that are always stored
-        self.addVariable("Iter", varType=int, printVar=printIter)
-        self.addVariable("Time", varType=float, printVar=printTime, valueFormat="{:9.3e}")
+        # Add fields for the iteration number and time, unless the user excluded them
+        self._includeIter = includeIter
+        if self._includeIter:
+            self.addVariable("Iter", varType=int, printVar=True)
+
+        self._includeTime = includeTime
+        if self._includeTime:
+            self.addVariable("Time", varType=float, printVar=includeTime, valueFormat="{:9.3e}")
 
     def reset(self, clearMetadata: bool = False) -> None:
         """Reset the history to its initial state.
@@ -330,14 +337,16 @@ class SolverHistory(object):
         """
 
         # Store time
-        if self._startTime < 0.0:
-            self.startTiming()
-            data["Time"] = 0.0
-        else:
-            data["Time"] = time.time() - self._startTime
+        if self._includeTime:
+            if self._startTime < 0.0:
+                self.startTiming()
+                data["Time"] = 0.0
+            else:
+                data["Time"] = time.time() - self._startTime
 
         # Store iteration number
-        data["Iter"] = self._iter
+        if self._includeIter:
+            data["Iter"] = self._iter
 
         for variable in self._variables.values():
             try:
