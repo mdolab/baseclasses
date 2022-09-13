@@ -149,7 +149,10 @@ class SolverHistory(object):
         if name not in self._variables or overwrite:
 
             # Only store variable's string format if it's going to be printed
-            if printVar:
+            if not printVar:
+                printFormat = None
+                headerFormat = None
+            else:
                 if printFormat is not None:
                     pass
                 elif varType in self._defaultFormat:
@@ -179,9 +182,7 @@ class SolverHistory(object):
                 # --- Now figure out the format strings for the iteration printout header and values ---
                 # The header is simply centred in the available width, which is actually columnWidth + 4
                 headerFormat = f"{{:^{(columnWidth + 4)}s}}"
-            else:
-                printFormat = None
-                headerFormat = None
+
             self._variables[name] = HistoryVariable(name, varType, printFormat, headerFormat)
             self._printVariables[name] = printVar
         else:
@@ -363,7 +364,7 @@ class SolverHistory(object):
         return list(self._variables.keys())
 
     @property
-    def _variablesToPrint(self) -> List[str]:
+    def _variablesToPrint(self) -> List[HistoryVariable]:
         """Get the variables to print
 
         Returns
@@ -410,9 +411,13 @@ class HistoryVariable(object):
         return copy.deepcopy(self.data)
 
     def getFormattedHeaderString(self, string: Optional[str] = None) -> str:
+        if self.headerFormat is None:
+            raise ValueError(f"No header format specified for variable {self.name}")
         if string is None:
             string = self.name
         return self.headerFormat.format(string)
 
     def getFormattedValueString(self, val) -> str:
+        if self.printFormat is None:
+            raise ValueError(f"No print format specified for variable {self.name}")
         return self.printFormat.format(val)
