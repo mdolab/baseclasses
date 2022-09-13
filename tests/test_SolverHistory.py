@@ -41,27 +41,23 @@ class TestSolverHistoryVariableAdding(unittest.TestCase):
     ) -> None:
         """Check that a variable is added correctly"""
 
-        # Check for corresponding keys in the variables and data dictionaries
+        # Check for corresponding keys in the variables and printVariables dictionaries
         self.assertIn(name, self.solverHistory._variables)
-        self.assertIn(name, self.solverHistory._data)
+        self.assertIn(name, self.solverHistory._printVariables)
 
         # Check that the print variable is correct
-        self.assertIn("print", self.solverHistory._variables[name])
-        self.assertEqual(self.solverHistory._variables[name]["print"], printVar)
+        self.assertEqual(self.solverHistory._printVariables[name], printVar)
 
         # Check that the type variable is correct
-        self.assertIn("type", self.solverHistory._variables[name])
-        self.assertEqual(self.solverHistory._variables[name]["type"], varType)
+        self.assertEqual(self.solverHistory._variables[name].type, varType)
 
-        # If the variable is printed we should have values for the "format", "type" and "columnWidth" keys in the
-        # variables dictionary, otherwiuse we should not
+        # If the variable is printed it the printFormat and headerFormat attributes should not be None, otherwise, they should be
         if printVar:
-            self.assertEqual(self.solverHistory._variables[name]["type"], varType)
-            self.assertIn("format", self.solverHistory._variables[name])
-            self.assertIn("columnWidth", self.solverHistory._variables[name])
+            self.assertNotEqual(None, self.solverHistory._variables[name].printFormat)
+            self.assertNotEqual(None, self.solverHistory._variables[name].headerFormat)
         else:
-            self.assertNotIn("format", self.solverHistory._variables[name])
-            self.assertNotIn("columnWidth", self.solverHistory._variables[name])
+            self.assertEqual(None, self.solverHistory._variables[name].printFormat)
+            self.assertEqual(None, self.solverHistory._variables[name].headerFormat)
 
     def test_addNoPrintVariable(self) -> None:
         """Check that adding a variable that is not to be printed goes as expected"""
@@ -140,10 +136,11 @@ class TestSolverHistoryWriting(unittest.TestCase):
     def test_getData(self) -> None:
         """Test the getData returns a copy of the recorded data"""
         data = self.solverHistory.getData()
-        self.assertEqual(data, self.solverHistory._data)
+        for var in data:
+            self.assertEqual(data[var], self.solverHistory._variables[var].data)
 
-        data["NewKey"] = 10
-        self.assertNotEqual(data, self.solverHistory._data)
+            data[var].append(None)
+            self.assertNotEqual(data, self.solverHistory._variables[var].data)
 
     def test_saveData(self) -> None:
         """Check that the data saved to a file is the same as that returned by getData"""

@@ -28,7 +28,7 @@ class SolverHistory(object):
 
     __slots__ = [
         "_variables",
-        "_data",
+        "_printVariables",
         "_metadata",
         "_iter",
         "_startTime",
@@ -49,8 +49,8 @@ class SolverHistory(object):
             Whether to include the history's internal timing variable in the iteration printout, by default True
         """
         # Dictionaries for storing variable information and values
-        self._variables: Dict[str, Any] = OrderedDict()
-        self._data: Dict[str, List] = OrderedDict()
+        self._variables: Dict[str, HistoryVariable] = OrderedDict()
+        self._printVariables: Dict[str, bool] = {}
         self._metadata: Dict[str, Any] = {}
 
         # Initialise iteration counter and solve start time
@@ -98,8 +98,8 @@ class SolverHistory(object):
         self._startTime = -1.0
 
         # Clear recorded data
-        for varName in self._data:
-            self._data[varName] = []
+        for variable in self._variables.values():
+            variable.reset()
 
         # Clear metadata if required
         if clearMetadata:
@@ -147,19 +147,15 @@ class SolverHistory(object):
         """
 
         if name not in self._variables or overwrite:
-            self._variables[name] = {"print": printVar, "type": varType}
-
-            # Create variable data list
-            self._data[name] = []
 
             # Only store variable's string format if it's going to be printed
             if printVar:
                 if printFormat is not None:
-                    self._variables[name]["format"] = printFormat
+                    pass
                 elif varType in self._defaultFormat:
-                    self._variables[name]["format"] = self._defaultFormat[varType]
+                    printFormat = self._defaultFormat[varType]
                 else:
-                    self._variables[name]["format"] = self._DEFAULT_OTHER_FORMAT
+                    printFormat = self._DEFAULT_OTHER_FORMAT
 
                 # Get test value for figuring out how long a string is using the supplied format
                 try:
@@ -170,19 +166,26 @@ class SolverHistory(object):
                 # Figure out column width, the maximum of the length of the name and the formatted value, also check
                 # that the format string is valid
                 try:
-                    testString = self._variables[name]["format"].format(testValue)
+                    testString = printFormat.format(testValue)
                 except (ValueError, TypeError) as e:
-                    raise ValueError(f"Supplied format string \"{self._variables[name]['format']}\" is invalid") from e
+                    raise ValueError(
+                        f'Supplied format string "{printFormat}" is invalid for variable type {varType}'
+                    ) from e
 
                 dataLen = len(testString)
                 nameLen = len(name)
-                self._variables[name]["columnWidth"] = max(dataLen, nameLen)
+                columnWidth = max(dataLen, nameLen)
 
                 # --- Now figure out the format strings for the iteration printout header and values ---
                 # The header is simply centred in the available width, which is actually columnWidth + 4
-                self._variables[name]["headerFormat"] = f"{{:^{(self._variables[name]['columnWidth'] + 4)}s}}"
+                headerFormat = f"{{:^{(columnWidth + 4)}s}}"
             else:
-                warnings.warn(f"Variable '{name}' already defined, set `overwrite=True` to overwrite")
+                printFormat = None
+                headerFormat = None
+            self._variables[name] = HistoryVariable(name, varType, printFormat, headerFormat)
+            self._printVariables[name] = printVar
+        else:
+            warnings.warn(f"Variable '{name}' already defined, set `overwrite=True` to overwrite")
 
     def startTiming(self) -> None:
         """Record the start time of the solver
@@ -214,20 +217,12 @@ class SolverHistory(object):
         # Store iteration number
         data["Iter"] = self._iter
 
-        # Store data, only if the supplied data can be converted to the correct type
-        for varName in self._variables:
-            if varName in data:
-                value = data.pop(varName)
-                try:
-                    convertedValue = None if value is None else self._variables[varName]["type"](value)
-                    self._data[varName].append(convertedValue)
-                except ValueError as e:
-                    raise TypeError(
-                        f"Value '{value}' provided for variable '{varName}' could not be converted to the type declared for this variable: {self._variables[varName]['type']}"
-                    ) from e
+        for variable in self._variables.values():
+            try:
+                variable.write(data.pop(variable.name))
             # If no data was supplied for a given variable, store a None
-            else:
-                self._data[varName].append(None)
+            except KeyError:
+                variable.write(None)
 
         # Any remaining entries in the data dictionary are variables that have not been defined using addVariable(), throw an error
         if len(data) > 0:
@@ -255,12 +250,7 @@ class SolverHistory(object):
             raise ValueError(
                 f"Unknown variables {name} supplied to Solution History recorder, recorded variables are {self.getVariables()}"
             )
-        try:
-            self._data[name] = [None if v is None else self._variables[name]["type"](v) for v in values]
-        except ValueError as e:
-            raise TypeError(
-                f"A value provided for variable '{name}' could not be converted to the type declared for this variable: {self._variables[name]['type']}"
-            ) from e
+        self._variables[name].writeFullHistory(values)
 
     def printHeader(self) -> None:
         """Print the header of the iteration printout
@@ -278,8 +268,8 @@ class SolverHistory(object):
         # Each field will be `columnWidth` characters wide plus 2 spaces each side, plus the vertical bar between each
         # field
         headerString = "|"
-        for varName in self._variablesToPrint:
-            headerString += self._variables[varName]["headerFormat"].format(varName)
+        for variable in self._variablesToPrint:
+            headerString += variable.getFormattedHeaderString()
             headerString += "|"
         headerWidth = len(headerString)
 
@@ -312,12 +302,13 @@ class SolverHistory(object):
 
         for i in iters:
             lineString = "|"
-            for varName in self._variablesToPrint:
-                if self._data[varName][i] is None:
-                    lineString += self._variables[varName]["headerFormat"].format("-")
+            for variable in self._variablesToPrint:
+                data = variable.data[i]
+                if data is None:
+                    lineString += variable.getFormattedHeaderString("-")
                 else:
-                    valueString = self._variables[varName]["format"].format(self._data[varName][i])
-                    lineString += self._variables[varName]["headerFormat"].format(valueString)
+                    valueString = variable.getFormattedValueString(data)
+                    lineString += variable.getFormattedHeaderString(valueString)
                 lineString += "|"
             print(lineString)
 
@@ -346,7 +337,10 @@ class SolverHistory(object):
         dict
             Dictionary of recorded data
         """
-        return copy.deepcopy(self._data)
+        data = {}
+        for varName, variable in self._variables.items():
+            data[varName] = copy.deepcopy(variable.data)
+        return data
 
     def getMetadata(self) -> Dict[str, Any]:
         """Get the recorded metadata
@@ -377,4 +371,48 @@ class SolverHistory(object):
         list
             List of variables to print
         """
-        return [varName for varName in self._variables if self._variables[varName]["print"]]
+        return [self._variables[varName] for varName in self._printVariables if self._printVariables[varName]]
+
+
+class HistoryVariable(object):
+    def __init__(self, name: str, varType: Type, printFormat: Optional[str] = None, headerFormat: Optional[str] = None):
+        self.name: str = name
+        self.type: Type = varType
+        self.printFormat: Optional[str] = printFormat
+        self.headerFormat: Optional[str] = headerFormat
+        self.data: List = []
+
+    def reset(self) -> None:
+        self.data = []
+
+    def write(self, value: Any) -> None:
+        if value is None:
+            self.data.append(None)
+        else:
+            # Store data, only if the supplied data can be converted to the correct type
+            try:
+                convertedValue = self.type(value)
+                self.data.append(convertedValue)
+            except ValueError as e:
+                raise TypeError(
+                    f"Value '{value}' provided for variable '{self.name}' could not be converted to the type declared for this variable: {self.type}"
+                ) from e
+
+    def writeFullHistory(self, values: Iterable) -> None:
+        try:
+            self.data = [None if v is None else self.type(v) for v in values]
+        except ValueError as e:
+            raise TypeError(
+                f"A value provided for variable '{self.name}' could not be converted to the type declared for this variable: {self.type}"
+            ) from e
+
+    def getData(self) -> List:
+        return copy.deepcopy(self.data)
+
+    def getFormattedHeaderString(self, string: Optional[str] = None) -> str:
+        if string is None:
+            string = self.name
+        return self.headerFormat.format(string)
+
+    def getFormattedValueString(self, val) -> str:
+        return self.printFormat.format(val)
