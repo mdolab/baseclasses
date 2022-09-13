@@ -19,6 +19,19 @@ import warnings
 
 
 class HistoryVariable(object):
+    """The HistoryVariable class is used to store the history of a single variable during the execution of a solver.
+
+    NOTE: This class is intended only to be used within the SolverHistory class, and should not be used directly.
+    """
+
+    __slots__ = [
+        "name",
+        "type",
+        "valueFormat",
+        "headerFormat",
+        "data",
+    ]
+
     def __init__(self, name: str, varType: Type, valueFormat: Optional[str] = None, headerFormat: Optional[str] = None):
         """Create a HistoryVariable object
 
