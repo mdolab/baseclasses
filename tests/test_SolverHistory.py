@@ -53,10 +53,10 @@ class TestSolverHistoryVariableAdding(unittest.TestCase):
 
         # If the variable is printed it the printFormat and headerFormat attributes should not be None, otherwise, they should be
         if printVar:
-            self.assertNotEqual(None, self.solverHistory._variables[name].printFormat)
+            self.assertNotEqual(None, self.solverHistory._variables[name].valueFormat)
             self.assertNotEqual(None, self.solverHistory._variables[name].headerFormat)
         else:
-            self.assertEqual(None, self.solverHistory._variables[name].printFormat)
+            self.assertEqual(None, self.solverHistory._variables[name].valueFormat)
             self.assertEqual(None, self.solverHistory._variables[name].headerFormat)
 
     def test_addNoPrintVariable(self) -> None:
@@ -74,7 +74,7 @@ class TestSolverHistoryVariableAdding(unittest.TestCase):
     def test_addVariableWrongFormat(self) -> None:
         """Check that adding a variable with an invalid printing format throws an error"""
         with self.assertRaises(ValueError):
-            self.solverHistory.addVariable(name="test", varType=list, printVar=True, printFormat="{:.2f}")
+            self.solverHistory.addVariable(name="test", varType=list, printVar=True, valueFormat="{:.2f}")
 
     def test_overwriteVariable(self) -> None:
         """Check that overwriting a variable works as expected"""
