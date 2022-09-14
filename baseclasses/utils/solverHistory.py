@@ -390,10 +390,9 @@ class SolverHistory(object):
 
         .. code-block:: text
 
-            +--------------------------------------------------------------------------...------+
-            | Iter  |       Time        |       Var 1       |       Var 2       |      ...      |
-            +--------------------------------------------------------------------------...------+
-
+            +--------------------------------------------------------------------...------+
+            |  Iter   |    Time     |  Random Int  |     Random Float     |      ...      |
+            +--------------------------------------------------------------------...------+
         """
 
         # Each field will be `columnWidth` characters wide plus 2 spaces each side, plus the vertical bar between each
@@ -411,6 +410,13 @@ class SolverHistory(object):
 
     def printData(self, iters: Optional[Union[int, Iterable[int]]] = None) -> None:
         """Print a selection of lines from the history
+
+        Each line will look something like this:
+
+        .. code-block:: text
+
+            |      0  |  1.000e-01  |      -84     |   2.87098307489e-01  |      ...      |
+
 
         Parameters
         ----------
