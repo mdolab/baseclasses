@@ -77,14 +77,15 @@ class TestSolverHistoryVariableAdding(unittest.TestCase):
             self.solverHistory.addVariable(name="test", varType=list, printVar=True, valueFormat="{:.2f}")
 
     def test_overwriteVariable(self) -> None:
-        """Check that overwriting a variable works as expected"""
+        """Check that variables are only overwritten if the overwrite flag is set, otherwise warning should be thrown"""
         name = "TestVar"
         varType = float
         printVar = False
         self.solverHistory.addVariable(name, varType=varType, printVar=printVar)
         self.checkVariableAddedCorrectly(name=name, varType=varType, printVar=printVar)
         # Trying to add same variable with print=True should not change anything unless we set overwirte=True
-        self.solverHistory.addVariable(name, varType=varType, printVar=True)
+        with self.assertWarns(UserWarning):
+            self.solverHistory.addVariable(name, varType=varType, printVar=True)
         self.checkVariableAddedCorrectly(name=name, varType=varType, printVar=False)
         self.solverHistory.addVariable(name, varType=varType, printVar=True, overwrite=True)
         self.checkVariableAddedCorrectly(name=name, varType=varType, printVar=True)
@@ -187,9 +188,9 @@ class TestSolverHistoryWriting(unittest.TestCase):
         sys.stdout = capturedOutput
         self.solverHistory.printHeader()
         sys.stdout = sys.__stdout__
-        expectedHeader = """+---------------------------------------------------------------------------------------------------------------------------+
-|  Iter   |    Time     |  Random Int  |     Random Float     |     Random Complex      |  Random String  |   Random List   |
-+---------------------------------------------------------------------------------------------------------------------------+\n"""
+        expectedHeader = """+-------------------------------------------------------------------------------------------------------------------------+
+|  Iter   |    Time     |  Random Int  |     Random Float     |     Random Complex      |  Random String  |  Random List  |
++-------------------------------------------------------------------------------------------------------------------------+\n"""
         self.assertEqual(capturedOutput.getvalue(), expectedHeader)
 
     def test_printData(self) -> None:
@@ -210,7 +211,7 @@ class TestSolverHistoryWriting(unittest.TestCase):
         sys.stdout = capturedOutput
         self.solverHistory.printData()
         sys.stdout = sys.__stdout__
-        expectedLine = "|      9  |  1.000e-01  |      -84     |   2.87098307489e-01  |  -2.606e-01+3.765e-01j  |      -85        |      [-89]      |\n"
+        expectedLine = "|      9  |  1.000e-01  |      -84     |   2.87098307489e-01  |  -2.606e-01+3.765e-01j  |      -85        |     [-89]     |\n"
         self.assertEqual(capturedOutput.getvalue(), expectedLine)
 
         # Same thing but for the first iteration
@@ -218,7 +219,7 @@ class TestSolverHistoryWriting(unittest.TestCase):
         sys.stdout = capturedOutput
         self.solverHistory.printData(0)
         sys.stdout = sys.__stdout__
-        expectedLine = "|      0  |      -      |       70     |  -2.30213286236e-01  |  -4.590e-01-4.835e-01j  |       27        |      [-65]      |\n"
+        expectedLine = "|      0  |      -      |       70     |  -2.30213286236e-01  |  -4.590e-01-4.835e-01j  |       27        |     [-65]     |\n"
         self.assertEqual(capturedOutput.getvalue(), expectedLine)
 
     def test_writeFullVariableHistory(self) -> None:

@@ -154,7 +154,6 @@ class SolverHistory(object):
         "_iter",
         "_startTime",
         "_defaultFormat",
-        "_testValues",
         "_includeIter",
         "_includeTime",
         "_DEFAULT_OTHER_FORMAT",
@@ -182,24 +181,16 @@ class SolverHistory(object):
 
         # --- Define default print formatting for some common types ---
         self._defaultFormat: Dict[Type, str] = {}
-        # Test values are used to check how wide the printed formatted values of a variable will be, so that we can make
-        # sure the columns in the iteration printout are wide enough
-        self._testValues: Dict[Type, Any] = {}
         # float
         self._defaultFormat[float] = "{: 17.11e}"
-        self._testValues[float] = 0.0
         # complex
         self._defaultFormat[complex] = "{: 9.3e}"
-        self._testValues[complex] = complex(0.0)
         # int
         self._defaultFormat[int] = "{: 5d}"
-        self._testValues[int] = 0
         # str
         self._defaultFormat[str] = "{:^10}"
-        self._testValues[str] = "a"
         # other
         self._DEFAULT_OTHER_FORMAT: str = "{}"
-        self._DEFAULT_OTHER_VALUE: list = [2, "b", 3.0]
 
         # Add fields for the iteration number and time, unless the user excluded them
         self._includeIter = includeIter
@@ -288,16 +279,10 @@ class SolverHistory(object):
                 else:
                     valueFormat = self._DEFAULT_OTHER_FORMAT
 
-                # Get test value for figuring out how long a string is using the supplied format
-                try:
-                    testValue = self._testValues[varType]
-                except KeyError:
-                    testValue = self._DEFAULT_OTHER_VALUE
-
                 # Figure out column width, the maximum of the length of the name and the formatted value, also check
-                # that the format string is valid
+                # that the format string is valid by testing it on the default value for the provided varType
                 try:
-                    testString = valueFormat.format(testValue)
+                    testString = valueFormat.format(varType())
                 except (ValueError, TypeError) as e:
                     raise ValueError(
                         f'Supplied format string "{valueFormat}" is invalid for variable type {varType}'
