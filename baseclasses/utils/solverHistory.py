@@ -295,7 +295,9 @@ class SolverHistory(object):
             Whether to overwrite any existing variables with the same name, by default False
         """
 
-        if name not in self._variables or overwrite:
+        if not overwrite and name in self._variables:
+            warnings.warn(f"Variable '{name}' already defined, set `overwrite=True` to overwrite")
+        else:
             if valueFormat is not None:
                 pass
             elif varType in self._defaultFormat:
@@ -322,8 +324,6 @@ class SolverHistory(object):
 
             self._variables[name] = HistoryVariable(name, varType, valueFormat, headerFormat)
             self._printVariables[name] = printVar
-        else:
-            warnings.warn(f"Variable '{name}' already defined, set `overwrite=True` to overwrite")
 
     def startTiming(self) -> None:
         """Record the start time of the solver
@@ -443,7 +443,7 @@ class SolverHistory(object):
             else:
                 badIter = min(iters)
             raise ValueError(
-                f"Requested iteration {badIter} is not in the history, only {self._iter} iterations in history"
+                f"Requested iteration {badIter} (zero-based) is not in the history, only {self._iter} iterations in history"
             )
 
         for i in iters:
