@@ -190,7 +190,6 @@ class SolverHistory(object):
         "_includeIter",
         "_includeTime",
         "_DEFAULT_OTHER_FORMAT",
-        "_DEFAULT_OTHER_VALUE",
     ]
 
     def __init__(self, includeIter: bool = True, includeTime: bool = True) -> None:
