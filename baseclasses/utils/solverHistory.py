@@ -229,7 +229,7 @@ class SolverHistory(object):
 
         self._includeTime = includeTime
         if self._includeTime:
-            self.addVariable("Time", varType=float, printVar=includeTime, valueFormat="{:9.3e}")
+            self.addVariable("Time", varType=float, printVar=True, valueFormat="{:9.3e}")
 
     def reset(self, clearMetadata: bool = False) -> None:
         """Reset the history to its initial state.
@@ -296,35 +296,29 @@ class SolverHistory(object):
         """
 
         if name not in self._variables or overwrite:
-
-            # Only store variable's string format if it's going to be printed
-            if not printVar:
-                valueFormat = None
-                headerFormat = None
+            if valueFormat is not None:
+                pass
+            elif varType in self._defaultFormat:
+                valueFormat = self._defaultFormat[varType]
             else:
-                if valueFormat is not None:
-                    pass
-                elif varType in self._defaultFormat:
-                    valueFormat = self._defaultFormat[varType]
-                else:
-                    valueFormat = self._DEFAULT_OTHER_FORMAT
+                valueFormat = self._DEFAULT_OTHER_FORMAT
 
-                # Figure out column width, the maximum of the length of the name and the formatted value, also check
-                # that the format string is valid by testing it on the default value for the provided varType
-                try:
-                    testString = valueFormat.format(varType())
-                except (ValueError, TypeError) as e:
-                    raise ValueError(
-                        f'Supplied format string "{valueFormat}" is invalid for variable type {varType}'
-                    ) from e
+            # Figure out column width, the maximum of the length of the name and the formatted value, also check
+            # that the format string is valid by testing it on the default value for the provided varType
+            try:
+                testString = valueFormat.format(varType())
+            except (ValueError, TypeError) as e:
+                raise ValueError(
+                    f'Supplied format string "{valueFormat}" is invalid for variable type {varType}'
+                ) from e
 
-                dataLen = len(testString)
-                nameLen = len(name)
-                columnWidth = max(dataLen, nameLen)
+            dataLen = len(testString)
+            nameLen = len(name)
+            columnWidth = max(dataLen, nameLen)
 
-                # --- Now figure out the format strings for the iteration printout header and values ---
-                # The header is simply centred in the available width, which is actually columnWidth + 4
-                headerFormat = f"{{:^{(columnWidth + 4)}s}}"
+            # --- Now figure out the format strings for the iteration printout header and values ---
+            # The header is simply centred in the available width, which is actually columnWidth + 4
+            headerFormat = f"{{:^{(columnWidth + 4)}s}}"
 
             self._variables[name] = HistoryVariable(name, varType, valueFormat, headerFormat)
             self._printVariables[name] = printVar

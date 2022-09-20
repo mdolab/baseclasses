@@ -48,14 +48,6 @@ class TestSolverHistoryVariableAdding(unittest.TestCase):
         # Check that the type variable is correct
         self.assertEqual(self.solverHistory._variables[name].getType(), varType)
 
-        # If the variable is printed it the printFormat and headerFormat attributes should not be None, otherwise, they should be
-        if printVar:
-            self.assertNotEqual(None, self.solverHistory._variables[name]._valueFormat)
-            self.assertNotEqual(None, self.solverHistory._variables[name]._headerFormat)
-        else:
-            self.assertEqual(None, self.solverHistory._variables[name]._valueFormat)
-            self.assertEqual(None, self.solverHistory._variables[name]._headerFormat)
-
     def test_addNoPrintVariable(self) -> None:
         """Check that adding a variable that is not to be printed goes as expected"""
         name = "TestVar"
