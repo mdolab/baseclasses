@@ -2,9 +2,6 @@
 ==============================================================================
 Solver History unit tests
 ==============================================================================
-@File    :   test_SolverHistory.py
-@Date    :   2022/08/10
-@Author  :   Alasdair Christison Gray
 @Description :
 """
 
