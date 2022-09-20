@@ -53,11 +53,11 @@ class TestSolverHistoryVariableAdding(unittest.TestCase):
 
         # If the variable is printed it the printFormat and headerFormat attributes should not be None, otherwise, they should be
         if printVar:
-            self.assertNotEqual(None, self.solverHistory._variables[name].valueFormat)
-            self.assertNotEqual(None, self.solverHistory._variables[name].headerFormat)
+            self.assertNotEqual(None, self.solverHistory._variables[name]._valueFormat)
+            self.assertNotEqual(None, self.solverHistory._variables[name]._headerFormat)
         else:
-            self.assertEqual(None, self.solverHistory._variables[name].valueFormat)
-            self.assertEqual(None, self.solverHistory._variables[name].headerFormat)
+            self.assertEqual(None, self.solverHistory._variables[name]._valueFormat)
+            self.assertEqual(None, self.solverHistory._variables[name]._headerFormat)
 
     def test_addNoPrintVariable(self) -> None:
         """Check that adding a variable that is not to be printed goes as expected"""
@@ -138,10 +138,10 @@ class TestSolverHistoryWriting(unittest.TestCase):
         """Test the getData returns a copy of the recorded data"""
         data = self.solverHistory.getData()
         for var in data:
-            self.assertEqual(data[var], self.solverHistory._variables[var].data)
+            self.assertEqual(data[var], self.solverHistory._variables[var].getData())
 
             data[var].append(None)
-            self.assertNotEqual(data, self.solverHistory._variables[var].data)
+            self.assertNotEqual(data, self.solverHistory._variables[var].getData())
 
     def test_saveData(self) -> None:
         """Check that the data saved to a file is the same as that returned by getData"""

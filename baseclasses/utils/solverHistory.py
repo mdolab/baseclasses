@@ -25,11 +25,11 @@ class HistoryVariable(object):
     """
 
     __slots__ = [
-        "name",
-        "type",
-        "valueFormat",
-        "headerFormat",
-        "data",
+        "_name",
+        "_type",
+        "_valueFormat",
+        "_headerFormat",
+        "_data",
     ]
 
     def __init__(self, name: str, varType: Type, valueFormat: Optional[str] = None, headerFormat: Optional[str] = None):
@@ -48,37 +48,47 @@ class HistoryVariable(object):
             Format string valid for printing variable name with the str.format() method (e.g "{:^20}" to print the name
             centred in 20 columns), only important for variables that are to be printed. By default None
         """
-        self.name: str = name
-        self.type: Type = varType
-        self.valueFormat: Optional[str] = valueFormat
-        self.headerFormat: Optional[str] = headerFormat
-        self.data: List = []
+        self._name: str = name
+        self._type: Type = varType
+        self._valueFormat: Optional[str] = valueFormat
+        self._headerFormat: Optional[str] = headerFormat
+        self._data: List = []
+
+    @property
+    def name(self) -> str:
+        """Return name of the variable"""
+        return copy.deepcopy(self._name)
+
+    @property
+    def type(self) -> Type:
+        """Return type of the variable"""
+        return self._type
 
     def reset(self) -> None:
         """Reset the variable history to its initial state."""
-        self.data = []
+        self._data = []
 
     def write(self, value: Any) -> None:
         """Record data for a single iteration"""
         if value is None:
-            self.data.append(None)
+            self._data.append(None)
         else:
             # Store data, only if the supplied data can be converted to the correct type
             try:
-                convertedValue = self.type(value)
-                self.data.append(convertedValue)
+                convertedValue = self._type(value)
+                self._data.append(convertedValue)
             except ValueError as e:
                 raise TypeError(
-                    f"Value '{value}' provided for variable '{self.name}' could not be converted to the type declared for this variable: {self.type}"
+                    f"Value '{value}' provided for variable '{self._name}' could not be converted to the type declared for this variable: {self._type}"
                 ) from e
 
     def writeFullHistory(self, values: Iterable) -> None:
         """Write the entire history of the variable in one go"""
         try:
-            self.data = [None if v is None else self.type(v) for v in values]
+            self._data = [None if v is None else self._type(v) for v in values]
         except ValueError as e:
             raise TypeError(
-                f"A value provided for variable '{self.name}' could not be converted to the type declared for this variable: {self.type}"
+                f"A value provided for variable '{self._name}' could not be converted to the type declared for this variable: {self._type}"
             ) from e
 
     def getData(self) -> List:
@@ -90,7 +100,30 @@ class HistoryVariable(object):
             Recorded data for this variable, None values indicate iteration where no value was provided for this
             variable
         """
-        return copy.deepcopy(self.data)
+        return copy.deepcopy(self._data)
+
+    def getValue(self, iteration: int) -> Any:
+        """Return the value of the variable for a given iteration
+
+        Parameters
+        ----------
+        iteration : int
+            Iteration number to get value for
+
+        Returns
+        -------
+        Any
+            Value of the variable for the given iteration
+
+        Raises
+        ------
+        IndexError
+            Error is raised if the iteration number is out of range
+        """
+        try:
+            return self._data[iteration]
+        except IndexError as e:
+            raise IndexError(f"Iteration {iteration} is out of range for variable {self._name}") from e
 
     def getFormattedHeaderString(self, string: Optional[str] = None) -> str:
         """Format a string in the header format for this variable
@@ -110,11 +143,11 @@ class HistoryVariable(object):
         ValueError
             Error is raised if this method is called when no headerFormat has been defined
         """
-        if self.headerFormat is None:
-            raise ValueError(f"No header format specified for variable {self.name}")
+        if self._headerFormat is None:
+            raise ValueError(f"No header format specified for variable {self._name}")
         if string is None:
-            string = self.name
-        return self.headerFormat.format(string)
+            string = self._name
+        return self._headerFormat.format(string)
 
     def getFormattedValueString(self, val) -> str:
         """Format a string in the value format for this variable
@@ -134,9 +167,9 @@ class HistoryVariable(object):
         ValueError
             Error is raised if this method is called when no valueFormat has been defined
         """
-        if self.valueFormat is None:
-            raise ValueError(f"No print format specified for variable {self.name}")
-        return self.valueFormat.format(val)
+        if self._valueFormat is None:
+            raise ValueError(f"No print format specified for variable {self._name}")
+        return self._valueFormat.format(val)
 
 
 class SolverHistory(object):
@@ -425,7 +458,7 @@ class SolverHistory(object):
         for i in iters:
             lineString = "|"
             for variable in self._variablesToPrint:
-                data = variable.data[i]
+                data = variable.getValue(i)
                 if data is None:
                     lineString += variable.getFormattedHeaderString("-")
                 else:
@@ -461,7 +494,7 @@ class SolverHistory(object):
         """
         data = {}
         for varName, variable in self._variables.items():
-            data[varName] = copy.deepcopy(variable.data)
+            data[varName] = copy.deepcopy(variable.getData())
         return data
 
     def getMetadata(self) -> Dict[str, Any]:
