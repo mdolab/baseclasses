@@ -54,13 +54,11 @@ class HistoryVariable(object):
         self._headerFormat: Optional[str] = headerFormat
         self._data: List = []
 
-    @property
-    def name(self) -> str:
+    def getName(self) -> str:
         """Return name of the variable"""
         return copy.deepcopy(self._name)
 
-    @property
-    def type(self) -> Type:
+    def getType(self) -> Type:
         """Return type of the variable"""
         return self._type
 
@@ -131,7 +129,7 @@ class HistoryVariable(object):
         Parameters
         ----------
         string : str, optional
-            String to be formatted, by default uses self.name
+            String to be formatted, by default uses self._name
 
         Returns
         -------
@@ -367,7 +365,7 @@ class SolverHistory(object):
 
         for variable in self._variables.values():
             try:
-                variable.write(data.pop(variable.name))
+                variable.write(data.pop(variable.getName()))
             # If no data was supplied for a given variable, store a None
             except KeyError:
                 variable.write(None)

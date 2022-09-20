@@ -46,7 +46,7 @@ class TestSolverHistoryVariableAdding(unittest.TestCase):
         self.assertEqual(self.solverHistory._printVariables[name], printVar)
 
         # Check that the type variable is correct
-        self.assertEqual(self.solverHistory._variables[name].type, varType)
+        self.assertEqual(self.solverHistory._variables[name].getType(), varType)
 
         # If the variable is printed it the printFormat and headerFormat attributes should not be None, otherwise, they should be
         if printVar:
