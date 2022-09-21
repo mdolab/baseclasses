@@ -9,7 +9,7 @@ import numpy as np
 import warnings
 from .ICAOAtmosphere import ICAOAtmosphere
 from .FluidProperties import FluidProperties
-from ..utils import CaseInsensitiveDict, Error
+from ..utils import CaseInsensitiveDict, Error, SolverHistory
 
 
 class AeroProblem(FluidProperties):
@@ -378,6 +378,9 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
         # Storage of BC varible values
         # vars are keyed by (bcVarName, Family)
         self.bcVarData = {}
+
+        # Solver History
+        self.history = SolverHistory()
 
     def _setStates(self, inputDict):
         """

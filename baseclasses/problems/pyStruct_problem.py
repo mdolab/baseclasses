@@ -5,7 +5,7 @@ pyStrut_problem
 # =============================================================================
 # Imports
 # =============================================================================
-from ..utils import Error
+from ..utils import Error, SolverHistory
 
 
 class StructProblem:
@@ -58,6 +58,9 @@ class StructProblem:
         # Storage of DVs (non as of yet)
         self.DVs = {}
         self.DVNames = {}
+
+        # Solver History
+        self.history = SolverHistory()
 
     def addDV(self, key, value=None, lower=None, upper=None, scale=1.0, name=None):
         """
