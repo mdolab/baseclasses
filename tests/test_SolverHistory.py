@@ -108,6 +108,10 @@ class TestSolverHistoryWriting(unittest.TestCase):
             }
             self.solverHistory.write(iterData)
 
+    def test_getIter(self) -> None:
+        """Test that the getIter method returns the correct number of iterations"""
+        self.assertEqual(self.solverHistory.getIter(), self.numIters)
+
     def test_dataListLength(self) -> None:
         """Check that the data list has the correct length"""
         for var in self.solverHistory.getData().values():

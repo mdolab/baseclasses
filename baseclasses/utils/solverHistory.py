@@ -508,6 +508,16 @@ class SolverHistory(object):
         """
         return list(self._variables.keys())
 
+    def getIter(self) -> int:
+        """Get the current number of iterations recorded
+
+        Returns
+        -------
+        int
+            Number of iterations recorded
+        """
+        return copy.copy(self._iter)
+
     @property
     def _variablesToPrint(self) -> List[HistoryVariable]:
         """Get the variables to print
