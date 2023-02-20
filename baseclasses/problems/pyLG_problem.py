@@ -134,11 +134,9 @@ class LGProblem:
         return loadFactor
 
     def getLoadCaseArrays(self):
-
         f_stat, f_dyn, f_sb, g_load = self._computeLGForces()
 
         if self.loadCaseType.lower() == "braking":
-
             if self.weightCondition.lower() == "mlw":
                 fVert = np.zeros(self.nCondition)
                 fVert[0] = 1.2 * f_stat

@@ -518,7 +518,6 @@ class MissionSegment:
     """
 
     def __init__(self, phase, **kwargs):
-
         # have to have a phase type
         self.phase = phase
 
@@ -1268,7 +1267,6 @@ class SegmentDV:
     """
 
     def __init__(self, dvType, isInitVal, value, lower, upper, scale=1.0, userDef=False):
-
         self.type = dvType  # String: 'Mach', 'Alt', 'TAS', 'CAS'
         self.isInitVal = isInitVal  # Boolean:
         self.value = value

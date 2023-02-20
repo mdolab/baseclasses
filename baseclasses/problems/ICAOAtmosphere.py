@@ -3,7 +3,6 @@ import numpy as np
 
 class ICAOAtmosphere:
     def __init__(self, **kwargs):
-
         # Check if we have english units:
         self.englishUnits = False
         if "englishUnits" in kwargs:

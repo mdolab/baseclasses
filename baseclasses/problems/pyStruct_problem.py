@@ -30,7 +30,6 @@ class StructProblem:
     """
 
     def __init__(self, name, loadFile=None, loadFactor=None, evalFuncs=None):
-
         # Always have to have the name
         self.name = name
 
@@ -138,7 +137,6 @@ class StructProblem:
             optProb.addVar(key, "c", value=dv.value, lower=dv.lower, upper=dv.upper, scale=dv.scale)
 
     def __getitem__(self, key):
-
         return self.funcNames[key]
 
     def evalFunctions(self, funcs, evalFuncs, ignoreMissing=False):

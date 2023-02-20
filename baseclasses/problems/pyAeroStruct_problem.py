@@ -27,7 +27,6 @@ class AeroStructProblem:
     """
 
     def __init__(self, ap, sp, **kwargs):
-
         if not isinstance(ap, AeroProblem):
             raise Error("The argument for 'ap' was not an AeroProblem!")
         if not isinstance(sp, StructProblem):
@@ -75,7 +74,6 @@ class AeroStructProblem:
         self.SP.addVariablesPyOpt(optProb)
 
     def __getitem__(self, key):
-
         return self.funcNames[key]
 
     def evalFunctions(self, funcs, evalFuncs):

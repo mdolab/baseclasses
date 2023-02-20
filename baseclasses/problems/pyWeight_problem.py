@@ -598,7 +598,6 @@ class FuelCase:
     def addDV(
         self, key, value=None, lower=None, upper=None, scale=1.0, name=None, offset=0.0, axis=None, addToPyOpt=True
     ):
-
         """
         Add one of the fuel case parameters as a weight and balance design
         variable. Typical variables are fuelfraction and reservefraction.

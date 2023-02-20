@@ -8,6 +8,7 @@ import copy
 import warnings
 from ..utils import CaseInsensitiveDict, CaseInsensitiveSet, Error, pp
 
+
 # =============================================================================
 # BaseSolver Class
 # =============================================================================

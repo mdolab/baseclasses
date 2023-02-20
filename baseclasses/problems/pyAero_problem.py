@@ -228,7 +228,6 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
     """
 
     def __init__(self, name, **kwargs):
-
         # Set basic fluid properties
         super().__init__(**kwargs)
 
@@ -692,7 +691,6 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
                     )
 
     def __getitem__(self, key):
-
         return self.funcNames[key]
 
     def __str__(self):

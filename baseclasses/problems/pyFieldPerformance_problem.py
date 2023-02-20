@@ -332,7 +332,6 @@ class FieldPerformanceProblem:
                 )
 
     def __getitem__(self, key):
-
         return self.funcNames[key]
 
     def __str__(self):
