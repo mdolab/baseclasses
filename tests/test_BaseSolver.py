@@ -6,7 +6,6 @@ from baseclasses.testing.decorators import require_mpi
 
 class SOLVER(BaseSolver):
     def __init__(self, name, options={}, comm=None, checkDefaultOptions=True, caseSensitiveOptions=False):
-
         """Create an artificial class for testing"""
 
         category = "Solver for testing BaseSolver"
@@ -46,7 +45,6 @@ class SOLVER(BaseSolver):
 
 class TestOptions(unittest.TestCase):
     def test_options(self):
-
         # initialize solver
         floatValue_set = 200.0
         intValue_set = 3
@@ -136,7 +134,6 @@ class TestOptions(unittest.TestCase):
 
 
 class TestComm(unittest.TestCase):
-
     N_PROCS = 2
 
     @require_mpi

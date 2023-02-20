@@ -37,7 +37,6 @@ class AeroSolver(BaseSolver):
         comm=None,
         informs={},
     ):
-
         """
         AeroSolver Class Initialization
         """
@@ -140,7 +139,6 @@ class AeroSolver(BaseSolver):
 
         # loop over the faces
         for iProc in range(len(faceSizes)):
-
             connCounter = 0
             for iFace in range(len(faceSizes[iProc])):
                 # Get the number of nodes on this face
@@ -478,7 +476,6 @@ class AeroSolver(BaseSolver):
     # --------------------------
 
     def _getFamilyList(self, groupName):
-
         if groupName is None:
             groupName = self.allFamilies
 

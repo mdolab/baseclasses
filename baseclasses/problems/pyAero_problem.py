@@ -228,7 +228,6 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
     """
 
     def __init__(self, name, **kwargs):
-
         # Set basic fluid properties
         super().__init__(**kwargs)
 
@@ -288,7 +287,7 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
         if "evalFuncs" in kwargs:
             self.evalFuncs = set(kwargs["evalFuncs"])
         if "funcs" in kwargs:
-            warnings.warn("funcs should **not** be an argument. Use 'evalFuncs' instead.")
+            warnings.warn("funcs should **not** be an argument. Use 'evalFuncs' instead.", stacklevel=2)
             self.evalFuncs = set(kwargs["funcs"])
 
         # we cast the set to a sorted list, so that each proc can loop over in the same order
@@ -692,7 +691,6 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
                     )
 
     def __getitem__(self, key):
-
         return self.funcNames[key]
 
     def __str__(self):
