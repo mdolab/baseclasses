@@ -80,7 +80,7 @@ class AeroSolver(BaseSolver):
         pts = self.getSurfaceCoordinates(self.meshFamilyGroup)
         self.mesh.setSurfaceDefinition(pts, conn, faceSizes)
 
-    def setDVGeo(self, DVGeo, pointSetKwargs=None):
+    def setDVGeo(self, DVGeo, pointSetKwargs={}, customPointSetFamilies=None):
         """
         Set the DVGeometry object that will manipulate 'geometry' in
         this object. Note that <SOLVER> does not **strictly** need a
@@ -96,6 +96,13 @@ class AeroSolver(BaseSolver):
             Keyword arguments to be passed to the DVGeo addPointSet call.
             Useful for DVGeometryMulti, specifying FFD projection tolerances, etc.
 
+        customPointSetKwargs : dict of dicts
+            Keyword arguments to be passed to the DVGeo addPointSet call for each surface family,
+            specified by the keys. The surface families need to be all part of the designSurfaceFamily.
+            Useful for DVGeometryMulti, specifying FFD projection tolerances, etc.
+            If this is provided together with pointSetKwargs, the regular pointSetKwargs
+            will be appended to each component's dictionary.
+
         Examples
         --------
         >>> CFDsolver = <SOLVER>(comm=comm, options=CFDoptions)
@@ -104,10 +111,11 @@ class AeroSolver(BaseSolver):
 
         self.DVGeo = DVGeo
 
-        if pointSetKwargs is None:
-            self.pointSetKwargs = {}
-        else:
-            self.pointSetKwargs = pointSetKwargs
+        # save the common kwargs dict. default is empty
+        self.pointSetKwargs = pointSetKwargs
+
+        # save if we have customPointSetFamilies
+        self.customPointSetFamilies = customPointSetFamilies
 
     def getTriangulatedMeshSurface(self, groupName=None, **kwargs):
         """
