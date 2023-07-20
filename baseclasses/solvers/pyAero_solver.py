@@ -7,7 +7,7 @@ Holds the Python Aerodynamic Analysis Classes (base).
 # =============================================================================
 # Standard Python modules
 # =============================================================================
-import numpy
+import numpy as np
 
 # =============================================================================
 # Extension modules
@@ -37,7 +37,6 @@ class AeroSolver(BaseSolver):
         comm=None,
         informs={},
     ):
-
         """
         AeroSolver Class Initialization
         """
@@ -137,7 +136,7 @@ class AeroSolver(BaseSolver):
         # groupName
         pts = self.comm.allgather(self.getSurfaceCoordinates(groupName, **kwargs))
         conn, faceSizes = self.getSurfaceConnectivity(groupName)
-        conn = numpy.array(conn).flatten()
+        conn = np.array(conn).flatten()
         conn = self.comm.allgather(conn)
         faceSizes = self.comm.allgather(faceSizes)
 
@@ -148,7 +147,6 @@ class AeroSolver(BaseSolver):
 
         # loop over the faces
         for iProc in range(len(faceSizes)):
-
             connCounter = 0
             for iFace in range(len(faceSizes[iProc])):
                 # Get the number of nodes on this face
@@ -328,7 +326,7 @@ class AeroSolver(BaseSolver):
         # It is very important that the list of families is sorted
         # becuase in fortran we always use a binary search to check if
         # a famID is in the list.
-        self.families[groupName] = sorted(numpy.unique(indices))
+        self.families[groupName] = sorted(np.unique(indices))
 
     def getSurfaceCoordinates(self, group_name):
         """
@@ -486,7 +484,6 @@ class AeroSolver(BaseSolver):
     # --------------------------
 
     def _getFamilyList(self, groupName):
-
         if groupName is None:
             groupName = self.allFamilies
 

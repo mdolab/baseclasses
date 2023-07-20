@@ -5,7 +5,7 @@ pyStrut_problem
 # =============================================================================
 # Imports
 # =============================================================================
-from ..utils import Error
+from ..utils import Error, SolverHistory
 
 
 class StructProblem:
@@ -30,7 +30,6 @@ class StructProblem:
     """
 
     def __init__(self, name, loadFile=None, loadFactor=None, evalFuncs=None):
-
         # Always have to have the name
         self.name = name
 
@@ -58,6 +57,9 @@ class StructProblem:
         # Storage of DVs (non as of yet)
         self.DVs = {}
         self.DVNames = {}
+
+        # Solver History
+        self.history = SolverHistory()
 
     def addDV(self, key, value=None, lower=None, upper=None, scale=1.0, name=None):
         """
@@ -135,7 +137,6 @@ class StructProblem:
             optProb.addVar(key, "c", value=dv.value, lower=dv.lower, upper=dv.upper, scale=dv.scale)
 
     def __getitem__(self, key):
-
         return self.funcNames[key]
 
     def evalFunctions(self, funcs, evalFuncs, ignoreMissing=False):

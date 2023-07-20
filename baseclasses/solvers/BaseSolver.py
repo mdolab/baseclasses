@@ -8,6 +8,7 @@ import copy
 import warnings
 from ..utils import CaseInsensitiveDict, CaseInsensitiveSet, Error, pp
 
+
 # =============================================================================
 # BaseSolver Class
 # =============================================================================
@@ -180,7 +181,7 @@ class BaseSolver:
 
     def printCurrentOptions(self):
         self.printOptions()
-        warnings.warn("printCurrentOptions is deprecated. Use printOptions instead.", DeprecationWarning)
+        warnings.warn("printCurrentOptions is deprecated. Use printOptions instead.", DeprecationWarning, stacklevel=2)
 
     def printOptions(self):
         """

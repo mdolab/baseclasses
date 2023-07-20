@@ -5,7 +5,7 @@ Holds the Segment, Profile and Problem classes for the mission solvers.
 """
 
 import sys
-import numpy
+import numpy as np
 import copy
 
 from .ICAOAtmosphere import ICAOAtmosphere
@@ -151,8 +151,8 @@ class MissionProblem:
                 profile.setDesignVars(self.currentDVs)
 
             # Replace the NaNs with 0
-            profSens = numpy.array(profSens)
-            indNaNs = numpy.isnan(profSens)
+            profSens = np.array(profSens)
+            indNaNs = np.isnan(profSens)
             profSens[indNaNs] = 0.0
 
             profSens = profSens.imag / stepSize
@@ -366,7 +366,7 @@ class MissionProfile:
 
         nSeg = len(self.segments)
 
-        segParameters = numpy.zeros(4 * nSeg, dtype="D")
+        segParameters = np.zeros(4 * nSeg, dtype="D")
         for i in range(nSeg):
             seg = self.segments[i]
             segParameters[4 * i] = seg.initMach
@@ -518,7 +518,6 @@ class MissionSegment:
     """
 
     def __init__(self, phase, **kwargs):
-
         # have to have a phase type
         self.phase = phase
 
@@ -946,7 +945,7 @@ class MissionSegment:
         """
         # evaluate the atmosphere model
         P, T = self.atm(alt)
-        a = numpy.sqrt(self.gamma * self.R * T)
+        a = np.sqrt(self.gamma * self.R * T)
 
         return copy.copy(a)
 
@@ -1002,7 +1001,7 @@ class MissionSegment:
         RhoRatio = rho / rho0
 
         # Convert the TAS to EAS
-        EAS = TAS * numpy.sqrt(RhoRatio)
+        EAS = TAS * np.sqrt(RhoRatio)
 
         # Evaluate the current M based on TAS
         M = TAS / a
@@ -1028,7 +1027,7 @@ class MissionSegment:
         # Differential pressure: Units of CAS and a0 must be consistent
         DP = P0 * ((1 + 0.2 * (CAS / a0) ** 2) ** (7.0 / 2.0) - 1)  # impact pressure
 
-        M = numpy.sqrt(5 * ((DP / P + 1) ** (2.0 / 7.0) - 1))
+        M = np.sqrt(5 * ((DP / P + 1) ** (2.0 / 7.0) - 1))
 
         if M > 1:
             raise Error(
@@ -1040,7 +1039,7 @@ class MissionSegment:
             # while M_diff > 1e-4:
             #     # computing Mach number in a supersonic compressible flow by using the
             #     # Rayleigh Supersonic Pitot equation using parameters for air
-            #     M_new = 0.88128485 * numpy.sqrt((DP/P + 1) * (1 - 1/(7*M**2))**2.5)
+            #     M_new = 0.88128485 * np.sqrt((DP/P + 1) * (1 - 1/(7*M**2))**2.5)
             #     M_diff = abs(M_new - M)
             #     M = M_new
 
@@ -1237,13 +1236,13 @@ class MissionSegment:
             idTag = "%02d:" % segNum
 
         # Putting the states into an array automatically convert Nones to nans
-        states = numpy.zeros([2, 4])
+        states = np.zeros([2, 4])
         states[0, :] = [self.initAlt, self.initMach, self.initCAS, self.initTAS]
         states[1, :] = [self.finalAlt, self.finalMach, self.finalCAS, self.finalTAS]
         if self.fuelFraction is None:
             fuelFrac = self.fuelFraction
         else:
-            fuelFrac = numpy.nan
+            fuelFrac = np.nan
 
         string = f"{idTag:>3} {self.phase:>18}  "
         string += "{:>8}  {:>8}  {:>8}  {:>8}  {:>8} \n".format("Alt", "Mach", "CAS", "TAS", "FuelFrac")
@@ -1268,7 +1267,6 @@ class SegmentDV:
     """
 
     def __init__(self, dvType, isInitVal, value, lower, upper, scale=1.0, userDef=False):
-
         self.type = dvType  # String: 'Mach', 'Alt', 'TAS', 'CAS'
         self.isInitVal = isInitVal  # Boolean:
         self.value = value

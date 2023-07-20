@@ -10,7 +10,7 @@ We will assume a fixed aircraft mass and LG characteristics. The output load can
 function of the LG geometry if necessary.
 """
 
-import numpy
+import numpy as np
 
 
 class LGProblem:
@@ -134,52 +134,50 @@ class LGProblem:
         return loadFactor
 
     def getLoadCaseArrays(self):
-
         f_stat, f_dyn, f_sb, g_load = self._computeLGForces()
 
         if self.loadCaseType.lower() == "braking":
-
             if self.weightCondition.lower() == "mlw":
-                fVert = numpy.zeros(self.nCondition)
+                fVert = np.zeros(self.nCondition)
                 fVert[0] = 1.2 * f_stat
                 fVert[1] = 1.2 * f_stat
 
-                fDrag = numpy.zeros(self.nCondition)
+                fDrag = np.zeros(self.nCondition)
                 fDrag[0] = 0.96 * f_stat
                 fDrag[1] = -0.66 * f_stat
 
-                fSide = numpy.zeros(self.nCondition)
+                fSide = np.zeros(self.nCondition)
 
-                closure = numpy.zeros(self.nCondition)
+                closure = np.zeros(self.nCondition)
                 closure[0] = 0.75 * self.shockDef
                 closure[1] = 0.75 * self.shockDef
 
-                gload = numpy.zeros(self.nCondition)
+                gload = np.zeros(self.nCondition)
                 gload[:] = g_load
 
             elif self.weightCondition.lower() == "mtow":
-                fVert = numpy.zeros(self.nCondition)
+                fVert = np.zeros(self.nCondition)
                 fVert[0] = 1.0 * f_stat
                 fVert[1] = 1.0 * f_stat
 
-                fDrag = numpy.zeros(self.nCondition)
+                fDrag = np.zeros(self.nCondition)
                 fDrag[0] = 0.8 * f_stat
                 fDrag[1] = -0.55 * f_stat
 
-                fSide = numpy.zeros(self.nCondition)
+                fSide = np.zeros(self.nCondition)
 
-                closure = numpy.zeros(self.nCondition)
+                closure = np.zeros(self.nCondition)
                 closure[0] = 0.75 * self.shockDef
                 closure[1] = 0.75 * self.shockDef
 
-                gload = numpy.zeros(self.nCondition)
+                gload = np.zeros(self.nCondition)
                 gload[:] = g_load
 
             else:
                 print("Unrecognized weightCondition:", self.weightCondition)
 
         elif self.loadCaseType.lower() == "landing":
-            fVert = numpy.zeros(self.nCondition)
+            fVert = np.zeros(self.nCondition)
             fVert[0] = f_dyn
             fVert[1] = 0.75 * f_dyn
             fVert[2] = 0.75 * f_dyn
@@ -188,7 +186,7 @@ class LGProblem:
             fVert[5] = 0.8 * f_sb
             fVert[6] = 0.8 * f_sb
 
-            fDrag = numpy.zeros(self.nCondition)
+            fDrag = np.zeros(self.nCondition)
             fDrag[0] = 0.25 * f_dyn
             fDrag[1] = 0.4 * f_dyn
             fDrag[2] = 0.4 * f_dyn
@@ -198,7 +196,7 @@ class LGProblem:
             fDrag[6] = -0.64 * f_sb
 
             # sign convention here is that negative is inboard facing
-            fSide = numpy.zeros(self.nCondition)
+            fSide = np.zeros(self.nCondition)
             fSide[0] = 0
             fSide[1] = -0.25 * f_dyn
             fSide[2] = 0.25 * f_dyn
@@ -207,7 +205,7 @@ class LGProblem:
             fSide[5] = 0.0
             fSide[6] = 0.0
 
-            closure = numpy.zeros(self.nCondition)
+            closure = np.zeros(self.nCondition)
             closure[0] = 0.5 * self.shockDef
             closure[1] = 0.25 * self.shockDef
             closure[2] = 0.25 * self.shockDef
@@ -216,7 +214,7 @@ class LGProblem:
             closure[5] = 0.15 * self.shockDef
             closure[6] = 0.15 * self.shockDef
 
-            gload = numpy.zeros(self.nCondition)
+            gload = np.zeros(self.nCondition)
             gload[:] = g_load
 
         else:

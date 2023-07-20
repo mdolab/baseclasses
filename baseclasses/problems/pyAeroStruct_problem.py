@@ -6,7 +6,7 @@ pyAeroStruct_problem
 # ======================================================================
 from .pyAero_problem import AeroProblem
 from .pyStruct_problem import StructProblem
-from ..utils import Error
+from ..utils import Error, SolverHistory
 
 
 class AeroStructProblem:
@@ -27,7 +27,6 @@ class AeroStructProblem:
     """
 
     def __init__(self, ap, sp, **kwargs):
-
         if not isinstance(ap, AeroProblem):
             raise Error("The argument for 'ap' was not an AeroProblem!")
         if not isinstance(sp, StructProblem):
@@ -45,6 +44,9 @@ class AeroStructProblem:
             )
         self.name = self.AP.name
         self.funcNames = {}
+
+        # Solver History
+        self.history = SolverHistory()
 
     def setDesignVars(self, x):
         """
@@ -72,7 +74,6 @@ class AeroStructProblem:
         self.SP.addVariablesPyOpt(optProb)
 
     def __getitem__(self, key):
-
         return self.funcNames[key]
 
     def evalFunctions(self, funcs, evalFuncs):

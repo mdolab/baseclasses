@@ -102,6 +102,9 @@ def readJSON(fname, comm=None):
             return np.array(data, dct["dtype"]).reshape(dct["shape"])
         return dct
 
+    if not os.path.isfile(fname):
+        raise FileNotFoundError(f"The JSON file {fname} cannot be found.")
+
     data = None
     if (comm is None) or (comm is not None and comm.rank == 0):
         with open(fname, "r") as json_file:
@@ -128,6 +131,9 @@ def readPickle(fname, comm=None):
     -------
     obj : The object stored in the pickle file
     """
+    if not os.path.isfile(fname):
+        raise FileNotFoundError(f"The pickle file {fname} cannot be found.")
+
     obj = None
     if (comm is None) or (comm is not None and comm.rank == 0):
         try:
@@ -212,6 +218,7 @@ def redirectingIO(f_out, f_err=None):
     The filestream passed to this function will be closed after exiting the `with` block.
 
     Here is an example of usage where all adflow output is redirected to the file `adflow_out.txt`:
+
     >>> from baseclasses.utils import redirectIO
     >>> print("Printing some information to terminal")
     >>> with redirectIO.redirectingIO(open("adflow_out.txt", "w")):
@@ -254,6 +261,10 @@ def redirectingIO(f_out, f_err=None):
 
     os.dup2(saved_stdout_fd, orig_out)
     os.dup2(saved_stderr_fd, orig_err)
+
+    # close copies
+    os.close(saved_stdout_fd)
+    os.close(saved_stderr_fd)
 
     # reopen the standard streams with original file descriptors
     sys.stdout = io.TextIOWrapper(os.fdopen(orig_out, "wb"))

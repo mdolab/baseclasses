@@ -165,7 +165,7 @@ class FieldPerformanceProblem:
         if "evalFuncs" in kwargs:
             self.evalFuncs = set(kwargs["evalFuncs"])
         if "funcs" in kwargs:
-            warnings.warn("funcs should **not** be an argument. Use 'evalFuncs' instead.")
+            warnings.warn("funcs should **not** be an argument. Use 'evalFuncs' instead.", stacklevel=2)
             self.evalFuncs = set(kwargs["funcs"])
 
         # Specify the set of possible design variables:
@@ -332,7 +332,6 @@ class FieldPerformanceProblem:
                 )
 
     def __getitem__(self, key):
-
         return self.funcNames[key]
 
     def __str__(self):
@@ -348,8 +347,8 @@ class FieldPerformanceProblem:
     #     h = 1e-40j; hr = 1e-40
     #     for key in self.DVNames:
     #         setattr(self, key, getattr(self, key) + h)
-    #         rDict[self.DVNames[key]] = numpy.imag(self.__dict__[func])/hr
-    #         setattr(self, key, numpy.real(getattr(self, key)))
+    #         rDict[self.DVNames[key]] = np.imag(self.__dict__[func])/hr
+    #         setattr(self, key, np.real(getattr(self, key)))
 
     #     return rDict
 

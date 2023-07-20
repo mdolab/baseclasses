@@ -1,9 +1,8 @@
-import numpy
+import numpy as np
 
 
 class ICAOAtmosphere:
     def __init__(self, **kwargs):
-
         # Check if we have english units:
         self.englishUnits = False
         if "englishUnits" in kwargs:
@@ -34,7 +33,7 @@ class ICAOAtmosphere:
         P0 = 101325  # Pressure
 
         # The set of break-points in the altitude (in km)
-        H_break = numpy.array([11, 20, 32, 47, 51, 71, 84.852])
+        H_break = np.array([11, 20, 32, 47, 51, 71, 84.852])
 
         def hermite(t, p0, m0, p1, m1):
             """Compute a standard cubic hermite interpolant"""
@@ -52,7 +51,7 @@ class ICAOAtmosphere:
                 PP = (288.15 / T) ** (-K / 6.5)
             elif index == 1:
                 T = 216.65
-                PP = 0.22336 * numpy.exp(-K * (H - 11) / 216.65)
+                PP = 0.22336 * np.exp(-K * (H - 11) / 216.65)
             elif index == 2:
                 T = 216.65 + (H - 20)
                 PP = 0.054032 * (216.65 / T) ** K
@@ -61,7 +60,7 @@ class ICAOAtmosphere:
                 PP = 0.0085666 * (228.65 / T) ** (K / 2.8)
             elif index == 4:
                 T = 270.65
-                PP = 0.0010945 * numpy.exp(-K * (H - 47) / 270.65)
+                PP = 0.0010945 * np.exp(-K * (H - 47) / 270.65)
             elif index == 5:
                 T = 270.65 - 2.8 * (H - 51)
                 PP = 0.00066063 * (270.65 / T) ** (-K / 2.8)
@@ -74,7 +73,7 @@ class ICAOAtmosphere:
         # Determine if we need to do smoothing or not:
         smooth = False
         for index in range(len(H_break)):
-            if numpy.real(H) > H_break[index] - dH_smooth and numpy.real(H) < H_break[index] + dH_smooth:
+            if np.real(H) > H_break[index] - dH_smooth and np.real(H) < H_break[index] + dH_smooth:
                 smooth = True
                 break
 
