@@ -54,8 +54,9 @@ class AeroSolver(BaseSolver):
         self.families = CaseInsensitiveDict()
         self._updateGeomInfo = False
 
-        # Initialize kwargs for addPointSet
+        # Initialize kwargs for addPointSet and customPointSetFamilies
         self.pointSetKwargs = None
+        self.customPointSetFamilies = None
 
     def setMesh(self, mesh):
         """
