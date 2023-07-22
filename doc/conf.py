@@ -1,4 +1,4 @@
-from sphinx_mdolab_theme.config import *
+from sphinx_mdolab_theme.config import extensions
 
 # -- Path setup --------------------------------------------------------------
 # If extensions (or modules to document with autodoc) are in another directory,
