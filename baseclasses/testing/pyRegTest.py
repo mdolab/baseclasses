@@ -191,7 +191,7 @@ class BaseRegTest:
             The name of the dictionary
         d : dict
             The dictionary to add
-        **kwargs
+        \*\*kwargs
             See :meth:`getTol <baseclasses.BaseRegTest.getTol>` on how to specif tolerances.
         """
         with multi_proc_exception_check(self.comm):
@@ -209,7 +209,7 @@ class BaseRegTest:
             The name of the value
         values : ndarray
             The array to be added. This must be a numpy array distributed over self.comm
-        **kwargs
+        \*\*kwargs
             See :meth:`getTol <baseclasses.BaseRegTest.getTol>` on how to specif tolerances.
         """
         if self.comm is None:
@@ -229,7 +229,7 @@ class BaseRegTest:
             The name of the value
         values : ndarray
             The array to be added. This must be a numpy array distributed over self.comm
-        **kwargs
+        \*\*kwargs
             See :meth:`getTol <baseclasses.BaseRegTest.getTol>` on how to specif tolerances.
         """
         if self.comm is None:
@@ -249,7 +249,7 @@ class BaseRegTest:
             The name of the value
         values : ndarray
             The array to be added. This must be a numpy array distributed over self.comm
-        **kwargs
+        \*\*kwargs
             See :meth:`getTol <baseclasses.BaseRegTest.getTol>` on how to specif tolerances.
         """
         if self.comm is None:

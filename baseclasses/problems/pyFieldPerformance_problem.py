@@ -55,7 +55,8 @@ class FieldPerformanceProblem:
     span : float
         Total wingspan
 
-    ** Note ** Thrust and weight should be specified in terms of force.
+    \*\* Note \*\* Thrust and weight should be specified in terms of force.
+
     T_VA : float
         Idle thrust during approach. <force>
     T_VF : float
@@ -75,7 +76,8 @@ class FieldPerformanceProblem:
     TOW : float
         Takeoff gross weight. <force>
 
-    ** Note ** TSFC should be specified in terms of mass / time / force.
+    \*\* Note \*\* TSFC should be specified in terms of mass / time / force.
+
     TSFC_VA : float
         Thrust-specific fuel consumption with engine in idle during approach.
     TSFC_VF : float
@@ -92,11 +94,13 @@ class FieldPerformanceProblem:
     Examples
     --------
     FP = FieldPerformance('gulfstream')
+
     fpp = FieldPerformanceProblem(name='fpp1',TOW=W,span=b,CLmax=CLmax,
                                   WingHeight=5.6,runwayFrictionCoef=0.04,Area=S,
                                   CD0=0.015,CD0_LG=0.0177,CD0_HL=0,
                                   T_VG=T_VG,T_VT=T_VT,TSFC_VG=TSFC,TSFC_VT=TSFC,
                                   altitude=0,units='english')
+
     fpp.addDV('TOW')
     funcs = {}
     funcsSens = {}
