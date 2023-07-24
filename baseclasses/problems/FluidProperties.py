@@ -3,6 +3,9 @@ import warnings
 
 class FluidProperties:
     """
+    This class is the parent of pyAero_problem and defines the basic flow properties to be passed to the solver.
+    It also has a method to update the dynamic viscosity through the Sutherland's law based on flow temperature and other optional user inputs.
+
     Parameters
     ----------
 
