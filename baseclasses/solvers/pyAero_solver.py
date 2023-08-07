@@ -95,13 +95,16 @@ class AeroSolver(BaseSolver):
         pointSetKwargs : dict
             Keyword arguments to be passed to the DVGeo addPointSet call.
             Useful for DVGeometryMulti, specifying FFD projection tolerances, etc.
+            These arguments are used for all point sets added by this solver.
 
-        customPointSetKwargs : dict of dicts
+        customPointSetFamilies : dict of dicts
             Keyword arguments to be passed to the DVGeo addPointSet call for each surface family,
             specified by the keys. The surface families need to be all part of the designSurfaceFamily.
             Useful for DVGeometryMulti, specifying FFD projection tolerances, etc.
             If this is provided together with pointSetKwargs, the regular pointSetKwargs
-            will be appended to each component's dictionary.
+            will be appended to each component's dictionary. If the same argument
+            is also provided in pointSetKwargs, the value specified in customPointSetFamilies
+            will be used.
 
         Examples
         --------
