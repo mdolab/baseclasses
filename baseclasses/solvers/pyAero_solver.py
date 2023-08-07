@@ -124,11 +124,8 @@ class AeroSolver(BaseSolver):
         else:
             self.pointSetKwargs = pointSetKwargs
 
-        # save if we have customPointSetFamilies
-        if customPointSetFamilies is None:
-            self.customPointSetFamilies = None
-        else:
-            self.customPointSetFamilies = customPointSetFamilies
+        # save if we have customPointSetFamilies. this default is not mutable so we can just set it as is.
+        self.customPointSetFamilies = customPointSetFamilies
 
     def getTriangulatedMeshSurface(self, groupName=None, **kwargs):
         """
