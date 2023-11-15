@@ -352,7 +352,15 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
 
         self.possibleDVs = set()
         for var in self.allVarFuncs:
-            if getattr(self, var) is not None:
+            validDV = False
+            # Flow state variables are only valid DVs if they were specified in the constructor
+            if var in self.fullState:
+                if var in self.inputs:
+                    self.possibleDVs.add(var)
+            else:
+                if getattr(self, var) is not None:
+                    validDV = True
+            if validDV:
                 self.possibleDVs.add(var)
 
         BCVarFuncs = ["Pressure", "PressureStagnation", "Temperature", "TemperatureStagnation", "Thrust", "Heat"]
