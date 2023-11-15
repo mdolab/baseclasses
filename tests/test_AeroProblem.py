@@ -8,12 +8,7 @@ Aero Problem unit tests
 # ==============================================================================
 # Standard Python modules
 # ==============================================================================
-import os
-import sys
-import io
 import unittest
-import pickle
-from typing import Type
 
 # ==============================================================================
 # External Python modules
