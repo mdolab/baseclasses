@@ -356,7 +356,7 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
             # Flow state variables are only valid DVs if they were specified in the constructor
             if var in self.fullState:
                 if var in self.inputs:
-                    self.possibleDVs.add(var)
+                    validDV = True
             else:
                 if getattr(self, var) is not None:
                     validDV = True
