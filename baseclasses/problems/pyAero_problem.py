@@ -653,6 +653,19 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
                 except:  # noqa
                     pass  # DV doesn't exist
 
+    def getDesignVars(self):
+        """Get the current DV values.
+
+        Returns
+        -------
+        dict of str : float
+            Current design variable values
+        """
+        dvs = {}
+        for dvName in self.DVs:
+            dvs[dvName] = self.DVs[dvName].value
+        return dvs
+
     def addVariablesPyOpt(self, optProb):
         """
         Add the current set of variables to the optProb object.
