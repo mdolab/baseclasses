@@ -666,7 +666,7 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
 
         Returns
         -------
-        dict of str : float
+        dvs : Dict[str, float]
             Current design variable values
         """
         dvs = {}
