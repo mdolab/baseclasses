@@ -41,13 +41,13 @@ class TestAeroProblem(unittest.TestCase):
         self.DVs = {}
         self.invalidDVs = []
 
-        for dv in self.ap.possibleDVs:
-            if dv in self.ap.fullState and dv not in self.ap.inputs:
-                self.invalidDVs.append(dv)
-            else:
+        for dv in self.ap.allVarFuncs:
+            if dv in self.ap.possibleDVs:
                 value = self.rng.random()
                 name = dv.upper()
                 self.DVs[dv] = {"value": value, "name": name}
+            else:
+                self.invalidDVs.append(dv)
 
         for dv in self.ap.possibleBCDVs:
             value = self.rng.random()
