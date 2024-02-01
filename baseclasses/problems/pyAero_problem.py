@@ -352,7 +352,14 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
 
         self.possibleDVs = set()
         for var in self.allVarFuncs:
-            if getattr(self, var) is not None:
+            validDV = False
+            # Flow state variables are only valid DVs if they were specified in the constructor
+            if var in self.fullState:
+                validDV = var in self.inputs
+            else:
+                if getattr(self, var) is not None:
+                    validDV = True
+            if validDV:
                 self.possibleDVs.add(var)
 
         BCVarFuncs = ["Pressure", "PressureStagnation", "Temperature", "TemperatureStagnation", "Thrust", "Heat"]
@@ -652,6 +659,19 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
                     self.DVs[dvName].value = x[dvName]
                 except:  # noqa
                     pass  # DV doesn't exist
+
+    def getDesignVars(self):
+        """Get the current DV values.
+
+        Returns
+        -------
+        dvs : Dict[str, float]
+            Current design variable values
+        """
+        dvs = {}
+        for dvName in self.DVs:
+            dvs[dvName] = self.DVs[dvName].value
+        return dvs
 
     def addVariablesPyOpt(self, optProb):
         """
