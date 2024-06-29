@@ -70,8 +70,10 @@ class StrandID(Enum):
 # DATA STRUCTURES
 # ==============================================================================
 class TecplotZone:
+    """Base class for Tecplot zones."""
+
     def __init__(self, name: str, data: Dict[str, npt.NDArray], solutionTime: float = 0.0, strandID: int = -1):
-        """Base class for Tecplot zones.
+        """Create a tecplot zone object.
 
         Parameters
         ----------
@@ -115,6 +117,10 @@ class TecplotZone:
 
 
 class TecplotOrderedZone(TecplotZone):
+    """Tecplot ordered zone. These zones do not contain connectivity information
+    because the data is ordered in an (i, j, k) grid.
+    """
+
     def __init__(
         self,
         name: str,
@@ -122,8 +128,23 @@ class TecplotOrderedZone(TecplotZone):
         solutionTime: float = 0.0,
         strandID: int = -1,
     ):
-        """Tecplot ordered zone. These zones do not contain connectivity information
-        because the data is ordered in a structured grid.
+        """To create a tecplot ordered zone object:
+
+        .. code-block:: python
+
+            # --- Example usage ---
+            # Create the data
+            nx, ny = 10, 10
+            X = np.random.rand(nx, ny)
+            Y = np.random.rand(nx, ny)
+
+            # Create the zone
+            zone = TecplotOrderedZone(
+                "OrderedZone",
+                {"X": X, "Y": Y},
+                solutionTime=0.0,
+                strandID=-1,
+            )
 
         Parameters
         ----------
@@ -152,6 +173,20 @@ class TecplotOrderedZone(TecplotZone):
 
 
 class TecplotFEZone(TecplotZone):
+    """Tecplot finite element zone. These zones contain connectivity information
+    to describe the elements in the zone. The type of element is determined by the
+    shape of the connectivity array and the ``tetrahedral`` flag. The connectivity
+    array is 0-based.
+
+    The following shapes correspond to the following element types, where n is the number of elements:
+
+    - ``(n, 2)``: FELINESEG
+    - ``(n, 3)``: FETRIANGLE
+    - ``(n, 4)``, ``tetrahedral=False``: FEQUADRILATERAL
+    - ``(n, 4)``, ``tetrahedral=True``: FETETRAHEDRON
+    - ``(n, 8)``: FEBRICK
+    """
+
     def __init__(
         self,
         zoneName: str,
@@ -161,8 +196,27 @@ class TecplotFEZone(TecplotZone):
         solutionTime: float = 0.0,
         strandID: int = -1,
     ):
-        """Tecplot finite element zone. These zones contain connectivity information
-        to describe the elements in the zone.
+        """To create a tecplot finite element zone object:
+
+        .. code-block:: python
+
+            # --- Example usage ---
+            # Create node coordinates
+            x = np.linspace(0, 1, nx + 1)
+            nodes = np.column_stack((x, x**2))
+
+            # Create element connectivity
+            connectivity = np.column_stack((np.arange(nx), np.arange(1, nx + 1)))
+
+            # Create the zone
+            zone = TecplotFEZone(
+                "FEZone",
+                {"x": nodes[:, 0], "y": nodes[:, 1]},
+                connectivity,
+                tetrahedral=False,
+                solutionTime=0.0,
+                strandID=-1,
+            )
 
         Parameters
         ----------
@@ -204,9 +258,9 @@ class TecplotZoneWriterASCII(Generic[T], ABC):
         ----------
         zone : T
             The Tecplot zone to write.
-        datapacking : Literal[&quot;BLOCK&quot;, &quot;POINT&quot;]
+        datapacking : Literal["BLOCK", "POINT"]
             The data packing format. BLOCK is row-major, POINT is column-major.
-        precision : Literal[&quot;SINGLE&quot;, &quot;DOUBLE&quot]
+        precision : Literal["SINGLE", "DOUBLE&quot]
             The floating point precision to write the data.
         """
         self.zone = zone
@@ -239,9 +293,9 @@ class TecplotOrderedZoneWriterASCII(TecplotZoneWriterASCII[TecplotOrderedZone]):
         ----------
         zone : TecplotOrderedZone
             The ordered zone to write.
-        datapacking : Literal[&quot;BLOCK&quot;, &quot;POINT&quot;]
+        datapacking : Literal["BLOCK", "POINT"]
             The data packing format. BLOCK is row-major, POINT is column-major.
-        precision : Literal[&quot;SINGLE&quot;, &quot;DOUBLE&quot;]
+        precision : Literal["SINGLE", "DOUBLE"]
             The floating point precision to write the data.
         """
         super().__init__(zone, datapacking, precision)
@@ -316,9 +370,9 @@ class TecplotFEZoneWriterASCII(TecplotZoneWriterASCII[TecplotFEZone]):
         ----------
         zone : TecplotFEZone
             The finite element zone to write.
-        datapacking : Literal[&quot;BLOCK&quot;, &quot;POINT&quot;]
+        datapacking : Literal["BLOCK", "POINT"]
             The data packing format. BLOCK is row-major, POINT is column-major.
-        precision : Literal[&quot;SINGLE&quot;, &quot;DOUBLE&quot;]
+        precision : Literal["SINGLE", "DOUBLE"]
             The floating point precision to write the data.
         """
         super().__init__(zone, datapacking, precision)
@@ -420,9 +474,9 @@ class TecplotWriterASCII:
             The title of the Tecplot file.
         zones : List[TecplotZone]
             A list of Tecplot zones to write.
-        datapacking : Literal[&quot;BLOCK&quot;, &quot;POINT&quot;]
+        datapacking : Literal["BLOCK", "POINT"]
             The data packing format. BLOCK is row-major, POINT is column-major.
-        precision : Literal[&quot;SINGLE&quot;, &quot;DOUBLE&quot;]
+        precision : Literal["SINGLE", "DOUBLE"]
             The floating point precision to write the data.
         """
         self.title = title
@@ -563,7 +617,7 @@ class TecplotZoneWriterBinary(Generic[T], ABC):
             The title of the Tecplot file.
         zone : T
             The Tecplot zone to write.
-        precision : Literal[&quot;SINGLE&quot;, &quot;DOUBLE&quot;]
+        precision : Literal["SINGLE", "DOUBLE"]
             The floating point precision to write the data.
         """
         self.title = title
@@ -687,7 +741,7 @@ class TecplotOrderedZoneWriterBinary(TecplotZoneWriterBinary[TecplotOrderedZone]
             The title of the Tecplot file.
         zone : TecplotOrderedZone
             The ordered zone to write.
-        precision : Literal[&quot;SINGLE&quot;, &quot;DOUBLE&quot;]
+        precision : Literal["SINGLE", "DOUBLE"]
             The floating point precision to write the data.
         """
         super().__init__(title, zone, precision)
@@ -734,7 +788,7 @@ class TecplotFEZoneWriterBinary(TecplotZoneWriterBinary[TecplotFEZone]):
             The title of the Tecplot file.
         zone : TecplotFEZone
             The finite element zone to write.
-        precision : Literal[&quot;SINGLE&quot;, &quot;DOUBLE&quot;]
+        precision : Literal["SINGLE", "DOUBLE"]
             The floating point precision to write the data.
         """
         super().__init__(title, zone, precision)
@@ -783,7 +837,7 @@ class TecplotWriterBinary:
             The title of the Tecplot file.
         zones : List[TecplotZone]
             A list of Tecplot zones to write.
-        precision : Literal[&quot;SINGLE&quot;, &quot;DOUBLE&quot;]
+        precision : Literal["SINGLE", "DOUBLE"]
             The floating point precision to write the data.
         """
         self.title = title
@@ -1468,10 +1522,10 @@ def writeTecplot(
     binary format. If the extension is .dat, the file will be written in
     ASCII format.
 
-    Note
-    ----
-    - ASCII files can be written with either BLOCK or POINT data packing.
-    - Binary files are always written with BLOCK data packing.
+    .. note::
+
+        - ASCII files can be written with either BLOCK or POINT data packing.
+        - Binary files are always written with BLOCK data packing.
 
     Parameters
     ----------
@@ -1481,15 +1535,34 @@ def writeTecplot(
         The title of the Tecplot file.
     zones : List[TecplotZone]
         A list of Tecplot zones to write
-    datapacking : Literal[&quot;BLOCK&quot;, &quot;POINT&quot;], optional
+    datapacking : Literal["BLOCK", "POINT"], optional
         The data packing format. BLOCK is row-major, POINT is column-major, by default "POINT"
-    precision : Literal[&quot;SINGLE&quot;, &quot;DOUBLE&quot;], optional
+    precision : Literal["SINGLE", "DOUBLE"], optional
         The floating point precision to write the data, by default "SINGLE"
 
     Raises
     ------
     ValueError
         If the file extension is invalid.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from baseclasses.utils import TecplotOrderedZone, writeTecplot
+        import numpy as np
+
+        nx, ny, nz = 10, 10, 10
+        X, Y, Z = np.meshgrid(np.random.rand(nx), np.random.rand(ny), np.random.rand(nz), indexing="ij")
+        data = {"X": X, "Y": Y, "Z": Z}
+        zone = TecplotOrderedZone("OrderedZone", data)
+
+        # Write the Tecplot file in ASCII format
+        writeTecplot("ordered.dat", "Ordered Zone", [zone], datapacking="BLOCK", precision="SINGLE")
+
+        # Write the Tecplot file in binary format
+        writeTecplot("ordered.plt", "Ordered Zone", [zone], precision="SINGLE")
+
     """
     filepath = Path(filename)
     if filepath.suffix == ".plt":
@@ -1522,6 +1595,18 @@ def readTecplot(filename: Union[str, Path]) -> Tuple[str, List[Union[TecplotOrde
     ------
     ValueError
         If the file extension is invalid.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from baseclasses.utils import readTecplot
+
+        # Read a Tecplot file in ASCII format
+        title, zones = readTecplot("ordered.dat")
+
+        # Read a Tecplot file in binary format
+        title, zones = readTecplot("ordered.plt")
     """
     filepath = Path(filename)
     if filepath.suffix == ".plt":
