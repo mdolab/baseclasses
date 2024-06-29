@@ -669,11 +669,11 @@ class TestTecplotIO(unittest.TestCase):
     def test_ASCIIReadWriteExternal(self):
         try:
             title, zones = readTecplot(self.externalFileAscii)
-        except FileNotFoundError:
-            self.fail(f"Reading external ASCII file {self.externalFileAscii} failed.")
+        except Exception as e:
+            self.fail(f"Reading external ASCII file {self.externalFileAscii} failed with error: {e}")
 
     def test_BinaryReadWriteExternal(self):
         try:
             title, zones = readTecplot(self.externalFileBinary)
-        except FileNotFoundError:
-            self.fail(f"Reading external binary file {self.externalFileBinary} failed.")
+        except Exception as e:
+            self.fail(f"Reading external binary file {self.externalFileBinary} failed with error: {e}")
