@@ -1,8 +1,9 @@
-from .containers import CaseInsensitiveSet, CaseInsensitiveDict
+from .containers import CaseInsensitiveDict, CaseInsensitiveSet
 from .error import Error
-from .utils import getPy3SafeString, pp, ParseStringFormat
-from .fileIO import writeJSON, readJSON, writePickle, readPickle, redirectIO, redirectingIO
+from .fileIO import readJSON, readPickle, redirectingIO, redirectIO, writeJSON, writePickle
 from .solverHistory import SolverHistory
+from .tecplotIO import TecplotFEZone, TecplotOrderedZone, readTecplot, writeTecplot
+from .utils import ParseStringFormat, getPy3SafeString, pp
 
 __all__ = [
     "CaseInsensitiveSet",
@@ -17,5 +18,8 @@ __all__ = [
     "redirectIO",
     "redirectingIO",
     "SolverHistory",
+    "TecplotFEZone",
+    "TecplotOrderedZone",
+    "writeTecplot",
     "ParseStringFormat",
 ]
