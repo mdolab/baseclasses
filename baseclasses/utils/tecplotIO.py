@@ -3,8 +3,7 @@ import struct
 from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
-from typing import (Any, Dict, Generic, List, Literal, TextIO, Tuple, TypeVar,
-                    Union)
+from typing import Any, Dict, Generic, List, Literal, TextIO, Tuple, TypeVar, Union
 
 import numpy as np
 import numpy.typing as npt
