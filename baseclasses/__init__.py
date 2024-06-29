@@ -1,24 +1,21 @@
-__version__ = "1.8.0"
+__version__ = "1.9.0"
 
 from .problems import (
     AeroProblem,
-    TransiProblem,
-    StructProblem,
     AeroStructProblem,
+    EngineProblem,
+    FieldPerformanceProblem,
+    FluidProperties,
+    FuelCase,
+    ICAOAtmosphere,
+    LGProblem,
     MissionProblem,
     MissionProfile,
     MissionSegment,
+    StructProblem,
+    TransiProblem,
     WeightProblem,
-    FuelCase,
-    FluidProperties,
-    ICAOAtmosphere,
-    EngineProblem,
-    FieldPerformanceProblem,
-    LGProblem,
 )
-
-from .solvers import BaseSolver, AeroSolver
-
-from .utils import getPy3SafeString
-
+from .solvers import AeroSolver, BaseSolver
 from .testing import BaseRegTest, getTol
+from .utils import getPy3SafeString
