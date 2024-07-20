@@ -15,6 +15,7 @@ T = TypeVar("T", bound="TecplotZone")
 # ENUMS
 # ==============================================================================
 class ZoneType(Enum):
+    UNSET = -1
     ORDERED = 0
     FELINESEG = 1
     FETRIANGLE = 2
@@ -35,6 +36,11 @@ class VariableLocation(Enum):
 
 
 class DataPrecision(Enum):
+    SINGLE = 6
+    DOUBLE = 12
+
+
+class BinaryDataPrecisionCodes(Enum):
     SINGLE = 1
     DOUBLE = 2
 
@@ -72,7 +78,13 @@ class StrandID(Enum):
 class TecplotZone:
     """Base class for Tecplot zones."""
 
-    def __init__(self, name: str, data: Dict[str, npt.NDArray], solutionTime: float = 0.0, strandID: int = -1):
+    def __init__(
+        self,
+        name: str,
+        data: Dict[str, npt.NDArray],
+        solutionTime: float = 0.0,
+        strandID: int = -1,
+    ):
         """Create a tecplot zone object.
 
         Parameters
@@ -90,7 +102,11 @@ class TecplotZone:
         self.data = data
         self.solutionTime = solutionTime
         self.strandID = strandID
-        self._validateShape()
+        self.zoneType: Union[str, ZoneType] = ZoneType.UNSET
+        self._validateName()
+        self._validateData()
+        self._validateSolutionTime()
+        self._validateStrandID()
 
     @property
     def variables(self) -> List[str]:
@@ -104,16 +120,64 @@ class TecplotZone:
     def nNodes(self) -> int:
         return np.multiply.reduce(self.shape)
 
-    def _validateShape(self) -> None:
-        """Check that all variables have the same shape.
+    def _validateName(self) -> None:
+        """Check that the zone name is a valid string.
 
         Raises
         ------
-        ValueError
-            If all variable data arrays do not have the same shape.
+        TypeError
+            If the zone name is not a valid string.
         """
+        if not isinstance(self.name, str):
+            raise TypeError("Zone name must be a string.")
+
+    def _validateData(self) -> None:
+        """Check that the data is a valid dictionary and the values
+        are numpy arrays that have the same shape.
+
+        Raises
+        ------
+        TypeError
+            If the data is not a dictionary or the values are not numpy arrays.
+        ValueError
+            If the variables do not have the same shape.
+        """
+        if not isinstance(self.data, dict):
+            raise TypeError("Data must be a dictionary.")
+
+        for val in self.data.values():
+            if not isinstance(val, np.ndarray):
+                raise TypeError("Data values must be numpy arrays.")
+
         if not all(self.data[var].shape == self.shape for var in self.variables):
             raise ValueError("All variables must have the same shape.")
+
+    def _validateSolutionTime(self) -> None:
+        """Check that the solution time is a valid float.
+
+        Raises
+        ------
+        TypeError
+            If the solution time is not a float.
+        ValueError
+            If the solution time is less than zero.
+        """
+        if not isinstance(self.solutionTime, float):
+            raise TypeError("Solution time must be a float.")
+
+        if self.solutionTime < 0.0:
+            raise ValueError("Solution time must be greater than or equal to zero.")
+
+    def _validateStrandID(self) -> None:
+        """Check that the strand ID is a valid integer.
+
+        Raises
+        ------
+        TypeError
+            If the strand ID is not an integer.
+        """
+        if not isinstance(self.strandID, int):
+            raise TypeError("Strand ID must be an integer.")
 
 
 class TecplotOrderedZone(TecplotZone):
@@ -152,12 +216,15 @@ class TecplotOrderedZone(TecplotZone):
             The name of the zone.
         data : Dict[str, npt.NDArray]
             A dictionary of variable names and their corresponding data.
+        zoneType : Union[str, ZoneType], optional
+            The type of the zone, by default ZoneType.ORDERED
         solutionTime : float, optional
             The solution time of the zone, by default 0.0
         strandID : int, optional
             The strand id of the zone, by default -1
         """
         super().__init__(name, data, solutionTime=solutionTime, strandID=strandID)
+        self.zoneType = ZoneType.ORDERED
 
     @property
     def iMax(self) -> int:
@@ -182,8 +249,8 @@ class TecplotFEZone(TecplotZone):
 
     - ``(n, 2)``: FELINESEG
     - ``(n, 3)``: FETRIANGLE
-    - ``(n, 4)``, ``tetrahedral=False``: FEQUADRILATERAL
-    - ``(n, 4)``, ``tetrahedral=True``: FETETRAHEDRON
+    - ``(n, 4)``, FEQUADRILATERAL
+    - ``(n, 4)``, FETETRAHEDRON
     - ``(n, 8)``: FEBRICK
     """
 
@@ -192,7 +259,7 @@ class TecplotFEZone(TecplotZone):
         zoneName: str,
         data: Dict[str, npt.NDArray],
         connectivity: npt.NDArray,
-        tetrahedral: bool = False,
+        zoneType: Union[str, ZoneType],
         solutionTime: float = 0.0,
         strandID: int = -1,
     ):
@@ -213,7 +280,7 @@ class TecplotFEZone(TecplotZone):
                 "FEZone",
                 {"x": nodes[:, 0], "y": nodes[:, 1]},
                 connectivity,
-                tetrahedral=False,
+                zoneType="FELINESEG",
                 solutionTime=0.0,
                 strandID=-1,
             )
@@ -226,8 +293,9 @@ class TecplotFEZone(TecplotZone):
             A dictionary of variable names and their corresponding data.
         connectivity : npt.NDArray
             The connectivity array that describes the elements in the zone.
-        tetrahedral : bool, optional
-            Flag to distinguish quadrilateral from tetrahedral zones, by default False
+        zoneType : Union[str, ZoneType]
+            The type of the zone. Can be a string that matches an entry
+            in the ZoneType enum or the ZoneType enum itself.
         solutionTime : float, optional
             The solution time of the zone, by default 0.0
         strandID : int, optional
@@ -235,11 +303,41 @@ class TecplotFEZone(TecplotZone):
         """
         super().__init__(zoneName, data, solutionTime=solutionTime, strandID=strandID)
         self.connectivity = connectivity
-        self.tetrahedral = tetrahedral
+        self.zoneType = zoneType
+        self._validateZoneType()
+        self._validateConnectivity()
 
     @property
     def nElements(self) -> int:
         return self.connectivity.shape[0]
+
+    def _validateZoneType(self) -> None:
+        supportedZones = [zone.name for zone in ZoneType if zone.name != "ORDERED"]
+        if isinstance(self.zoneType, str):
+            if self.zoneType.upper() not in supportedZones:
+                raise ValueError("Invalid zone type.")
+            self.zoneType = ZoneType[self.zoneType.upper()]
+        elif isinstance(self.zoneType, ZoneType):
+            if self.zoneType.name not in supportedZones:
+                raise ValueError("Invalid zone type.")
+        else:
+            raise ValueError("Invalid zone type.")
+
+    def _validateConnectivity(self) -> None:
+        if self.zoneType == ZoneType.FELINESEG:
+            assert self.connectivity.shape[1] == 2, "Connectivity shape does not match zone type."
+        elif self.zoneType == ZoneType.FETRIANGLE:
+            assert self.connectivity.shape[1] == 3, "Connectivity shape does not match zone type."
+        elif self.zoneType == ZoneType.FEQUADRILATERAL:
+            assert self.connectivity.shape[1] == 4, "Connectivity shape does not match zone type."
+        elif self.zoneType == ZoneType.FETETRAHEDRON:
+            assert self.connectivity.shape[1] == 4, "Connectivity shape does not match zone type."
+        elif self.zoneType == ZoneType.FEBRICK:
+            assert self.connectivity.shape[1] == 8, "Connectivity shape does not match zone type."
+        else:
+            # Prior validation step should ensure we don't reach this point
+            # but raise an error just in case.
+            raise TypeError("Invalid zone type.")
 
 
 # ==============================================================================
@@ -260,24 +358,30 @@ class TecplotZoneWriterASCII(Generic[T], ABC):
             The Tecplot zone to write.
         datapacking : Literal["BLOCK", "POINT"]
             The data packing format. BLOCK is row-major, POINT is column-major.
-        precision : Literal["SINGLE", "DOUBLE&quot]
+        precision : Literal["SINGLE", "DOUBLE"]
             The floating point precision to write the data.
         """
         self.zone = zone
-        self.datapacking = datapacking
-        self.nDigits = 6 if precision == "SINGLE" else 12
+        self.datapacking = DataPacking[datapacking].name
+        self.fmtPrecision = DataPrecision[precision].value
 
     @abstractmethod
     def writeHeader(self, handle: TextIO):
         pass
 
     @abstractmethod
-    def writeData(self, handle: TextIO):
-        pass
-
-    @abstractmethod
     def writeFooter(self, handle: TextIO):
         pass
+
+    def writeData(self, handle: TextIO):
+        data = np.stack([self.zone.data[var] for var in self.zone.variables], axis=-1)
+
+        if self.datapacking == "POINT":
+            data = data.reshape(-1, len(self.zone.variables))
+        else:
+            data = data.reshape(-1, len(self.zone.variables)).T
+
+        np.savetxt(handle, data, fmt=f"%.{self.fmtPrecision}E")
 
 
 class TecplotOrderedZoneWriterASCII(TecplotZoneWriterASCII[TecplotOrderedZone]):
@@ -318,33 +422,16 @@ class TecplotOrderedZoneWriterASCII(TecplotZoneWriterASCII[TecplotOrderedZone]):
         if self.zone.kMax > 1:
             zoneString += f", K={self.zone.kMax}"
 
-        if self.zone.strandID is not None:
+        # Write the strand ID and solution time
+        if self.zone.strandID != StrandID.STATIC and self.zone.strandID != StrandID.PENDING:
+            # ASCII format does not support the -1 or -2 strand IDs
+            # So we only write the strand ID if it is not -1
             zoneString += f", STRANDID={self.zone.strandID}"
 
-        if self.zone.solutionTime is not None:
-            zoneString += f", SOLUTIONTIME={self.zone.solutionTime}"
-
+        zoneString += f", SOLUTIONTIME={self.zone.solutionTime}"
         zoneString += f", DATAPACKING={self.datapacking}\n"
 
         handle.write(zoneString)
-
-    def writeData(self, handle: TextIO):
-        """Write the zone data to the file.
-
-        Parameters
-        ----------
-        handle : TextIO
-            The file handle.
-        """
-        # Get the data into a single array
-        data = np.stack([self.zone.data[var] for var in self.zone.variables], axis=-1)
-
-        if self.datapacking == "POINT":
-            # If the datapacking is POINT, then each variable is a column
-            np.savetxt(handle, data.reshape(-1, len(self.zone.variables)), fmt=f"%.{self.nDigits}E")
-        else:
-            # If the datapacking is BLOCK, then each variable is a row
-            np.savetxt(handle, data.reshape(-1, len(self.zone.variables)).T, fmt=f"%.{self.nDigits}E")
 
     def writeFooter(self, handle: TextIO):
         """Write the zone footer to the file.
@@ -376,33 +463,6 @@ class TecplotFEZoneWriterASCII(TecplotZoneWriterASCII[TecplotFEZone]):
             The floating point precision to write the data.
         """
         super().__init__(zone, datapacking, precision)
-        self.zoneType = self._getZoneType()
-
-    def _getZoneType(self) -> str:
-        """Get the Tecplot zone type based on the connectivity shape.
-
-        Returns
-        -------
-        str
-            The Tecplot zone type.
-
-        Raises
-        ------
-        ValueError
-            If the connectivity shape is invalid.
-        """
-        if self.zone.connectivity.shape[1] == 2:
-            return ZoneType.FELINESEG.name
-        elif self.zone.connectivity.shape[1] == 3:
-            return ZoneType.FETRIANGLE.name
-        elif self.zone.connectivity.shape[1] == 4 and not self.zone.tetrahedral:
-            return ZoneType.FEQUADRILATERAL.name
-        elif self.zone.connectivity.shape[1] == 4 and self.zone.tetrahedral:
-            return ZoneType.FETETRAHEDRON.name
-        elif self.zone.connectivity.shape[1] == 8:
-            return ZoneType.FEBRICK.name
-        else:
-            raise ValueError("Invalid connectivity shape.")
 
     def writeHeader(self, handle: TextIO):
         """Write the zone header to the file.
@@ -419,27 +479,17 @@ class TecplotFEZoneWriterASCII(TecplotZoneWriterASCII[TecplotFEZone]):
         # Write the node and element information
         zoneString += f", NODES={np.multiply.reduce(self.zone.shape):d}"
         zoneString += f", ELEMENTS={self.zone.nElements:d}"
-        zoneString += f", ZONETYPE={self.zoneType}\n"
+        zoneString += f", ZONETYPE={self.zone.zoneType.name}"
+
+        # Write the strand ID and solution time
+        if self.zone.strandID != StrandID.STATIC and self.zone.strandID != StrandID.PENDING:
+            # ASCII format does not support the -1 or -2 strand IDs
+            # So we only write the strand ID if it is not -1
+            zoneString += f", STRANDID={self.zone.strandID}"
+
+        zoneString += f", SOLUTIONTIME={self.zone.solutionTime}\n"
 
         handle.write(zoneString)
-
-    def writeData(self, handle: TextIO):
-        """Write the zone data to the file.
-
-        Parameters
-        ----------
-        handle : TextIO
-            The file handle.
-        """
-        # Get the data into a single array
-        data = np.stack([self.zone.data[var] for var in self.zone.variables], axis=-1)
-
-        if self.datapacking == "POINT":
-            # If the datapacking is POINT, then each variable is a column
-            np.savetxt(handle, data.reshape(-1, len(self.zone.variables)), fmt=f"%.{self.nDigits}E")
-        else:
-            # If the datapacking is BLOCK, then each variable is a row
-            np.savetxt(handle, data.reshape(-1, len(self.zone.variables)).T, fmt=f"%.{self.nDigits}E")
 
     def writeFooter(self, handle: TextIO):
         """Write the zone footer to the file. This includes the connectivity information.
@@ -481,11 +531,11 @@ class TecplotWriterASCII:
         """
         self.title = title
         self.zones = zones
-        self.datapacking = datapacking
-        self.precision = precision
-        self._checkVariables()
+        self.datapacking = DataPacking[datapacking].name
+        self.precision = DataPrecision[precision].name
+        self._validateVariables()
 
-    def _checkVariables(self) -> None:
+    def _validateVariables(self) -> None:
         """Check that all zones have the same variables."""
         if not all(set(self.zones[0].variables) == set(zone.variables) for zone in self.zones):
             raise ValueError("All zones must have the same variables.")
@@ -623,41 +673,7 @@ class TecplotZoneWriterBinary(Generic[T], ABC):
         self.title = title
         self.zone = zone
         self.datapacking = "BLOCK"
-        self.precision = precision
-        self.zoneType = self._getZoneType()
-
-    def _getZoneType(self) -> int:
-        """Get the Tecplot zone type based on the zone object.
-
-        Returns
-        -------
-        int
-            The Tecplot zone type.
-
-        Raises
-        ------
-        ValueError
-            If the zone type is invalid.
-        ValueError
-            If the connectivity shape is invalid.
-        """
-        if isinstance(self.zone, TecplotOrderedZone):
-            return ZoneType.ORDERED.value
-        elif isinstance(self.zone, TecplotFEZone):
-            if self.zone.connectivity.shape[1] == 2:
-                return ZoneType.FELINESEG.value
-            elif self.zone.connectivity.shape[1] == 3:
-                return ZoneType.FETRIANGLE.value
-            elif self.zone.connectivity.shape[1] == 4 and not self.zone.tetrahedral:
-                return ZoneType.FEQUADRILATERAL.value
-            elif self.zone.connectivity.shape[1] == 4 and self.zone.tetrahedral:
-                return ZoneType.FETETRAHEDRON.value
-            elif self.zone.connectivity.shape[1] == 8:
-                return ZoneType.FEBRICK.value
-            else:
-                raise ValueError("Invalid connectivity shape.")
-        else:
-            raise ValueError("Invalid zone type.")
+        self.precision = DataPrecision[precision].name
 
     def _writeCommonHeader(self, handle: TextIO) -> None:
         """Write the common header information for all zones.
@@ -671,16 +687,10 @@ class TecplotZoneWriterBinary(Generic[T], ABC):
         _writeFloat32(handle, SectionMarkers.ZONE.value)  # Write the zone marker
         _writeString(handle, self.zone.name)  # Write the zone name
         _writeInteger(handle, BinaryFlags.NONE.value)  # Write the parent zone
-        if self.zone.strandID is not None:
-            _writeInteger(handle, self.zone.strandID)  # Write the strand ID
-        else:
-            _writeInteger(handle, StrandID.STATIC.value)
-        if self.zone.solutionTime is not None:
-            _writeFloat64(handle, self.zone.solutionTime)  # Write the solution time
-        else:
-            _writeFloat64(handle, 0.0)
+        _writeInteger(handle, self.zone.strandID)  # Write the strand ID
+        _writeFloat64(handle, self.zone.solutionTime)  # Write the solution time
         _writeInteger(handle, BinaryFlags.NONE.value)  # Write the default color
-        _writeInteger(handle, self.zoneType)  # Write the zone type
+        _writeInteger(handle, self.zone.zoneType.value)  # Write the zone type
         _writeInteger(handle, DataPacking.BLOCK.value)  # Data Packing (Always block for binary)
         _writeInteger(handle, VariableLocation.NODE.value)  # Specify the variable location
         _writeInteger(handle, BinaryFlags.FALSE.value)  # Are raw 1-1 face neighbors supplied
@@ -707,7 +717,7 @@ class TecplotZoneWriterBinary(Generic[T], ABC):
 
         # Write the variable data format for each variable
         for _ in range(len(self.zone.variables)):
-            _writeInteger(handle, DataPrecision[self.precision].value)
+            _writeInteger(handle, BinaryDataPrecisionCodes[self.precision].value)
 
         _writeInteger(handle, BinaryFlags.FALSE.value)  # No passive variables
         _writeInteger(handle, BinaryFlags.FALSE.value)  # No variable sharing
@@ -831,6 +841,12 @@ class TecplotWriterBinary:
     ) -> None:
         """Writer for Tecplot files in binary format.
 
+        This writer only supports files formatted using the format
+        designated by magic number ``#!TDV112``.
+
+        See the Tecplot 360 User's Manual for more information on the
+        binary file format and the magic number.
+
         Parameters
         ----------
         title : str
@@ -840,6 +856,7 @@ class TecplotWriterBinary:
         precision : Literal["SINGLE", "DOUBLE"]
             The floating point precision to write the data.
         """
+        self._magicNumber = b"#!TDV112"
         self.title = title
         self.zones = zones
         self.precision = precision
@@ -884,7 +901,7 @@ class TecplotWriterBinary:
             The filename as a string or pathlib.Path object.
         """
         with open(filename, "wb") as handle:
-            handle.write(b"#!TDV112")  # Magic number
+            handle.write(self._magicNumber)  # Magic number
             _writeInteger(handle, 1)  # Byte order
             _writeInteger(handle, FileType.FULL.value)  # Full filetype
             _writeString(handle, self.title)  # Write the title
@@ -1082,21 +1099,21 @@ class TecplotASCIIReader:
             zoneHeaderDict["zoneName"],
             data,
             connectivity - 1,
+            zoneType=zoneHeaderDict["zoneType"],
             solutionTime=zoneHeaderDict["solutionTime"],
             strandID=zoneHeaderDict["strandID"],
-            tetrahedral=zoneHeaderDict["zoneType"] == "FETETRAHEDRON",
         )
 
         return zone, nodeOffset + nElements
 
-    def _readZoneData(self, lines: List[str], iCurrent: int, variables: List[str]) -> Tuple[TecplotZone, int]:
+    def _readZoneData(self, lines: List[str], iLine: int, variables: List[str]) -> Tuple[TecplotZone, int]:
         """Read the data for a Tecplot zone.
 
         Parameters
         ----------
         lines : List[str]
             The list of lines in the Tecplot file.
-        iCurrent : int
+        iLine : int
             The current line number in the file.
         variables : List[str]
             The list of variable names.
@@ -1106,14 +1123,14 @@ class TecplotASCIIReader:
         Tuple[TecplotZone, int]
             The Tecplot zone object and the number of lines read.
         """
-        zoneHeaderDict, iCurrent = self._readZoneHeader(lines, iCurrent)
+        zoneHeaderDict, iLine = self._readZoneHeader(lines, iLine)
 
         if zoneHeaderDict["zoneType"] == "ORDERED":
-            zone, iOffset = self._readOrderedZoneData(iCurrent, variables, zoneHeaderDict)
+            zone, iOffset = self._readOrderedZoneData(iLine, variables, zoneHeaderDict)
         else:
-            zone, iOffset = self._readFEZoneData(iCurrent, variables, zoneHeaderDict)
+            zone, iOffset = self._readFEZoneData(iLine, variables, zoneHeaderDict)
 
-        return zone, iCurrent + iOffset
+        return zone, iLine + iOffset
 
     def read(self) -> Tuple[str, List[TecplotZone]]:
         """Read the Tecplot file and return the title and zones.
@@ -1144,14 +1161,14 @@ class TecplotASCIIReader:
         # Get the variable names
         variables = re.findall(r'"([^"]*)"', lines[1])
 
-        iCurrent = 2
-        while iCurrent < len(lines):
-            zone, iCurrent = self._readZoneData(lines, iCurrent, variables)
+        iLine = 2
+        while iLine < len(lines):
+            zone, iLine = self._readZoneData(lines, iLine, variables)
             zones.append(zone)
 
             # Skip any empty lines
-            while iCurrent < len(lines) and not lines[iCurrent].strip():
-                iCurrent += 1
+            while iLine < len(lines) and not lines[iLine].strip():
+                iLine += 1
 
         return title, zones
 
@@ -1212,9 +1229,9 @@ class TecplotBinaryReader:
         int
             The integer read from the file.
         """
-        return np.fromfile(handle, dtype=np.int32, count=1, offset=offset)[0]
+        return int(np.fromfile(handle, dtype=np.int32, count=1, offset=offset)[0])
 
-    def _readIntegerArray(self, handle: TextIO, nValues: int, offset: int = 0) -> np.ndarray:
+    def _readIntegerArray(self, handle: TextIO, nValues: int, offset: int = 0) -> npt.NDArray[np.int32]:
         """Read an array of integers from a binary file as int32.
 
         Parameters
@@ -1228,7 +1245,7 @@ class TecplotBinaryReader:
 
         Returns
         -------
-        np.ndarray
+        npt.NDArray[np.int32]
             The integer array read from the file.
         """
         return np.fromfile(handle, dtype=np.int32, count=nValues, offset=offset)
@@ -1248,9 +1265,9 @@ class TecplotBinaryReader:
         float
             The float read from the file.
         """
-        return np.fromfile(handle, dtype=np.float32, count=1, offset=offset)[0]
+        return float(np.fromfile(handle, dtype=np.float32, count=1, offset=offset)[0])
 
-    def _readFloat32Array(self, handle: TextIO, nValues: int, offset: int = 0) -> np.ndarray:
+    def _readFloat32Array(self, handle: TextIO, nValues: int, offset: int = 0) -> npt.NDArray[np.float32]:
         """Read an array of floats from a binary file as float32.
 
         Parameters
@@ -1264,7 +1281,7 @@ class TecplotBinaryReader:
 
         Returns
         -------
-        np.ndarray
+        npt.NDArray[np.float32]
             The float array read from the file.
         """
         return np.fromfile(handle, dtype=np.float32, count=nValues, offset=offset)
@@ -1284,9 +1301,9 @@ class TecplotBinaryReader:
         float
             The float read from the file.
         """
-        return np.fromfile(handle, dtype=np.float64, count=1, offset=offset)[0]
+        return float(np.fromfile(handle, dtype=np.float64, count=1, offset=offset)[0])
 
-    def _readFloat64Array(self, handle: TextIO, nValues: int, offset: int = 0) -> np.ndarray:
+    def _readFloat64Array(self, handle: TextIO, nValues: int, offset: int = 0) -> npt.NDArray[np.float64]:
         """Read an array of floats from a binary file as float64.
 
         Parameters
@@ -1300,7 +1317,7 @@ class TecplotBinaryReader:
 
         Returns
         -------
-        np.ndarray
+        npt.NDArray[np.float64]
             The float array read from the file.
         """
         return np.fromfile(handle, dtype=np.float64, count=nValues, offset=offset)
@@ -1386,7 +1403,7 @@ class TecplotBinaryReader:
             zoneName,
             {var: np.zeros(nNodes) for _, var in enumerate(self._variables)},
             connectivity,
-            tetrahedral=zoneType == ZoneType.FETETRAHEDRON.value,
+            zoneType=ZoneType(zoneType),
             solutionTime=solutionTime,
             strandID=strandID,
         )
@@ -1477,7 +1494,7 @@ class TecplotBinaryReader:
                 kMax = zones[izone].kMax
 
                 for i in range(self._nVariables):
-                    if dataFormats[i] == DataPrecision.SINGLE.value:
+                    if dataFormats[i] == BinaryDataPrecisionCodes.SINGLE.value:
                         readData = self._readFloat32Array(file, iMax * jMax * kMax).reshape(iMax, jMax, kMax).squeeze()
                     else:
                         readData = self._readFloat64Array(file, iMax * jMax * kMax).reshape(iMax, jMax, kMax).squeeze()
@@ -1489,7 +1506,7 @@ class TecplotBinaryReader:
                 nElements = zones[izone].nElements
 
                 for i in range(self._nVariables):
-                    if dataFormats[i] == DataPrecision.SINGLE.value:
+                    if dataFormats[i] == BinaryDataPrecisionCodes.SINGLE.value:
                         readData = self._readFloat32Array(file, nNodes)
                     else:
                         readData = self._readFloat64Array(file, nNodes)

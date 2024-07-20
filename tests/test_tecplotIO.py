@@ -1,3 +1,4 @@
+import itertools
 import tempfile
 import unittest
 from itertools import product
@@ -6,31 +7,70 @@ from typing import List, Tuple
 
 import numpy as np
 import numpy.typing as npt
+from parameterized import parameterized
 
-from baseclasses.utils import TecplotFEZone, TecplotOrderedZone, readTecplot, writeTecplot
+from baseclasses.utils import TecplotFEZone, TecplotOrderedZone, ZoneType, readTecplot, writeTecplot
+
+# --- Define test matrices for Ordered and FE Zones ---
+TEST_CASES_ORDERED = [
+    tc
+    for tc in itertools.product(
+        [(10,), (10, 10), (10, 10, 10)], ["SINGLE", "DOUBLE"], ["POINT", "BLOCK"], [".dat", ".plt"]
+    )
+]
+# filter out cases that use POINT datapacking with binary '.plt' extensions
+TEST_CASES_ORDERED = [tc for tc in TEST_CASES_ORDERED if not (tc[2] == "POINT" and tc[3] == ".plt")]
+
+TEST_CASES_FE = [
+    tc
+    for tc in itertools.product(
+        [ZoneType.FELINESEG, ZoneType.FETRIANGLE, ZoneType.FEQUADRILATERAL],
+        ["SINGLE", "DOUBLE"],
+        ["POINT", "BLOCK"],
+        [".dat", ".plt"],
+    )
+]
+# filter out cases that use POINT datapacking with binary '.plt' extensions
+TEST_CASES_FE = [tc for tc in TEST_CASES_FE if not (tc[2] == "POINT" and tc[3] == ".plt")]
 
 
-def createBrickGrid(nx: int, ny: int, nz: int) -> Tuple[npt.ArrayLike, npt.ArrayLike]:
+def createBrickGrid(ni: int, nj: int, nk: int) -> Tuple[npt.NDArray, npt.NDArray]:
+    """Create a 3D grid of hexahedral 'brick' elements.
+
+    Parameters
+    ----------
+    ni : int
+        The number of elements in the i-direction.
+    nj : int
+        The number of elements in the j-direction.
+    nk : int
+        The number of elements in the k-direction.
+
+    Returns
+    -------
+    Tuple[npt.NDArray, npt.NDArray]
+        A tuple containing the node coordinates and element connectivity.
+    """
     # Create node coordinates
-    x = np.linspace(0, 1, nx + 1)
-    y = np.linspace(0, 1, ny + 1)
-    z = np.linspace(0, 1, nz + 1)
+    x = np.linspace(0, 1, ni + 1)
+    y = np.linspace(0, 1, nj + 1)
+    z = np.linspace(0, 1, nk + 1)
     xx, yy, zz = np.meshgrid(x, y, z)
     nodes = np.column_stack((xx.flatten(), yy.flatten(), zz.flatten()))
 
     # Create element connectivity
     connectivity = []
-    for k in range(nz):
-        for j in range(ny):
-            for i in range(nx):
+    for k in range(nk):
+        for j in range(nj):
+            for i in range(ni):
                 # Get the eight corners of the hexahedron
-                n0 = i + j * (nx + 1) + k * (nx + 1) * (ny + 1)
+                n0 = i + j * (ni + 1) + k * (ni + 1) * (nj + 1)
                 n1 = n0 + 1
-                n2 = n1 + (nx + 1)
+                n2 = n1 + (ni + 1)
                 n3 = n2 - 1
-                n4 = n0 + (nx + 1) * (ny + 1)
+                n4 = n0 + (ni + 1) * (nj + 1)
                 n5 = n4 + 1
-                n6 = n5 + (nx + 1)
+                n6 = n5 + (ni + 1)
                 n7 = n6 - 1
 
                 connectivity.append([n0, n1, n2, n3, n4, n5, n6, n7])
@@ -40,27 +80,43 @@ def createBrickGrid(nx: int, ny: int, nz: int) -> Tuple[npt.ArrayLike, npt.Array
     return nodes, connectivity
 
 
-def createTetGrid(nx: int, ny: int, nz: int) -> Tuple[npt.ArrayLike, npt.ArrayLike]:
+def createTetGrid(ni: int, nj: int, nk: int) -> Tuple[npt.NDArray, npt.NDArray]:
+    """Create a 3D grid of tetrahedral elements.
+
+    Parameters
+    ----------
+    ni : int
+        The number of elements in the i-direction.
+    nj : int
+        The number of elements in the j-direction.
+    nk : int
+        The number of elements in the k-direction.
+
+    Returns
+    -------
+    Tuple[npt.NDArray, npt.NDArray]
+        A tuple containing the node coordinates and element connectivity.
+    """
     # Create node coordinates
-    x = np.linspace(0, 1, nx + 1)
-    y = np.linspace(0, 1, ny + 1)
-    z = np.linspace(0, 1, nz + 1)
+    x = np.linspace(0, 1, ni + 1)
+    y = np.linspace(0, 1, nj + 1)
+    z = np.linspace(0, 1, nk + 1)
     xx, yy, zz = np.meshgrid(x, y, z)
     nodes = np.column_stack((xx.flatten(), yy.flatten(), zz.flatten()))
 
     # Create element connectivity
     connectivity = []
-    for k in range(nz):
-        for j in range(ny):
-            for i in range(nx):
+    for k in range(nk):
+        for j in range(nj):
+            for i in range(ni):
                 # Get the eight corners of the hexahedron
-                n0 = i + j * (nx + 1) + k * (nx + 1) * (ny + 1)
+                n0 = i + j * (ni + 1) + k * (ni + 1) * (nj + 1)
                 n1 = n0 + 1
-                n2 = n1 + (nx + 1)
+                n2 = n1 + (ni + 1)
                 n3 = n2 - 1
-                n4 = n0 + (nx + 1) * (ny + 1)
+                n4 = n0 + (ni + 1) * (nj + 1)
                 n5 = n4 + 1
-                n6 = n5 + (nx + 1)
+                n6 = n5 + (ni + 1)
                 n7 = n6 - 1
 
                 # Basic subdivision (always add these)
@@ -78,15 +134,15 @@ def createTetGrid(nx: int, ny: int, nz: int) -> Tuple[npt.ArrayLike, npt.ArrayLi
                 # Additional tetrahedra for boundary faces
                 if i == 0:
                     connectivity.append([n0, n3, n4, n7])
-                if i == nx - 1:
+                if i == ni - 1:
                     connectivity.append([n1, n2, n5, n6])
                 if j == 0:
                     connectivity.append([n0, n1, n4, n5])
-                if j == ny - 1:
+                if j == nj - 1:
                     connectivity.append([n2, n3, n6, n7])
                 if k == 0:
                     connectivity.append([n0, n1, n2, n3])
-                if k == nz - 1:
+                if k == nk - 1:
                     connectivity.append([n4, n5, n6, n7])
 
     connectivity = np.array(connectivity)
@@ -95,20 +151,34 @@ def createTetGrid(nx: int, ny: int, nz: int) -> Tuple[npt.ArrayLike, npt.ArrayLi
 
 
 # Create a finite element mesh with connectivity
-def createQuadGrid(nx: int, ny: int) -> Tuple[npt.ArrayLike, npt.ArrayLike]:
+def createQuadGrid(ni: int, nj: int) -> Tuple[npt.NDArray, npt.NDArray]:
+    """Create a 2D grid of quadrilateral elements.
+
+    Parameters
+    ----------
+    ni : int
+        The number of elements in the i-direction.
+    nj : int
+        The number of elements in the j-direction.
+
+    Returns
+    -------
+    Tuple[npt.NDArray, npt.NDArray]
+        A tuple containing the node coordinates and element connectivity.
+    """
     # Create node coordinates
-    x = np.linspace(0, 1, nx + 1)
-    y = np.linspace(0, 1, ny + 1)
+    x = np.linspace(0, 1, ni + 1)
+    y = np.linspace(0, 1, nj + 1)
     xx, yy = np.meshgrid(x, y)
-    nodes = np.column_stack((xx.flatten(), yy.flatten()))
+    nodes = np.column_stack((xx.flatten(), yy.flatten(), np.zeros_like(xx.flatten())))
 
     # Create element connectivity
     connectivity = []
-    for j in range(ny):
-        for i in range(nx):
-            n1 = i + j * (nx + 1)
+    for j in range(nj):
+        for i in range(ni):
+            n1 = i + j * (ni + 1)
             n2 = n1 + 1
-            n3 = n2 + nx + 1
+            n3 = n2 + ni + 1
             n4 = n3 - 1
             connectivity.append([n1, n2, n3, n4])
 
@@ -117,24 +187,38 @@ def createQuadGrid(nx: int, ny: int) -> Tuple[npt.ArrayLike, npt.ArrayLike]:
     return nodes, connectivity
 
 
-def createTriGrid(nx: int, ny: int) -> Tuple[npt.ArrayLike, npt.ArrayLike]:
+def createTriGrid(ni: int, nj: int) -> Tuple[npt.NDArray, npt.NDArray]:
+    """Create a 2D grid of triangular elements.
+
+    Parameters
+    ----------
+    ni : int
+        The number of elements in the i-direction.
+    nj : int
+        The number of elements in the j-direction.
+
+    Returns
+    -------
+    Tuple[npt.NDArray, npt.NDArray]
+        A tuple containing the node coordinates and element connectivity.
+    """
     # Create node coordinates
-    x = np.linspace(0, 1, nx + 1)
-    y = np.linspace(0, 1, ny + 1)
+    x = np.linspace(0, 1, ni + 1)
+    y = np.linspace(0, 1, nj + 1)
     xx, yy = np.meshgrid(x, y)
-    nodes = np.column_stack((xx.flatten(), yy.flatten()))
+    nodes = np.column_stack((xx.flatten(), yy.flatten(), np.zeros_like(xx.flatten())))
 
     # Create element connectivity
     connectivity = []
-    for j in range(ny):
-        for i in range(nx):
-            n1 = i + j * (nx + 1)
+    for j in range(nj):
+        for i in range(ni):
+            n1 = i + j * (ni + 1)
             n2 = n1 + 1
-            n3 = n2 + nx + 1
+            n3 = n2 + ni + 1
             connectivity.append([n1, n2, n3])
 
-            n1 = i + j * (nx + 1)
-            n2 = n1 + nx + 1
+            n1 = i + j * (ni + 1)
+            n2 = n1 + ni + 1
             n3 = n2 + 1
             connectivity.append([n1, n2, n3])
 
@@ -143,13 +227,25 @@ def createTriGrid(nx: int, ny: int) -> Tuple[npt.ArrayLike, npt.ArrayLike]:
     return nodes, connectivity
 
 
-def createLineSegGrid(nx: int) -> Tuple[npt.ArrayLike, npt.ArrayLike]:
+def createLineSegGrid(ni: int) -> Tuple[npt.NDArray, npt.NDArray]:
+    """Create a 1D grid of line segments.
+
+    Parameters
+    ----------
+    ni : int
+        The number of elements in the i-direction.
+
+    Returns
+    -------
+    Tuple[npt.NDArray, npt.NDArray]
+        A tuple containing the node coordinates and element connectivity.
+    """
     # Create node coordinates
-    x = np.linspace(0, 1, nx + 1)
-    nodes = np.column_stack((x, x**2))
+    x = np.linspace(0, 1, ni + 1)
+    nodes = np.column_stack((x, x**2, np.zeros_like(x)))
 
     # Create element connectivity
-    connectivity = np.column_stack((np.arange(nx), np.arange(1, nx + 1)))
+    connectivity = np.column_stack((np.arange(ni), np.arange(1, ni + 1)))
 
     return nodes, connectivity
 
@@ -158,8 +254,6 @@ class TestTecplotIO(unittest.TestCase):
     N_PROCS = 1
 
     def setUp(self):
-        np.random.seed(123)
-
         thisDir = Path(__file__).parent
         self.externalFileAscii = thisDir / "input" / "airfoil_000_slices.dat"
         self.externalFileBinary = thisDir / "input" / "airfoil_000_surf.plt"
@@ -186,7 +280,6 @@ class TestTecplotIO(unittest.TestCase):
             self.assertEqual(zone1.nNodes, zone2.nNodes)
             self.assertEqual(zone1.solutionTime, zone2.solutionTime)
             self.assertEqual(zone1.strandID, zone2.strandID)
-            self.assertEqual(zone1.tetrahedral, zone2.tetrahedral)
 
     def test_orderedZone(self):
         # Create a 3D grid of shape (nx, ny, nz, 3)
@@ -208,6 +301,36 @@ class TestTecplotIO(unittest.TestCase):
         self.assertEqual(zone.solutionTime, 0.0)
         self.assertEqual(zone.strandID, -1)
 
+        msg = "Zone name must be a string"
+        with self.assertRaises(TypeError, msg=msg):
+            TecplotOrderedZone(123, {"X": X, "Y": Y, "Z": Z}, solutionTime=0.0, strandID=-1)
+
+        msg = "Solution time must be a float"
+        with self.assertRaises(TypeError):
+            TecplotOrderedZone("Grid", {"X": X, "Y": Y, "Z": Z}, solutionTime="1.0", strandID=-1)
+
+        msg = "Solution time must be greater than or equal to zero"
+        with self.assertRaises(ValueError):
+            TecplotOrderedZone("Grid", {"X": X, "Y": Y, "Z": Z}, solutionTime=-1.0, strandID=1)
+
+        msg = "Strand ID must be an integer"
+        with self.assertRaises(TypeError):
+            TecplotOrderedZone("Grid", {"X": X, "Y": Y, "Z": Z}, solutionTime=0.0, strandID="1")
+
+        msg = "Data values must be numpy arrays."
+        with self.assertRaises(TypeError):
+            TecplotOrderedZone(
+                "Grid", {"X": X.tolist(), "Y": Y.tolist(), "Z": Z.tolist()}, solutionTime=0.0, strandID=-1
+            )
+
+        msg = "Data must be a dictionary."
+        with self.assertRaises(TypeError):
+            TecplotOrderedZone("Grid", X, solutionTime=0.0, strandID=-1)
+
+        msg = "All variables must have the same shape."
+        with self.assertRaises(ValueError):
+            TecplotOrderedZone("Grid", {"X": X, "Y": Y, "Z": Z[:-1]}, solutionTime=0.0, strandID=-1)
+
     def test_FEZone(self):
         # Create a quad grid
         nx, ny = 10, 10
@@ -217,7 +340,12 @@ class TestTecplotIO(unittest.TestCase):
         strandID = 4
         # Create a Tecplot zone with Quad elements
         zone = TecplotFEZone(
-            "QuadGrid", {"X": nodes[:, 0], "Y": nodes[:, 1]}, connectivity, solutionTime=solutionTime, strandID=strandID
+            "QuadGrid",
+            {"X": nodes[:, 0], "Y": nodes[:, 1]},
+            connectivity,
+            zoneType=ZoneType.FEQUADRILATERAL,
+            solutionTime=solutionTime,
+            strandID=strandID,
         )
 
         self.assertEqual(zone.name, "QuadGrid")
@@ -228,6 +356,7 @@ class TestTecplotIO(unittest.TestCase):
         self.assertEqual(zone.nNodes, (nx + 1) * (ny + 1))
         self.assertEqual(zone.solutionTime, solutionTime)
         self.assertEqual(zone.strandID, strandID)
+        self.assertEqual(zone.zoneType, ZoneType.FEQUADRILATERAL)
 
         nx, ny, nz = 10, 10, 10
         nodes, connectivity = createTetGrid(nx, ny, nz)
@@ -237,9 +366,9 @@ class TestTecplotIO(unittest.TestCase):
             "TetGrid",
             {"X": nodes[:, 0], "Y": nodes[:, 1], "Z": nodes[:, 2]},
             connectivity,
+            zoneType=ZoneType.FETETRAHEDRON,
             solutionTime=solutionTime,
             strandID=strandID,
-            tetrahedral=True,
         )
 
         self.assertEqual(zone.name, "TetGrid")
@@ -250,417 +379,131 @@ class TestTecplotIO(unittest.TestCase):
         self.assertEqual(zone.nNodes, (nx + 1) * (ny + 1) * (nz + 1))
         self.assertEqual(zone.solutionTime, solutionTime)
         self.assertEqual(zone.strandID, strandID)
+        self.assertEqual(zone.zoneType, ZoneType.FETETRAHEDRON)
 
-    def test_ASCIIReadWriteOrderedZones(self):
+        msg = "Zone name must be a string"
+        with self.assertRaises(TypeError, msg=msg):
+            TecplotFEZone(
+                123,
+                {"X": nodes[:, 0], "Y": nodes[:, 1], "Z": nodes[:, 2]},
+                connectivity,
+                zoneType=ZoneType.FETETRAHEDRON,
+            )
+
+        msg = "Solution time must be a float"
+        with self.assertRaises(TypeError):
+            TecplotFEZone(
+                "TetGrid",
+                {"X": nodes[:, 0], "Y": nodes[:, 1], "Z": nodes[:, 2]},
+                connectivity,
+                zoneType=ZoneType.FETETRAHEDRON,
+                solutionTime="1.0",
+            )
+
+        msg = "Solution time must be greater than or equal to zero"
+        with self.assertRaises(ValueError):
+            TecplotFEZone(
+                "TetGrid",
+                {"X": nodes[:, 0], "Y": nodes[:, 1], "Z": nodes[:, 2]},
+                connectivity,
+                zoneType=ZoneType.FETETRAHEDRON,
+                solutionTime=-1.0,
+            )
+
+        msg = "Strand ID must be an integer"
+        with self.assertRaises(TypeError):
+            TecplotFEZone(
+                "TetGrid",
+                {"X": nodes[:, 0], "Y": nodes[:, 1], "Z": nodes[:, 2]},
+                connectivity,
+                zoneType=ZoneType.FETETRAHEDRON,
+                strandID="1",
+            )
+
+        msg = "Data values must be numpy arrays."
+        with self.assertRaises(TypeError):
+            TecplotFEZone(
+                "TetGrid",
+                {"X": nodes[:, 0].tolist(), "Y": nodes[:, 1].tolist(), "Z": nodes[:, 2].tolist()},
+                connectivity,
+                zoneType=ZoneType.FETETRAHEDRON,
+            )
+
+        msg = "Data must be a dictionary."
+        with self.assertRaises(TypeError):
+            TecplotFEZone("TetGrid", nodes, connectivity, zoneType=ZoneType.FETETRAHEDRON)
+
+        msg = "All variables must have the same shape."
+        with self.assertRaises(ValueError):
+            TecplotFEZone(
+                "TetGrid",
+                {"X": nodes[:, 0], "Y": nodes[:, 1], "Z": nodes[:-1, 2]},
+                connectivity,
+                zoneType=ZoneType.FETETRAHEDRON,
+            )
+
+        msg = "Connectivity shape does not match zone type."
+        with self.assertRaises(AssertionError):
+            TecplotFEZone(
+                "TetGrid",
+                {"X": nodes[:, 0], "Y": nodes[:, 1], "Z": nodes[:, 2]},
+                connectivity,
+                zoneType=ZoneType.FETRIANGLE,
+            )
+
+    @parameterized.expand(
+        TEST_CASES_ORDERED,
+        name_func=lambda f, n, p: parameterized.to_safe_name(f"{f.__name__}_{p[0]}"),
+    )
+    def test_ReadWriteOrderedZones(self, shape: Tuple[int, ...], precision: str, datapacking: str, ext: str):
         zones: List[TecplotOrderedZone] = []
 
-        X = np.random.rand(10)
-        Y = np.random.rand(10)
-        Z = np.random.rand(10)
-        zone = TecplotOrderedZone("Grid", {"X": X, "Y": Y, "Z": Z})
-        zones.append(zone)
+        rng = np.random.default_rng(123)
+        X = rng.random(shape)
+        Y = rng.random(shape)
+        Z = rng.random(shape)
 
-        X = np.random.rand(10, 10)
-        Y = np.random.rand(10, 10)
-        Z = np.random.rand(10, 10)
-        zone = TecplotOrderedZone("Grid", {"X": X, "Y": Y, "Z": Z})
-        zones.append(zone)
-
-        X = np.random.rand(10, 10)
-        Y = np.random.rand(10, 10)
-        Z = np.random.rand(10, 10)
-        zone = TecplotOrderedZone("Grid", {"X": X, "Y": Y, "Z": Z})
-        zones.append(zone)
-
-        X = np.random.rand(10, 10, 10)
-        Y = np.random.rand(10, 10, 10)
-        Z = np.random.rand(10, 10, 10)
         zone = TecplotOrderedZone("Grid", {"X": X, "Y": Y, "Z": Z})
         zones.append(zone)
 
         title = "ASCII ORDERED ZONES TEST"
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="POINT", precision="SINGLE")
+        with tempfile.NamedTemporaryFile(suffix=ext, delete=True) as tmpfile:
+            writeTecplot(tmpfile.name, title, zones, datapacking=datapacking, precision=precision)
             titleRead, zonesRead = readTecplot(tmpfile.name)
 
         self.assertEqual(titleRead, title)
         self.assertOrderedZonesEqual(zones, zonesRead)
 
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="BLOCK", precision="SINGLEs")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertOrderedZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="POINT", precision="DOUBLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertOrderedZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="BLOCK", precision="DOUBLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-    def test_BinaryReadWriteOrderedZones(self):
-        zones: List[TecplotOrderedZone] = []
-
-        X = np.random.rand(10)
-        Y = np.random.rand(10)
-        Z = np.random.rand(10)
-        zone = TecplotOrderedZone("Grid", {"X": X, "Y": Y, "Z": Z})
-        zones.append(zone)
-
-        X = np.random.rand(10, 10)
-        Y = np.random.rand(10, 10)
-        Z = np.random.rand(10, 10)
-        zone = TecplotOrderedZone("Grid", {"X": X, "Y": Y, "Z": Z})
-        zones.append(zone)
-
-        X = np.random.rand(10, 10)
-        Y = np.random.rand(10, 10)
-        Z = np.random.rand(10, 10)
-        zone = TecplotOrderedZone("Grid", {"X": X, "Y": Y, "Z": Z})
-        zones.append(zone)
-
-        X = np.random.rand(10, 10, 10)
-        Y = np.random.rand(10, 10, 10)
-        Z = np.random.rand(10, 10, 10)
-        zone = TecplotOrderedZone("Grid", {"X": X, "Y": Y, "Z": Z})
-        zones.append(zone)
-
-        title = "BINARY ORDERED ZONES TEST"
-        with tempfile.NamedTemporaryFile(suffix=".plt", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, precision="SINGLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertOrderedZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".plt", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, precision="DOUBLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertOrderedZonesEqual(zones, zonesRead)
-
-    def test_ASCIIReadWriteFELineSegZones(self):
+    @parameterized.expand(
+        TEST_CASES_FE,
+        name_func=lambda f, n, p: parameterized.to_safe_name(f"{f.__name__}_{p[0]}"),
+    )
+    def test_ReadWriteFEZones(self, zoneType: ZoneType, precision: str, datapacking: str, ext: str):
         zones: List[TecplotFEZone] = []
 
-        for nx in range(2, 10):
-            nodes, connectivity = createLineSegGrid(nx)
-            zone = TecplotFEZone(f"LineSegGrid_{nx}", {"X": nodes[:, 0], "Y": nodes[:, 1]}, connectivity)
-            zones.append(zone)
+        if zoneType == ZoneType.FELINESEG:
+            rawDataList = [createLineSegGrid(nx) for nx in range(2, 10)]
+        elif zoneType == ZoneType.FETRIANGLE:
+            rawDataList = [createTriGrid(nx, ny) for nx, ny in product(range(2, 10), range(2, 10))]
+        elif zoneType == ZoneType.FEQUADRILATERAL:
+            rawDataList = [createQuadGrid(nx, ny) for nx, ny in product(range(2, 10), range(2, 10))]
+        elif zoneType == ZoneType.FETETRAHEDRON:
+            rawDataList = [createTetGrid(nx, ny, nz) for nx, ny, nz in product(range(2, 5), range(2, 5), range(2, 5))]
+        elif zoneType == ZoneType.FEBRICK:
+            rawDataList = [createBrickGrid(nx, ny, nz) for nx, ny, nz in product(range(2, 5), range(2, 5), range(2, 5))]
 
-        title = "ASCII FELINESEG ZONES TEST"
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="POINT", precision="SINGLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="BLOCK", precision="SINGLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="POINT", precision="DOUBLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="BLOCK", precision="DOUBLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-    def test_BinaryReadWriteFELineSegZones(self):
-        zones: List[TecplotFEZone] = []
-
-        for nx in range(2, 10):
-            nodes, connectivity = createLineSegGrid(nx)
-            zone = TecplotFEZone(f"LineSegGrid_{nx}", {"X": nodes[:, 0], "Y": nodes[:, 1]}, connectivity)
-            zones.append(zone)
-
-        title = "BINARY FELINESEG ZONES TEST"
-        with tempfile.NamedTemporaryFile(suffix=".plt", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, precision="SINGLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".plt", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, precision="DOUBLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-    def test_ASCIIReadWriteFETriZones(self):
-        zones: List[TecplotFEZone] = []
-        dims = product(range(2, 10), range(2, 10))
-
-        for nx, ny in dims:
-            nodes, connectivity = createTriGrid(nx, ny)
-            zone = TecplotFEZone(f"TriGrid_{nx}", {"X": nodes[:, 0], "Y": nodes[:, 1]}, connectivity)
-            zones.append(zone)
-
-        title = "ASCII FETRIANGLE ZONES TEST"
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="POINT", precision="SINGLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="BLOCK", precision="SINGLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="POINT", precision="DOUBLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="BLOCK", precision="DOUBLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-    def test_BinaryReadWriteFETriZones(self):
-        zones: List[TecplotFEZone] = []
-        dims = product(range(2, 10), range(2, 10))
-
-        for nx, ny in dims:
-            nodes, connectivity = createTriGrid(nx, ny)
-            zone = TecplotFEZone(f"TriGrid_{nx}", {"X": nodes[:, 0], "Y": nodes[:, 1]}, connectivity)
-            zones.append(zone)
-
-        title = "BINARY FETRIANGLE ZONES TEST"
-        with tempfile.NamedTemporaryFile(suffix=".plt", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, precision="SINGLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".plt", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, precision="DOUBLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-    def test_ASCIIReadWriteFEQuadZones(self):
-        zones: List[TecplotFEZone] = []
-        dims = product(range(2, 10), range(2, 10))
-
-        for nx, ny in dims:
-            nodes, connectivity = createQuadGrid(nx, ny)
-            zone = TecplotFEZone(f"QuadGrid_{nx}", {"X": nodes[:, 0], "Y": nodes[:, 1]}, connectivity)
-            zones.append(zone)
-
-        title = "ASCII FEQUADRILATERAL ZONES TEST"
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="POINT", precision="SINGLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="BLOCK", precision="SINGLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="POINT", precision="DOUBLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="BLOCK", precision="DOUBLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-    def test_BinaryReadWriteFEQuadZones(self):
-        zones: List[TecplotFEZone] = []
-        dims = product(range(2, 10), range(2, 10))
-
-        for nx, ny in dims:
-            nodes, connectivity = createQuadGrid(nx, ny)
-            zone = TecplotFEZone(f"QuadGrid_{nx}", {"X": nodes[:, 0], "Y": nodes[:, 1]}, connectivity)
-            zones.append(zone)
-
-        title = "BINARY FEQUADRILATERAL ZONES TEST"
-        with tempfile.NamedTemporaryFile(suffix=".plt", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, precision="SINGLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".plt", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, precision="DOUBLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-    def test_ASCIIReadWriteFETetZones(self):
-        zones: List[TecplotFEZone] = []
-        npts = 5
-        dims = product(range(2, npts), range(2, npts), range(2, npts))
-
-        for nx, ny, nz in dims:
-            nodes, connectivity = createTetGrid(nx, ny, nz)
+        for i, (nodes, connectivity) in enumerate(rawDataList):
             zone = TecplotFEZone(
-                f"TetGrid_{nx}", {"X": nodes[:, 0], "Y": nodes[:, 1], "Z": nodes[:, 2]}, connectivity, tetrahedral=True
+                f"Grid_{i}",
+                {"X": nodes[..., 0], "Y": nodes[..., 1], "Z": nodes[..., 2]},
+                connectivity,
+                zoneType=zoneType,
             )
             zones.append(zone)
 
-        title = "ASCII FETETRAHEDRAL ZONES TEST"
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="POINT", precision="SINGLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="BLOCK", precision="SINGLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="POINT", precision="DOUBLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="BLOCK", precision="DOUBLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-    def test_BinaryReadWriteFETetZones(self):
-        zones: List[TecplotFEZone] = []
-        npts = 5
-        dims = product(range(2, npts), range(2, npts), range(2, npts))
-
-        for nx, ny, nz in dims:
-            nodes, connectivity = createTetGrid(nx, ny, nz)
-            zone = TecplotFEZone(
-                f"TetGrid_{nx}", {"X": nodes[:, 0], "Y": nodes[:, 1], "Z": nodes[:, 2]}, connectivity, tetrahedral=True
-            )
-            zones.append(zone)
-
-        title = "BINARY FETETRAHEDRAL ZONES TEST"
-        with tempfile.NamedTemporaryFile(suffix=".plt", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, precision="SINGLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".plt", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, precision="DOUBLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-    def test_ASCIIReadWriteFEBrickZones(self):
-        zones: List[TecplotFEZone] = []
-        npts = 5
-        dims = product(range(2, npts), range(2, npts), range(2, npts))
-
-        for nx, ny, nz in dims:
-            nodes, connectivity = createBrickGrid(nx, ny, nz)
-            zone = TecplotFEZone(
-                f"BrickGrid_{nx}", {"X": nodes[:, 0], "Y": nodes[:, 1], "Z": nodes[:, 2]}, connectivity
-            )
-            zones.append(zone)
-
-        title = "ASCII FEBRICK ZONES TEST"
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="POINT", precision="SINGLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="BLOCK", precision="SINGLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="POINT", precision="DOUBLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".dat", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking="BLOCK", precision="DOUBLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-    def test_BinaryReadWriteFEBrickZones(self):
-        zones: List[TecplotFEZone] = []
-        npts = 5
-        dims = product(range(2, npts), range(2, npts), range(2, npts))
-
-        for nx, ny, nz in dims:
-            nodes, connectivity = createBrickGrid(nx, ny, nz)
-            zone = TecplotFEZone(
-                f"BrickGrid_{nx}", {"X": nodes[:, 0], "Y": nodes[:, 1], "Z": nodes[:, 2]}, connectivity
-            )
-            zones.append(zone)
-
-        title = "BINARY FEBRICK ZONES TEST"
-        with tempfile.NamedTemporaryFile(suffix=".plt", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, precision="SINGLE")
-            titleRead, zonesRead = readTecplot(tmpfile.name)
-
-        self.assertEqual(titleRead, title)
-        self.assertFEZonesEqual(zones, zonesRead)
-
-        with tempfile.NamedTemporaryFile(suffix=".plt", delete=True) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, precision="DOUBLE")
+        title = f"ASCII {zoneType.name} ZONES TEST"
+        with tempfile.NamedTemporaryFile(suffix=ext, delete=True) as tmpfile:
+            writeTecplot(tmpfile.name, title, zones, datapacking=datapacking, precision=precision)
             titleRead, zonesRead = readTecplot(tmpfile.name)
 
         self.assertEqual(titleRead, title)
