@@ -965,7 +965,7 @@ class TecplotASCIIReader:
         headerString = ", ".join(header)
 
         # Use regex to parse the header information
-        zoneNameMatch = re.search(r'zone t\s*=\s*"(.+)"', headerString, re.IGNORECASE)
+        zoneNameMatch = re.search(r'zone t\s*=\s*"*(.+)"*', headerString, re.IGNORECASE)
         zoneName = zoneNameMatch.group(1) if zoneNameMatch else None
 
         zoneTypeMatch = re.search(r"zonetype\s*=\s*(\w+)", headerString, re.IGNORECASE)
