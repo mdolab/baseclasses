@@ -72,9 +72,9 @@ class WeightProblem:
         """
 
         # Check if components is of type Component or list, otherwise raise Error
-        if type(components) == list:
+        if isinstance(components, list):
             pass
-        elif type(components) == object:
+        elif isinstance(components, object):
             components = [components]
         else:
             raise Error("addComponents() takes in either a list of or a single component")
@@ -136,7 +136,7 @@ class WeightProblem:
 
         """
 
-        if type(surf) == list:
+        if isinstance(surf, list):
             self.p0 = np.array(surf[0])
             self.v1 = np.array(surf[1])
             self.v2 = np.array(surf[2])
@@ -199,10 +199,10 @@ class WeightProblem:
 
         """
         # Build the FETriangle data array
-        dataArrays = np.zeros((len(self.p0), 3), dtype=float)
-        dataArrays[:, 0] = self.p0
-        dataArrays[:, 1] = self.p0 + self.v1
-        dataArrays[:, 2] = self.p0 + self.v2
+        dataArrays = np.zeros((len(self.p0) * 3, 3), dtype=float)
+        dataArrays[::3] = self.p0
+        dataArrays[1::3] = self.p0 + self.v1
+        dataArrays[2::3] = self.p0 + self.v2
         data = {"CoordinateX": dataArrays[:, 0], "CoordinateY": dataArrays[:, 1], "CoordinateZ": dataArrays[:, 2]}
 
         # Create the connectivity
@@ -370,9 +370,9 @@ class WeightProblem:
         """
 
         # Check if case is a single entry or a list, otherwise raise Error
-        if type(cases) == list:
+        if isinstance(cases, list):
             pass
-        elif type(cases) == object:
+        elif isinstance(cases, object):
             cases = [cases]
         else:
             raise Error("addFuelCases() takes in either a list of or a single fuelcase")
@@ -455,7 +455,7 @@ class WeightProblem:
 
         if includeType is not None:
             # Specified a list of component types to include
-            if type(includeType) == str:
+            if isinstance(includeType, str):
                 includeType = [includeType]
             weightKeysTmp = set()
             for key in weightKeys:
@@ -465,21 +465,21 @@ class WeightProblem:
 
         if include is not None:
             # Specified a list of compoents to include
-            if type(include) == str:
+            if isinstance(include, str):
                 include = [include]
             include = set(include)
             weightKeys.intersection_update(include)
 
         if exclude is not None:
             # Specified a list of components to exclude
-            if type(exclude) == str:
+            if isinstance(exclude, str):
                 exclude = [exclude]
             exclude = set(exclude)
             weightKeys.difference_update(exclude)
 
         if excludeType is not None:
             # Specified a list of compoent types to exclude
-            if type(excludeType) == str:
+            if isinstance(excludeType, str):
                 excludeType = [excludeType]
             weightKeysTmp = copy.copy(weightKeys)
             for key in weightKeys:
@@ -498,7 +498,7 @@ class WeightProblem:
 
         filename: str
             filename for writing the masses. This string will have the
-            .dat suffix appended to it if it does not already have it.
+            # .dat suffix appended to it if it does not already have it.
         """
 
         nMasses = len(self.nameList)
