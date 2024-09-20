@@ -11,11 +11,20 @@ from parameterized import parameterized
 
 from baseclasses.utils import TecplotFEZone, TecplotOrderedZone, ZoneType, readTecplot, writeTecplot
 
+# --- Save tempfile locally or in a temp directory ---
+SAVE_TEMPFILES = True
+SAVE_DIR = Path(__file__).parent / "tmp_tecplot" if SAVE_TEMPFILES else None
+if SAVE_DIR is not None:
+    SAVE_DIR.mkdir(exist_ok=True)
+
 # --- Define test matrices for Ordered and FE Zones ---
 TEST_CASES_ORDERED = [
     tc
     for tc in itertools.product(
-        [(10,), (10, 10), (10, 10, 10)], ["SINGLE", "DOUBLE"], ["POINT", "BLOCK"], [".dat", ".plt"]
+        [(10,), (100,), (10, 10), (100, 100), (10, 10, 10), (100, 100, 100)],
+        ["SINGLE", "DOUBLE"],
+        ["POINT", "BLOCK"],
+        [".dat", ".plt"],
     )
 ]
 # filter out cases that use POINT datapacking with binary '.plt' extensions
@@ -24,7 +33,7 @@ TEST_CASES_ORDERED = [tc for tc in TEST_CASES_ORDERED if not (tc[2] == "POINT" a
 TEST_CASES_FE = [
     tc
     for tc in itertools.product(
-        [ZoneType.FELINESEG, ZoneType.FETRIANGLE, ZoneType.FEQUADRILATERAL],
+        [ZoneType.FELINESEG, ZoneType.FETRIANGLE, ZoneType.FEQUADRILATERAL, ZoneType.FETETRAHEDRON, ZoneType.FEBRICK],
         ["SINGLE", "DOUBLE"],
         ["POINT", "BLOCK"],
         [".dat", ".plt"],
@@ -51,33 +60,31 @@ def createBrickGrid(ni: int, nj: int, nk: int) -> Tuple[npt.NDArray, npt.NDArray
     Tuple[npt.NDArray, npt.NDArray]
         A tuple containing the node coordinates and element connectivity.
     """
-    # Create node coordinates
-    x = np.linspace(0, 1, ni + 1)
-    y = np.linspace(0, 1, nj + 1)
-    z = np.linspace(0, 1, nk + 1)
-    xx, yy, zz = np.meshgrid(x, y, z)
-    nodes = np.column_stack((xx.flatten(), yy.flatten(), zz.flatten()))
+    x = np.linspace(0, 1, ni)
+    y = np.linspace(0, 1, nj)
+    z = np.linspace(0, 1, nk)
+    x, y, z = np.meshgrid(x, y, z)
+    nodal_data = np.column_stack((x.flatten(), y.flatten(), z.flatten()))
 
-    # Create element connectivity
     connectivity = []
-    for k in range(nk):
-        for j in range(nj):
-            for i in range(ni):
-                # Get the eight corners of the hexahedron
-                n0 = i + j * (ni + 1) + k * (ni + 1) * (nj + 1)
-                n1 = n0 + 1
-                n2 = n1 + (ni + 1)
-                n3 = n2 - 1
-                n4 = n0 + (ni + 1) * (nj + 1)
-                n5 = n4 + 1
-                n6 = n5 + (ni + 1)
-                n7 = n6 - 1
+    for i in range(nk - 1):
+        for j in range(nj - 1):
+            for k in range(ni - 1):
+                index = i * (ni * nj) + j * ni + k
+                connectivity.append(
+                    [
+                        index,
+                        index + 1,
+                        index + ni + 1,
+                        index + ni,
+                        index + (ni * nj),
+                        index + (ni * nj) + 1,
+                        index + (ni * nj) + ni + 1,
+                        index + (ni * nj) + ni,
+                    ]
+                )
 
-                connectivity.append([n0, n1, n2, n3, n4, n5, n6, n7])
-
-    connectivity = np.array(connectivity)
-
-    return nodes, connectivity
+    return nodal_data, np.array(connectivity)
 
 
 def createTetGrid(ni: int, nj: int, nk: int) -> Tuple[npt.NDArray, npt.NDArray]:
@@ -458,16 +465,29 @@ class TestTecplotIO(unittest.TestCase):
     def test_ReadWriteOrderedZones(self, shape: Tuple[int, ...], precision: str, datapacking: str, ext: str):
         zones: List[TecplotOrderedZone] = []
 
-        rng = np.random.default_rng(123)
-        X = rng.random(shape)
-        Y = rng.random(shape)
-        Z = rng.random(shape)
+        if len(shape) == 1:
+            X = np.linspace(0, 1, shape[0])
+            Y = np.zeros_like(X)
+            Z = np.zeros_like(X)
+        elif len(shape) == 2:
+            x = np.linspace(0, 1, shape[0])
+            y = np.linspace(0, 1, shape[1])
+
+            X, Y = np.meshgrid(x, y)
+            Z = np.zeros_like(X)
+        elif len(shape) == 3:
+            x = np.linspace(0, 1, shape[0])
+            y = np.linspace(0, 1, shape[1])
+            z = np.linspace(0, 1, shape[2])
+
+            X, Y, Z = np.meshgrid(x, y, z, indexing="ij")
 
         zone = TecplotOrderedZone("Grid", {"X": X, "Y": Y, "Z": Z})
         zones.append(zone)
 
         title = "ASCII ORDERED ZONES TEST"
-        with tempfile.NamedTemporaryFile(suffix=ext, delete=True) as tmpfile:
+        prefix = f"ORDERED_{shape}_{precision}_{datapacking}_"
+        with tempfile.NamedTemporaryFile(suffix=ext, delete=not SAVE_TEMPFILES, dir=SAVE_DIR, prefix=prefix) as tmpfile:
             writeTecplot(tmpfile.name, title, zones, datapacking=datapacking, precision=precision)
             titleRead, zonesRead = readTecplot(tmpfile.name)
 
@@ -488,13 +508,13 @@ class TestTecplotIO(unittest.TestCase):
         elif zoneType == ZoneType.FEQUADRILATERAL:
             rawDataList = [createQuadGrid(nx, ny) for nx, ny in product(range(2, 10), range(2, 10))]
         elif zoneType == ZoneType.FETETRAHEDRON:
-            rawDataList = [createTetGrid(nx, ny, nz) for nx, ny, nz in product(range(2, 5), range(2, 5), range(2, 5))]
+            rawDataList = [createTetGrid(nx, ny, nz) for nx, ny, nz in zip(range(2, 10), range(2, 10), range(2, 10))]
         elif zoneType == ZoneType.FEBRICK:
-            rawDataList = [createBrickGrid(nx, ny, nz) for nx, ny, nz in product(range(2, 5), range(2, 5), range(2, 5))]
+            rawDataList = [createBrickGrid(nx, ny, nz) for nx, ny, nz in zip(range(2, 10), range(2, 10), range(2, 10))]
 
         for i, (nodes, connectivity) in enumerate(rawDataList):
             zone = TecplotFEZone(
-                f"Grid_{i}",
+                f"Grid_{i}_{nodes.shape}",
                 {"X": nodes[..., 0], "Y": nodes[..., 1], "Z": nodes[..., 2]},
                 connectivity,
                 zoneType=zoneType,
@@ -502,7 +522,8 @@ class TestTecplotIO(unittest.TestCase):
             zones.append(zone)
 
         title = f"ASCII {zoneType.name} ZONES TEST"
-        with tempfile.NamedTemporaryFile(suffix=ext, delete=True) as tmpfile:
+        prefix = f"{zoneType.name}_{precision}_{datapacking}_"
+        with tempfile.NamedTemporaryFile(suffix=ext, delete=not SAVE_TEMPFILES, dir=SAVE_DIR, prefix=prefix) as tmpfile:
             writeTecplot(tmpfile.name, title, zones, datapacking=datapacking, precision=precision)
             titleRead, zonesRead = readTecplot(tmpfile.name)
 
