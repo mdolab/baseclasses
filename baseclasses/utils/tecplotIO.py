@@ -72,6 +72,10 @@ class StrandID(Enum):
     STATIC = -1
 
 
+class SolutionTime(Enum):
+    UNSET = -1
+
+
 # ==============================================================================
 # DATA STRUCTURES
 # ==============================================================================
@@ -423,12 +427,15 @@ class TecplotOrderedZoneWriterASCII(TecplotZoneWriterASCII[TecplotOrderedZone]):
             zoneString += f", K={self.zone.kMax}"
 
         # Write the strand ID and solution time
-        if self.zone.strandID != StrandID.STATIC and self.zone.strandID != StrandID.PENDING:
+        if self.zone.strandID != StrandID.STATIC.value and self.zone.strandID != StrandID.PENDING.value:
             # ASCII format does not support the -1 or -2 strand IDs
             # So we only write the strand ID if it is not -1
             zoneString += f", STRANDID={self.zone.strandID}"
 
-        zoneString += f", SOLUTIONTIME={self.zone.solutionTime}"
+        # Only write the solution time if it is set
+        if self.zone.solutionTime != SolutionTime.UNSET.value:
+            zoneString += f", SOLUTIONTIME={self.zone.solutionTime}"
+
         zoneString += f", DATAPACKING={self.datapacking}\n"
 
         handle.write(zoneString)
@@ -482,12 +489,14 @@ class TecplotFEZoneWriterASCII(TecplotZoneWriterASCII[TecplotFEZone]):
         zoneString += f", ZONETYPE={self.zone.zoneType.name}"
 
         # Write the strand ID and solution time
-        if self.zone.strandID != StrandID.STATIC and self.zone.strandID != StrandID.PENDING:
+        if self.zone.strandID != StrandID.STATIC.value and self.zone.strandID != StrandID.PENDING.value:
             # ASCII format does not support the -1 or -2 strand IDs
             # So we only write the strand ID if it is not -1
             zoneString += f", STRANDID={self.zone.strandID}"
 
-        zoneString += f", SOLUTIONTIME={self.zone.solutionTime}\n"
+        # Only write the solution time if it is set
+        if self.zone.solutionTime != SolutionTime.UNSET.value:
+            zoneString += f", SOLUTIONTIME={self.zone.solutionTime}\n"
 
         handle.write(zoneString)
 
@@ -1093,6 +1102,9 @@ class TecplotASCIIReader:
         # Check if the nodal data is 1D
         if nodalData.ndim == 1:
             nodalData = nodalData.reshape(-1, len(variables))
+
+        if connectivity.ndim == 1:
+            connectivity = connectivity.reshape(nElements, -1)
 
         data = {var: nodalData[..., i] for i, var in enumerate(variables)}
         zone = TecplotFEZone(
