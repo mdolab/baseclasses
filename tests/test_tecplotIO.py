@@ -12,7 +12,7 @@ from parameterized import parameterized
 from baseclasses.utils import TecplotFEZone, TecplotOrderedZone, ZoneType, readTecplot, writeTecplot
 
 # --- Save tempfile locally or in a temp directory ---
-SAVE_TEMPFILES = True
+SAVE_TEMPFILES = False
 SAVE_DIR = Path(__file__).parent / "tmp_tecplot" if SAVE_TEMPFILES else None
 if SAVE_DIR is not None:
     SAVE_DIR.mkdir(exist_ok=True)
@@ -491,6 +491,13 @@ class TestTecplotIO(unittest.TestCase):
             writeTecplot(tmpfile.name, title, zones, datapacking=datapacking, precision=precision)
             titleRead, zonesRead = readTecplot(tmpfile.name)
 
+            if ext == ".dat":
+                with open(tmpfile.name, "r") as f:
+                    lines = f.readlines()
+
+                for line in lines:
+                    self.assertTrue(len(line) <= 4000)
+
         self.assertEqual(titleRead, title)
         self.assertOrderedZonesEqual(zones, zonesRead)
 
@@ -526,6 +533,13 @@ class TestTecplotIO(unittest.TestCase):
         with tempfile.NamedTemporaryFile(suffix=ext, delete=not SAVE_TEMPFILES, dir=SAVE_DIR, prefix=prefix) as tmpfile:
             writeTecplot(tmpfile.name, title, zones, datapacking=datapacking, precision=precision)
             titleRead, zonesRead = readTecplot(tmpfile.name)
+
+            if ext == ".dat":
+                with open(tmpfile.name, "r") as f:
+                    lines = f.readlines()
+
+                for line in lines:
+                    self.assertTrue(len(line) <= 4000)
 
         self.assertEqual(titleRead, title)
         self.assertFEZonesEqual(zones, zonesRead)
