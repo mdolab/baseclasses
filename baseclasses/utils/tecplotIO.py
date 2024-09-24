@@ -4,8 +4,7 @@ from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from enum import Enum
 from pathlib import Path
-from typing import (Any, Dict, Generator, Generic, List, Literal, TextIO,
-                    Tuple, TypeVar, Union)
+from typing import Any, Dict, Generator, Generic, List, Literal, TextIO, Tuple, TypeVar, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -1026,8 +1025,8 @@ class TecplotWriterBinary:
 # ==============================================================================
 # ASCII READERS
 # ==============================================================================
-def readBlockData(filename: str, iCurrent: int, nVals: int, nVars: int) -> Tuple[npt.NDArray, int]:
-    """Read block data from a Tecplot ASCII file.
+def readArrayData(filename: str, iCurrent: int, nVals: int, nVars: int) -> Tuple[npt.NDArray, int]:
+    """Read array data from a Tecplot ASCII file.
 
     Parameters
     ----------
@@ -1045,24 +1044,21 @@ def readBlockData(filename: str, iCurrent: int, nVals: int, nVars: int) -> Tuple
     Tuple[npt.NDArray, int]
         The data and the number of lines read.
     """
-    MAX_LINE_LENGTH = 4000
-
     with open(filename, "r") as handle:
         lines = handle.readlines()
 
-    firstVal = lines[iCurrent].split()[0]  # This accounts for the precision
-    nPerLine = MAX_LINE_LENGTH // (len(firstVal) + 1)
-
-    if len(lines[iCurrent].split()) < nPerLine:
-        nLines = nVars
-    else:
-        nLines = int(np.ceil(nVals / nPerLine) * nVars)
+    pattern = r"[\s,\t\n\r]+"  # Separator pattern
 
     data = []
-    for line in lines[iCurrent : iCurrent + nLines]:
-        data.append([float(val) for val in line.split()])
+    nLines = 0
+    while len(data) < nVals * nVars:
+        line = lines[iCurrent].strip()  # Remove leading/trailing whitespace
+        vals = [float(val) for val in re.split(pattern, line) if val]  # Split the line into values
+        data.extend(vals)  # Add the values to the data list
+        iCurrent += 1  # Increment the line number
+        nLines += 1
 
-    data = np.concatenate(data)
+    data = np.array(data)
 
     return data, nLines
 
@@ -1176,13 +1172,12 @@ class TecplotASCIIReader:
 
         if zoneHeaderDict["datapacking"] == "POINT":
             # Point data is column-major
-            nodalData = np.loadtxt(self.filename, skiprows=iCurrent, max_rows=nNodes, dtype=float)
-            nodalData = nodalData.reshape(shape).squeeze()
-            nodeOffset = nNodes
+            nodalData, nodeOffset = readArrayData(self.filename, iCurrent, nNodes, len(variables))
+            nodalData = nodalData.reshape(shape, order="C").squeeze()
         else:
             # Block data is row-major
-            nodalData, nodeOffset = readBlockData(self.filename, iCurrent, nNodes, len(variables))
-            nodalData = nodalData.reshape(shape).squeeze()
+            nodalData, nodeOffset = readArrayData(self.filename, iCurrent, nNodes, len(variables))
+            nodalData = nodalData.reshape(shape, order="F").squeeze()
 
         data = {var: nodalData[..., i] for i, var in enumerate(variables)}
         zone = TecplotOrderedZone(
@@ -1218,12 +1213,12 @@ class TecplotASCIIReader:
 
         if zoneHeaderDict["datapacking"] == "POINT":
             # Point data is column-major
-            nodalData = np.loadtxt(self.filename, skiprows=iCurrent, max_rows=nNodes, dtype=float)
-            nodeOffset = nNodes
+            nodalData, nodeOffset = readArrayData(self.filename, iCurrent, nNodes, len(variables))
+            nodalData = nodalData.reshape(nNodes, len(variables), order="C")
         else:
             # Block data is row-major
-            nodalData, nodeOffset = readBlockData(self.filename, iCurrent, nNodes, len(variables))
-            nodalData = nodalData.reshape(nNodes, len(variables))
+            nodalData, nodeOffset = readArrayData(self.filename, iCurrent, nNodes, len(variables))
+            nodalData = nodalData.reshape(nNodes, len(variables), order="F")
 
         connectivity = np.loadtxt(self.filename, skiprows=iCurrent + nodeOffset, max_rows=nElements, dtype=int)
 
