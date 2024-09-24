@@ -1,10 +1,9 @@
 import re
 import struct
 from abc import ABC, abstractmethod
-from contextlib import contextmanager
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Generator, Generic, List, Literal, TextIO, Tuple, TypeVar, Union
+from typing import Any, Dict, Generic, List, Literal, TextIO, Tuple, TypeVar, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -75,6 +74,14 @@ class StrandID(Enum):
 
 class SolutionTime(Enum):
     UNSET = -1
+
+
+class Separator(Enum):
+    SPACE = " "
+    COMMA = ","
+    TAB = "\t"
+    NEWLINE = "\n"
+    CARRIAGE_RETURN = "\r"
 
 
 # ==============================================================================
@@ -348,35 +355,12 @@ class TecplotFEZone(TecplotZone):
 # ==============================================================================
 # ASCII WRITERS
 # ==============================================================================
-@contextmanager
-def numpyPrintOptions(**kwargs) -> Generator[Any, Any, Any]:
-    """Context manager to temporarily set numpy print options.
-
-    Parameters
-    ----------
-    kwargs
-        The numpy print options to set.
-
-    Yields
-    ------
-    None
-    """
-    originalOptions = np.get_printoptions()
-
-    try:
-        np.set_printoptions(**kwargs)
-        yield
-    except ValueError:
-        raise ValueError("Invalid numpy print options.")
-    finally:
-        np.set_printoptions(**originalOptions)
-
-
 def writeArrayToFile(
     arr: npt.NDArray[np.float64],
     handle: TextIO,
     maxLineWidth: int = 4000,
     precision: int = 6,
+    separator: Separator = Separator.SPACE,
 ) -> None:
     """
     Write a 2D numpy array to a file using numpy.array_str with custom formatting.
@@ -391,48 +375,27 @@ def writeArrayToFile(
         Maximum width of each line in characters (default is 4000).
     precision : int, optional
         Number of decimal places for floating-point numbers (default is 6).
+    separator : Literal[" ", ",", "\\t", "\\n", "\\r"], optional
+        Separator to use between elements (default is " ").
 
     Raises
     ------
     ValueError
         If the input array is not 2-dimensional.
-
-    Examples
-    --------
-    >>> arr = np.array([[1.123456, 2.123456], [3.123456, 4.123456]])
-    >>> with open('output.txt', 'w') as f:
-    ...     writeArrayToFile(arr, f, maxLineWidth=20, precision=3)
-    >>> with open('output.txt', 'r') as f:
-    ...     print(f.read())
-    1.123 2.123
-    3.123 4.123
     """
     if arr.ndim != 2:
         raise ValueError("Input must be a 2D numpy array")
 
-    def customFormatter(x: float) -> str:
-        """
-        Custom formatter for numpy array elements.
-
-        Parameters
-        ----------
-        x : float
-            The value to format.
-
-        Returns
-        -------
-        str
-            The formatted string representation of the value.
-        """
-        if isinstance(x, (float, np.float32, np.float64)):
-            return f"{x:.{precision}E}"
-        return str(x)
-
-    with numpyPrintOptions(formatter={"float_kind": customFormatter}, threshold=np.inf):
-        for row in arr:
-            rowStr = np.array_str(row, max_line_width=maxLineWidth)
-            cleanedRowStr = rowStr.strip("[]").strip().replace("\n ", "\n")  # Remove brackets and extra spaces
-            handle.write(cleanedRowStr + "\n")
+    for row in arr:
+        rowStr = np.array2string(
+            row,
+            max_line_width=maxLineWidth,
+            separator=separator.value,
+            formatter={"float_kind": lambda x: f"{x:.{precision}E}"},
+            threshold=np.inf,
+        )
+        cleanedRowStr = rowStr.strip("[]").strip().replace("\n ", "\n")  # Remove brackets and extra spaces
+        handle.write(cleanedRowStr + "\n")
 
 
 class TecplotZoneWriterASCII(Generic[T], ABC):
@@ -441,6 +404,7 @@ class TecplotZoneWriterASCII(Generic[T], ABC):
         zone: T,
         datapacking: Literal["BLOCK", "POINT"],
         precision: Literal["SINGLE", "DOUBLE"],
+        separator: Separator = Separator.SPACE,
     ) -> None:
         """Abstract base class for writing Tecplot zones to ASCII files.
 
@@ -456,6 +420,7 @@ class TecplotZoneWriterASCII(Generic[T], ABC):
         self.zone = zone
         self.datapacking = DataPacking[datapacking].name
         self.fmtPrecision = DataPrecision[precision].value
+        self.separator = separator
 
     @abstractmethod
     def writeHeader(self, handle: TextIO):
@@ -473,7 +438,7 @@ class TecplotZoneWriterASCII(Generic[T], ABC):
         else:
             data = data.reshape(-1, len(self.zone.variables)).T
 
-        writeArrayToFile(data, handle, maxLineWidth=4000, precision=self.fmtPrecision)
+        writeArrayToFile(data, handle, maxLineWidth=4000, precision=self.fmtPrecision, separator=self.separator)
 
 
 class TecplotOrderedZoneWriterASCII(TecplotZoneWriterASCII[TecplotOrderedZone]):
@@ -482,6 +447,7 @@ class TecplotOrderedZoneWriterASCII(TecplotZoneWriterASCII[TecplotOrderedZone]):
         zone: TecplotOrderedZone,
         datapacking: Literal["BLOCK", "POINT"],
         precision: Literal["SINGLE", "DOUBLE"],
+        separator: Separator = Separator.SPACE,
     ) -> None:
         """Writer for Tecplot ordered zones in ASCII format.
 
@@ -493,8 +459,10 @@ class TecplotOrderedZoneWriterASCII(TecplotZoneWriterASCII[TecplotOrderedZone]):
             The data packing format. BLOCK is row-major, POINT is column-major.
         precision : Literal["SINGLE", "DOUBLE"]
             The floating point precision to write the data.
+        separator : Separator, optional
+            Separator to use between elements, by default Separator.SPACE
         """
-        super().__init__(zone, datapacking, precision)
+        super().__init__(zone, datapacking, precision, separator)
 
     def writeHeader(self, handle: TextIO):
         """Write the zone header to the file.
@@ -545,6 +513,7 @@ class TecplotFEZoneWriterASCII(TecplotZoneWriterASCII[TecplotFEZone]):
         zone: TecplotFEZone,
         datapacking: Literal["BLOCK", "POINT"],
         precision: Literal["SINGLE", "DOUBLE"],
+        separator: Separator = Separator.SPACE,
     ) -> None:
         """Writer for Tecplot finite element zones in ASCII format.
 
@@ -556,8 +525,10 @@ class TecplotFEZoneWriterASCII(TecplotZoneWriterASCII[TecplotFEZone]):
             The data packing format. BLOCK is row-major, POINT is column-major.
         precision : Literal["SINGLE", "DOUBLE"]
             The floating point precision to write the data.
+        separator : Separator, optional
+            Separator to use between elements, by default Separator.SPACE
         """
-        super().__init__(zone, datapacking, precision)
+        super().__init__(zone, datapacking, precision, separator)
 
     def writeHeader(self, handle: TextIO):
         """Write the zone header to the file.
@@ -612,6 +583,7 @@ class TecplotWriterASCII:
         zones: List[TecplotZone],
         datapacking: Literal["BLOCK", "POINT"],
         precision: Literal["SINGLE", "DOUBLE"],
+        separator: Separator = Separator.SPACE,
     ) -> None:
         """Writer for Tecplot files in ASCII format.
 
@@ -625,11 +597,14 @@ class TecplotWriterASCII:
             The data packing format. BLOCK is row-major, POINT is column-major.
         precision : Literal["SINGLE", "DOUBLE"]
             The floating point precision to write the data.
+        separator : Separator, optional
+            Separator to use between elements, by default Separator.SPACE
         """
         self.title = title
         self.zones = zones
         self.datapacking = DataPacking[datapacking].name
         self.precision = DataPrecision[precision].name
+        self.separator = separator
         self._validateVariables()
 
     def _validateVariables(self) -> None:
@@ -665,9 +640,9 @@ class TecplotWriterASCII:
             If the zone type is invalid.
         """
         if isinstance(zone, TecplotOrderedZone):
-            writer = TecplotOrderedZoneWriterASCII(zone, self.datapacking, self.precision)
+            writer = TecplotOrderedZoneWriterASCII(zone, self.datapacking, self.precision, self.separator)
         elif isinstance(zone, TecplotFEZone):
-            writer = TecplotFEZoneWriterASCII(zone, self.datapacking, self.precision)
+            writer = TecplotFEZoneWriterASCII(zone, self.datapacking, self.precision, self.separator)
         else:
             raise ValueError("Invalid zone type.")
 
@@ -1668,6 +1643,7 @@ def writeTecplot(
     zones: List[TecplotZone],
     datapacking: Literal["BLOCK", "POINT"] = "POINT",
     precision: Literal["SINGLE", "DOUBLE"] = "SINGLE",
+    separator: Separator = Separator.SPACE,
 ) -> None:
     """Write a Tecplot file to disk. The file format is determined by the
     file extension. If the extension is .plt, the file will be written in
@@ -1691,6 +1667,8 @@ def writeTecplot(
         The data packing format. BLOCK is row-major, POINT is column-major, by default "POINT"
     precision : Literal["SINGLE", "DOUBLE"], optional
         The floating point precision to write the data, by default "SINGLE"
+    separator : Separator, optional
+        The separator to use when writing ASCII files, by default Separator.SPACE
 
     Raises
     ------
@@ -1721,7 +1699,7 @@ def writeTecplot(
         writer = TecplotWriterBinary(title, zones, precision)
         writer.write(filepath)
     elif filepath.suffix == ".dat":
-        writer = TecplotWriterASCII(title, zones, datapacking, precision)
+        writer = TecplotWriterASCII(title, zones, datapacking, precision, separator)
         writer.write(filename)
     else:
         raise ValueError("Invalid file extension. Must be .plt (binary) or .dat (ASCII).")

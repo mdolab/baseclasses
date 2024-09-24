@@ -9,7 +9,7 @@ import numpy as np
 import numpy.typing as npt
 from parameterized import parameterized
 
-from baseclasses.utils import TecplotFEZone, TecplotOrderedZone, ZoneType, readTecplot, writeTecplot
+from baseclasses.utils import Separator, TecplotFEZone, TecplotOrderedZone, ZoneType, readTecplot, writeTecplot
 
 # --- Save tempfile locally or in a temp directory ---
 SAVE_TEMPFILES = False
@@ -21,12 +21,17 @@ if SAVE_DIR is not None:
 TEST_CASES_ORDERED = [
     tc
     for tc in itertools.product(
-        [(10,), (100,), (10, 10), (100, 100), (10, 10, 10), (100, 100, 100)],
+        [(10,), (100,), (10, 10), (100, 100), (10, 10, 10)],
         ["SINGLE", "DOUBLE"],
         ["POINT", "BLOCK"],
         [".dat", ".plt"],
+        [Separator.SPACE, Separator.COMMA, Separator.TAB, Separator.NEWLINE, Separator.CARRIAGE_RETURN],
     )
 ]
+# Add a single stress test case for each datapacking
+TEST_CASES_ORDERED.append(((100, 100, 100), "DOUBLE", "BLOCK", ".dat", Separator.SPACE))
+TEST_CASES_ORDERED.append(((100, 100, 100), "DOUBLE", "POINT", ".dat", Separator.COMMA))
+
 # filter out cases that use POINT datapacking with binary '.plt' extensions
 TEST_CASES_ORDERED = [tc for tc in TEST_CASES_ORDERED if not (tc[2] == "POINT" and tc[3] == ".plt")]
 
@@ -37,6 +42,7 @@ TEST_CASES_FE = [
         ["SINGLE", "DOUBLE"],
         ["POINT", "BLOCK"],
         [".dat", ".plt"],
+        [Separator.SPACE, Separator.COMMA, Separator.TAB, Separator.NEWLINE, Separator.CARRIAGE_RETURN],
     )
 ]
 # filter out cases that use POINT datapacking with binary '.plt' extensions
@@ -462,7 +468,9 @@ class TestTecplotIO(unittest.TestCase):
         TEST_CASES_ORDERED,
         name_func=lambda f, n, p: parameterized.to_safe_name(f"{f.__name__}_{p[0]}"),
     )
-    def test_ReadWriteOrderedZones(self, shape: Tuple[int, ...], precision: str, datapacking: str, ext: str):
+    def test_ReadWriteOrderedZones(
+        self, shape: Tuple[int, ...], precision: str, datapacking: str, ext: str, separator: Separator
+    ):
         zones: List[TecplotOrderedZone] = []
 
         if len(shape) == 1:
@@ -488,7 +496,7 @@ class TestTecplotIO(unittest.TestCase):
         title = "ASCII ORDERED ZONES TEST"
         prefix = f"ORDERED_{shape}_{precision}_{datapacking}_"
         with tempfile.NamedTemporaryFile(suffix=ext, delete=not SAVE_TEMPFILES, dir=SAVE_DIR, prefix=prefix) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking=datapacking, precision=precision)
+            writeTecplot(tmpfile.name, title, zones, datapacking=datapacking, precision=precision, separator=separator)
             titleRead, zonesRead = readTecplot(tmpfile.name)
 
             if ext == ".dat":
@@ -505,7 +513,9 @@ class TestTecplotIO(unittest.TestCase):
         TEST_CASES_FE,
         name_func=lambda f, n, p: parameterized.to_safe_name(f"{f.__name__}_{p[0]}"),
     )
-    def test_ReadWriteFEZones(self, zoneType: ZoneType, precision: str, datapacking: str, ext: str):
+    def test_ReadWriteFEZones(
+        self, zoneType: ZoneType, precision: str, datapacking: str, ext: str, separator: Separator
+    ):
         zones: List[TecplotFEZone] = []
 
         if zoneType == ZoneType.FELINESEG:
@@ -531,7 +541,7 @@ class TestTecplotIO(unittest.TestCase):
         title = f"ASCII {zoneType.name} ZONES TEST"
         prefix = f"{zoneType.name}_{precision}_{datapacking}_"
         with tempfile.NamedTemporaryFile(suffix=ext, delete=not SAVE_TEMPFILES, dir=SAVE_DIR, prefix=prefix) as tmpfile:
-            writeTecplot(tmpfile.name, title, zones, datapacking=datapacking, precision=precision)
+            writeTecplot(tmpfile.name, title, zones, datapacking=datapacking, precision=precision, separator=separator)
             titleRead, zonesRead = readTecplot(tmpfile.name)
 
             if ext == ".dat":

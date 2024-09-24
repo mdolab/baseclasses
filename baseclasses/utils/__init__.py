@@ -2,7 +2,7 @@ from .containers import CaseInsensitiveDict, CaseInsensitiveSet
 from .error import Error
 from .fileIO import readJSON, readPickle, redirectingIO, redirectIO, writeJSON, writePickle
 from .solverHistory import SolverHistory
-from .tecplotIO import TecplotFEZone, TecplotOrderedZone, TecplotZone, ZoneType, readTecplot, writeTecplot
+from .tecplotIO import Separator, TecplotFEZone, TecplotOrderedZone, TecplotZone, ZoneType, readTecplot, writeTecplot
 from .utils import ParseStringFormat, getPy3SafeString, pp
 
 __all__ = [
@@ -23,5 +23,7 @@ __all__ = [
     "TecplotOrderedZone",
     "writeTecplot",
     "readTecplot",
+    "ZoneType",
+    "Separator",
     "ParseStringFormat",
 ]
