@@ -1,9 +1,11 @@
 import re
 import struct
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Generic, List, Literal, TextIO, Tuple, TypeVar, Union
+from typing import (Any, Dict, Generator, Generic, List, Literal, TextIO,
+                    Tuple, TypeVar, Union)
 
 import numpy as np
 import numpy.typing as npt
@@ -347,6 +349,93 @@ class TecplotFEZone(TecplotZone):
 # ==============================================================================
 # ASCII WRITERS
 # ==============================================================================
+@contextmanager
+def numpyPrintOptions(**kwargs) -> Generator[Any, Any, Any]:
+    """Context manager to temporarily set numpy print options.
+
+    Parameters
+    ----------
+    kwargs
+        The numpy print options to set.
+
+    Yields
+    ------
+    None
+    """
+    originalOptions = np.get_printoptions()
+
+    try:
+        np.set_printoptions(**kwargs)
+        yield
+    except ValueError:
+        raise ValueError("Invalid numpy print options.")
+    finally:
+        np.set_printoptions(**originalOptions)
+
+
+def writeArrayToFile(
+    arr: npt.NDArray[np.float64],
+    handle: TextIO,
+    maxLineWidth: int = 4000,
+    precision: int = 6,
+) -> None:
+    """
+    Write a 2D numpy array to a file using numpy.array_str with custom formatting.
+
+    Parameters
+    ----------
+    arr : npt.NDArray[np.float64]
+        2D numpy array to write.
+    file : TextIO
+        A file-like object (e.g., opened with 'open()') to write to.
+    maxLineWidth : int, optional
+        Maximum width of each line in characters (default is 4000).
+    precision : int, optional
+        Number of decimal places for floating-point numbers (default is 6).
+
+    Raises
+    ------
+    ValueError
+        If the input array is not 2-dimensional.
+
+    Examples
+    --------
+    >>> arr = np.array([[1.123456, 2.123456], [3.123456, 4.123456]])
+    >>> with open('output.txt', 'w') as f:
+    ...     writeArrayToFile(arr, f, maxLineWidth=20, precision=3)
+    >>> with open('output.txt', 'r') as f:
+    ...     print(f.read())
+    1.123 2.123
+    3.123 4.123
+    """
+    if arr.ndim != 2:
+        raise ValueError("Input must be a 2D numpy array")
+
+    def customFormatter(x: float) -> str:
+        """
+        Custom formatter for numpy array elements.
+
+        Parameters
+        ----------
+        x : float
+            The value to format.
+
+        Returns
+        -------
+        str
+            The formatted string representation of the value.
+        """
+        if isinstance(x, (float, np.float32, np.float64)):
+            return f"{x:.{precision}E}"
+        return str(x)
+
+    with numpyPrintOptions(formatter={"float_kind": customFormatter}, threshold=np.inf):
+        for row in arr:
+            rowStr = np.array_str(row, max_line_width=maxLineWidth)
+            cleanedRowStr = rowStr.strip("[]").strip().replace("\n ", "\n")  # Remove brackets and extra spaces
+            handle.write(cleanedRowStr + "\n")
+
+
 class TecplotZoneWriterASCII(Generic[T], ABC):
     def __init__(
         self,
@@ -385,7 +474,7 @@ class TecplotZoneWriterASCII(Generic[T], ABC):
         else:
             data = data.reshape(-1, len(self.zone.variables)).T
 
-        np.savetxt(handle, data, fmt=f"%.{self.fmtPrecision}E")
+        writeArrayToFile(data, handle, maxLineWidth=4000, precision=self.fmtPrecision)
 
 
 class TecplotOrderedZoneWriterASCII(TecplotZoneWriterASCII[TecplotOrderedZone]):
@@ -937,6 +1026,47 @@ class TecplotWriterBinary:
 # ==============================================================================
 # ASCII READERS
 # ==============================================================================
+def readBlockData(filename: str, iCurrent: int, nVals: int, nVars: int) -> Tuple[npt.NDArray, int]:
+    """Read block data from a Tecplot ASCII file.
+
+    Parameters
+    ----------
+    filename : str
+        The filename of the Tecplot file.
+    iCurrent : int
+        The current line number in the file.
+    nVals : int
+        The number of values to read.
+    nVars : int
+        The number of variables in the data.
+
+    Returns
+    -------
+    Tuple[npt.NDArray, int]
+        The data and the number of lines read.
+    """
+    MAX_LINE_LENGTH = 4000
+
+    with open(filename, "r") as handle:
+        lines = handle.readlines()
+
+    firstVal = lines[iCurrent].split()[0]  # This accounts for the precision
+    nPerLine = MAX_LINE_LENGTH // (len(firstVal) + 1)
+
+    if len(lines[iCurrent].split()) < nPerLine:
+        nLines = nVars
+    else:
+        nLines = int(np.ceil(nVals / nPerLine) * nVars)
+
+    data = []
+    for line in lines[iCurrent : iCurrent + nLines]:
+        data.append([float(val) for val in line.split()])
+
+    data = np.concatenate(data)
+
+    return data, nLines
+
+
 class TecplotASCIIReader:
     def __init__(self, filename: Union[str, Path]) -> None:
         """Reader for Tecplot files in ASCII format.
@@ -1051,9 +1181,8 @@ class TecplotASCIIReader:
             nodeOffset = nNodes
         else:
             # Block data is row-major
-            nodalData = np.loadtxt(self.filename, skiprows=iCurrent, max_rows=len(variables), dtype=float)
-            nodalData = nodalData.T.reshape(shape).squeeze()
-            nodeOffset = len(variables)
+            nodalData, nodeOffset = readBlockData(self.filename, iCurrent, nNodes, len(variables))
+            nodalData = nodalData.reshape(shape).squeeze()
 
         data = {var: nodalData[..., i] for i, var in enumerate(variables)}
         zone = TecplotOrderedZone(
@@ -1093,9 +1222,8 @@ class TecplotASCIIReader:
             nodeOffset = nNodes
         else:
             # Block data is row-major
-            nodalData = np.loadtxt(self.filename, skiprows=iCurrent, max_rows=len(variables), dtype=float)
-            nodalData = np.atleast_2d(nodalData).T
-            nodeOffset = len(variables)
+            nodalData, nodeOffset = readBlockData(self.filename, iCurrent, nNodes, len(variables))
+            nodalData = nodalData.reshape(nNodes, len(variables))
 
         connectivity = np.loadtxt(self.filename, skiprows=iCurrent + nodeOffset, max_rows=nElements, dtype=int)
 
