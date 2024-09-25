@@ -9,7 +9,8 @@ import numpy as np
 import numpy.typing as npt
 from parameterized import parameterized
 
-from baseclasses.utils import Separator, TecplotFEZone, TecplotOrderedZone, ZoneType, readTecplot, writeTecplot
+from baseclasses.utils import TecplotFEZone, TecplotOrderedZone, readTecplot, writeTecplot
+from baseclasses.utils.tecplotIO import Separator, ZoneType
 
 # --- Save tempfile locally or in a temp directory ---
 SAVE_TEMPFILES = False

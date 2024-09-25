@@ -15,6 +15,8 @@ T = TypeVar("T", bound="TecplotZone")
 # ENUMS
 # ==============================================================================
 class ZoneType(Enum):
+    """Tecplot finite element zone types"""
+
     UNSET = -1
     ORDERED = 0
     FELINESEG = 1
@@ -25,58 +27,80 @@ class ZoneType(Enum):
 
 
 class DataPacking(Enum):
+    """Tecplot data packing formats"""
+
     BLOCK = 0
     POINT = 1
 
 
 class VariableLocation(Enum):
+    """Grid location of the variable data"""
+
     NODE = 0
     CELL_CENTER = 1
     NODE_AND_CELL_CENTER = 2
 
 
 class DataPrecision(Enum):
+    """Tecplot data precision"""
+
     SINGLE = 6
     DOUBLE = 12
 
 
 class BinaryDataPrecisionCodes(Enum):
+    """Binary data precision codes"""
+
     SINGLE = 1
     DOUBLE = 2
 
 
 class DTypePrecision(Enum):
+    """Numpy data types for single and double precision"""
+
     SINGLE = np.float32
     DOUBLE = np.float64
 
 
 class FileType(Enum):
+    """Tecplot file types"""
+
     FULL = 0
     GRID = 1
     SOLUTION = 2
 
 
 class SectionMarkers(Enum):
+    """Tecplot section markers"""
+
     ZONE = 299.0  # V11.2 marker
     DATA = 357.0
 
 
 class BinaryFlags(Enum):
+    """Binary boolean flags"""
+
     NONE = -1
     FALSE = 0
     TRUE = 1
 
 
 class StrandID(Enum):
+    """Strand ID default codes"""
+
     PENDING = -2
     STATIC = -1
 
 
 class SolutionTime(Enum):
+    """Solution time default codes"""
+
     UNSET = -1
 
 
 class Separator(Enum):
+    """Separator characters"""
+
     SPACE = " "
     COMMA = ","
     TAB = "\t"
@@ -150,7 +174,8 @@ class TecplotZone:
         Raises
         ------
         TypeError
-            If the data is not a dictionary or the values are not numpy arrays.
+            If the data is not a dictionary or the values are not numpy
+            arrays.
         ValueError
             If the variables do not have the same shape.
         """
@@ -193,8 +218,8 @@ class TecplotZone:
 
 
 class TecplotOrderedZone(TecplotZone):
-    """Tecplot ordered zone. These zones do not contain connectivity information
-    because the data is ordered in an (i, j, k) grid.
+    """Tecplot ordered zone. These zones do not contain connectivity
+    information because the data is ordered in an (i, j, k) grid.
     """
 
     def __init__(
@@ -252,12 +277,13 @@ class TecplotOrderedZone(TecplotZone):
 
 
 class TecplotFEZone(TecplotZone):
-    """Tecplot finite element zone. These zones contain connectivity information
-    to describe the elements in the zone. The type of element is determined by the
-    shape of the connectivity array and the ``tetrahedral`` flag. The connectivity
-    array is 0-based.
+    """Tecplot finite element zone. These zones contain connectivity
+    information to describe the elements in the zone. The type of
+    element is determined by the shape of the connectivity array and
+    the ``tetrahedral`` flag. The connectivity array is 0-based.
 
-    The following shapes correspond to the following element types, where n is the number of elements:
+    The following shapes correspond to the following element types,
+    where n is the number of elements:
 
     - ``(n, 2)``: FELINESEG
     - ``(n, 3)``: FETRIANGLE
@@ -304,7 +330,8 @@ class TecplotFEZone(TecplotZone):
         data : Dict[str, npt.NDArray]
             A dictionary of variable names and their corresponding data.
         connectivity : npt.NDArray
-            The connectivity array that describes the elements in the zone.
+            The connectivity array that describes the elements in the
+            zone.
         zoneType : Union[str, ZoneType]
             The type of the zone. Can be a string that matches an entry
             in the ZoneType enum or the ZoneType enum itself.
@@ -363,7 +390,8 @@ def writeArrayToFile(
     separator: Separator = Separator.SPACE,
 ) -> None:
     """
-    Write a 2D numpy array to a file using numpy.array_str with custom formatting.
+    Write a 2D numpy array to a file using numpy.array_str with custom
+    formatting.
 
     Parameters
     ----------
@@ -372,11 +400,12 @@ def writeArrayToFile(
     file : TextIO
         A file-like object (e.g., opened with 'open()') to write to.
     maxLineWidth : int, optional
-        Maximum width of each line in characters (default is 4000).
+        Maximum width of each line in characters, by default 4000.
     precision : int, optional
-        Number of decimal places for floating-point numbers (default is 6).
+        Number of decimal places for floating-point numbers, by default
+        6.
     separator : Literal[" ", ",", "\\t", "\\n", "\\r"], optional
-        Separator to use between elements (default is " ").
+        Separator to use between elements, by default Separator.SPACE
 
     Raises
     ------
@@ -413,7 +442,8 @@ class TecplotZoneWriterASCII(Generic[T], ABC):
         zone : T
             The Tecplot zone to write.
         datapacking : Literal["BLOCK", "POINT"]
-            The data packing format. BLOCK is row-major, POINT is column-major.
+            The data packing format. BLOCK is row-major, POINT is
+            column-major.
         precision : Literal["SINGLE", "DOUBLE"]
             The floating point precision to write the data.
         """
@@ -456,11 +486,14 @@ class TecplotOrderedZoneWriterASCII(TecplotZoneWriterASCII[TecplotOrderedZone]):
         zone : TecplotOrderedZone
             The ordered zone to write.
         datapacking : Literal["BLOCK", "POINT"]
-            The data packing format. BLOCK is row-major, POINT is column-major.
+            The data packing format. BLOCK is row-major, POINT is
+            column-major.
         precision : Literal["SINGLE", "DOUBLE"]
             The floating point precision to write the data.
         separator : Separator, optional
-            Separator to use between elements, by default Separator.SPACE
+            Separator to use between elements. The Separator
+            is an enum defined in :meth:`Separator <baseclasses.utils.tecplotIO.Separator>`,
+            by default Separator.SPACE
         """
         super().__init__(zone, datapacking, precision, separator)
 
@@ -522,11 +555,14 @@ class TecplotFEZoneWriterASCII(TecplotZoneWriterASCII[TecplotFEZone]):
         zone : TecplotFEZone
             The finite element zone to write.
         datapacking : Literal["BLOCK", "POINT"]
-            The data packing format. BLOCK is row-major, POINT is column-major.
+            The data packing format. BLOCK is row-major, POINT is
+            column-major.
         precision : Literal["SINGLE", "DOUBLE"]
             The floating point precision to write the data.
         separator : Separator, optional
-            Separator to use between elements, by default Separator.SPACE
+            Separator to use between elements. The Separator is an enum
+            defined in :meth:`Separator <baseclasses.utils.tecplotIO.Separator>`,
+            by default Separator.SPACE
         """
         super().__init__(zone, datapacking, precision, separator)
 
@@ -560,7 +596,8 @@ class TecplotFEZoneWriterASCII(TecplotZoneWriterASCII[TecplotFEZone]):
         handle.write(zoneString)
 
     def writeFooter(self, handle: TextIO):
-        """Write the zone footer to the file. This includes the connectivity information.
+        """Write the zone footer to the file. This includes the
+        connectivity information.
 
         Parameters
         ----------
@@ -594,11 +631,14 @@ class TecplotWriterASCII:
         zones : List[TecplotZone]
             A list of Tecplot zones to write.
         datapacking : Literal["BLOCK", "POINT"]
-            The data packing format. BLOCK is row-major, POINT is column-major.
+            The data packing format. BLOCK is row-major, POINT is
+            column-major.
         precision : Literal["SINGLE", "DOUBLE"]
             The floating point precision to write the data.
         separator : Separator, optional
-            Separator to use between elements, by default Separator.SPACE
+            Separator to use between elements. The Separator
+            is an enum defined in :meth:`Separator <baseclasses.utils.tecplotIO.Separator>`,
+            by default Separator.SPACE
         """
         self.title = title
         self.zones = zones
@@ -731,7 +771,8 @@ class TecplotZoneWriterBinary(Generic[T], ABC):
         zone: T,
         precision: Literal["SINGLE", "DOUBLE"],
     ) -> None:
-        """Abstract base class for writing Tecplot zones to binary files.
+        """Abstract base class for writing Tecplot zones to binary
+        files.
 
         Parameters
         ----------
@@ -845,7 +886,8 @@ class TecplotOrderedZoneWriterBinary(TecplotZoneWriterBinary[TecplotOrderedZone]
         _writeInteger(handle, BinaryFlags.FALSE.value)  # No aux data
 
     def writeFooter(self, handle: TextIO):
-        """Write the zone footer to the file. This is not used for ordered zones.
+        """Write the zone footer to the file. This is not used for
+        ordered zones.
 
         Parameters
         ----------
@@ -894,7 +936,8 @@ class TecplotFEZoneWriterBinary(TecplotZoneWriterBinary[TecplotFEZone]):
         _writeInteger(handle, BinaryFlags.FALSE.value)  # No aux data
 
     def writeFooter(self, handle: TextIO):
-        """Write the zone footer to the file. This includes the connectivity information.
+        """Write the zone footer to the file. This includes the
+        connectivity information.
 
         Parameters
         ----------
@@ -1332,7 +1375,8 @@ class TecplotBinaryReader:
         handle : TextIO
             The file handle to read from.
         offset : int, optional
-            The offset (in bytes) from the file's current position, by default 0
+            The offset (in bytes) from the file's current position,
+            by default 0
 
         Returns
         -------
@@ -1351,7 +1395,8 @@ class TecplotBinaryReader:
         nValues : int
             The number of values to read.
         offset : int, optional
-            The offset (in bytes) from the file's current position, by default 0
+            The offset (in bytes) from the file's current position,
+            by default 0
 
         Returns
         -------
@@ -1368,7 +1413,8 @@ class TecplotBinaryReader:
         handle : TextIO
             The file handle to read from.
         offset : int, optional
-            The offset (in bytes) from the file's current position, by default 0
+            The offset (in bytes) from the file's current position,
+            by default 0
 
         Returns
         -------
@@ -1387,7 +1433,8 @@ class TecplotBinaryReader:
         nValues : int
             The number of values to read.
         offset : int, optional
-            The offset (in bytes) from the file's current position, by default 0
+            The offset (in bytes) from the file's current position,
+            by default 0
 
         Returns
         -------
@@ -1404,7 +1451,8 @@ class TecplotBinaryReader:
         handle : TextIO
             The file handle to read from.
         offset : int, optional
-            The offset (in bytes) from the file's current position, by default 0
+            The offset (in bytes) from the file's current position,
+            by default 0
 
         Returns
         -------
@@ -1423,7 +1471,8 @@ class TecplotBinaryReader:
         nValues : int
             The number of values to read.
         offset : int, optional
-            The offset (in bytes) from the file's current position, by default 0
+            The offset (in bytes) from the file's current position,
+            by default 0
 
         Returns
         -------
@@ -1664,11 +1713,15 @@ def writeTecplot(
     zones : List[TecplotZone]
         A list of Tecplot zones to write
     datapacking : Literal["BLOCK", "POINT"], optional
-        The data packing format. BLOCK is row-major, POINT is column-major, by default "POINT"
+        The data packing format. BLOCK is row-major, POINT is
+        column-major, by default "POINT"
     precision : Literal["SINGLE", "DOUBLE"], optional
-        The floating point precision to write the data, by default "SINGLE"
+        The floating point precision to write the data, by default
+        "SINGLE"
     separator : Separator, optional
-        The separator to use when writing ASCII files, by default Separator.SPACE
+        The separator to use when writing ASCII files. The Separator
+        is an enum defined in :meth:`Separator <baseclasses.utils.tecplotIO.Separator>`,
+        by default Separator.SPACE
 
     Raises
     ------
@@ -1679,19 +1732,19 @@ def writeTecplot(
     --------
     .. code-block:: python
 
-        from baseclasses.utils import TecplotOrderedZone, writeTecplot
+        from baseclasses import tecplotIO as tpio
         import numpy as np
 
         nx, ny, nz = 10, 10, 10
         X, Y, Z = np.meshgrid(np.random.rand(nx), np.random.rand(ny), np.random.rand(nz), indexing="ij")
         data = {"X": X, "Y": Y, "Z": Z}
-        zone = TecplotOrderedZone("OrderedZone", data)
+        zone = tpio.TecplotOrderedZone("OrderedZone", data)
 
         # Write the Tecplot file in ASCII format
-        writeTecplot("ordered.dat", "Ordered Zone", [zone], datapacking="BLOCK", precision="SINGLE")
+        tpio.writeTecplot("ordered.dat", "Ordered Zone", [zone], datapacking="BLOCK", precision="SINGLE", separator=tpio.Separator.SPACE)
 
         # Write the Tecplot file in binary format
-        writeTecplot("ordered.plt", "Ordered Zone", [zone], precision="SINGLE")
+        tpio.writeTecplot("ordered.plt", "Ordered Zone", [zone], precision="SINGLE")
 
     """
     filepath = Path(filename)
@@ -1706,9 +1759,9 @@ def writeTecplot(
 
 
 def readTecplot(filename: Union[str, Path]) -> Tuple[str, List[Union[TecplotOrderedZone, TecplotFEZone]]]:
-    """Read a Tecplot file from disk. The file format is determined by the
-    file extension. If the extension is .plt, the file will be read in
-    binary format. If the extension is .dat, the file will be read in
+    """Read a Tecplot file from disk. The file format is determined by
+    the file extension. If the extension is .plt, the file will be read
+    in binary format. If the extension is .dat, the file will be read in
     ASCII format.
 
     Parameters
@@ -1730,13 +1783,13 @@ def readTecplot(filename: Union[str, Path]) -> Tuple[str, List[Union[TecplotOrde
     --------
     .. code-block:: python
 
-        from baseclasses.utils import readTecplot
+        from baseclasses import tecplotIO as tpio
 
         # Read a Tecplot file in ASCII format
-        title, zones = readTecplot("ordered.dat")
+        title, zones = tpio.readTecplot("ordered.dat")
 
         # Read a Tecplot file in binary format
-        title, zones = readTecplot("ordered.plt")
+        title, zones = tpio.readTecplot("ordered.plt")
     """
     filepath = Path(filename)
     if filepath.suffix == ".plt":

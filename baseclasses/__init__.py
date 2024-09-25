@@ -18,4 +18,4 @@ from .problems import (
 )
 from .solvers import AeroSolver, BaseSolver
 from .testing import BaseRegTest, getTol
-from .utils import getPy3SafeString
+from .utils import getPy3SafeString, tecplotIO

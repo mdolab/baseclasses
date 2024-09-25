@@ -9,12 +9,12 @@ Holds the Python Aerodynamic Analysis Classes (base).
 # =============================================================================
 import numpy as np
 
-from ..utils import CaseInsensitiveDict, Error, TecplotFEZone, ZoneType, writeTecplot
-
 # =============================================================================
 # Extension modules
 # =============================================================================
 from .BaseSolver import BaseSolver
+from ..utils import CaseInsensitiveDict, Error, TecplotFEZone, writeTecplot
+from ..utils.tecplotIO import ZoneType
 
 # =============================================================================
 # AeroSolver Class

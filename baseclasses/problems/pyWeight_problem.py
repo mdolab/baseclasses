@@ -9,7 +9,8 @@ from pathlib import Path
 
 import numpy as np
 
-from baseclasses.utils import TecplotFEZone, TecplotOrderedZone, ZoneType, writeTecplot
+from ..utils import TecplotFEZone, TecplotOrderedZone, writeTecplot
+from ..utils.tecplotIO import ZoneType
 
 try:
     from pygeo import geo_utils
