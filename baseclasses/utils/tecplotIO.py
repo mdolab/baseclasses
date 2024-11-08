@@ -350,6 +350,15 @@ class TecplotFEZone(TecplotZone):
     def nElements(self) -> int:
         return self.connectivity.shape[0]
 
+    @property
+    def triConnectivity(self) -> npt.NDArray:
+        if self.zoneType == ZoneType.FETRIANGLE:
+            return self.connectivity
+        elif self.zoneType == ZoneType.FEQUADRILATERAL:
+            return np.row_stack((self.connectivity[:, [0, 1, 2]], self.connectivity[:, [0, 2, 3]]))
+        else:
+            raise TypeError(f"'triConnectivity' not supported for {self.zoneType.name} zone type.")
+
     def _validateZoneType(self) -> None:
         supportedZones = [zone.name for zone in ZoneType if zone.name != "ORDERED"]
         if isinstance(self.zoneType, str):

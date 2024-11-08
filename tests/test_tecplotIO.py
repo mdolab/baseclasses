@@ -566,3 +566,62 @@ class TestTecplotIO(unittest.TestCase):
             title, zones = readTecplot(self.externalFileBinary)
         except Exception as e:
             self.fail(f"Reading external binary file {self.externalFileBinary} failed with error: {e}")
+
+    def test_TriToTriConn(self):
+        # Create a fe ordered tri zone
+        ni, nj = 10, 10
+        nodes, connectivity = createTriGrid(ni, nj)
+        zone = TecplotFEZone(
+            "TriGrid", {"X": nodes[:, 0], "Y": nodes[:, 1]}, connectivity, zoneType=ZoneType.FETRIANGLE
+        )
+
+        triConn = zone.triConnectivity
+
+        np.testing.assert_array_equal(triConn, zone.connectivity)
+
+    def test_QuadToTriConn(self):
+        # Create a fe ordered quad zone
+        ni, nj = 10, 10
+        nodes, connectivity = createQuadGrid(ni, nj)
+        zone = TecplotFEZone(
+            "QuadGrid", {"X": nodes[:, 0], "Y": nodes[:, 1]}, connectivity, zoneType=ZoneType.FEQUADRILATERAL
+        )
+
+        triConn = zone.triConnectivity
+
+        self.assertEqual(triConn.shape, (zone.nElements * 2, 3))
+
+    def test_TriConnBadZoneType(self):
+        # Create an line seg zone
+        ni = 10
+        nodes, connectivity = createLineSegGrid(ni)
+        zone = TecplotFEZone("LineSeg", {"X": nodes[:, 0], "Y": nodes[:, 1]}, connectivity, zoneType=ZoneType.FELINESEG)
+
+        with self.assertRaises(TypeError):
+            triConn = zone.triConnectivity
+
+        # Create a tet zone
+        ni, nj, nk = 10, 10, 10
+        nodes, connectivity = createTetGrid(ni, nj, nk)
+        zone = TecplotFEZone(
+            "TetGrid",
+            {"X": nodes[:, 0], "Y": nodes[:, 1], "Z": nodes[:, 2]},
+            connectivity,
+            zoneType=ZoneType.FETETRAHEDRON,
+        )
+
+        with self.assertRaises(TypeError):
+            triConn = zone.triConnectivity
+
+        # Create a brick zone
+        ni, nj, nk = 10, 10, 10
+        nodes, connectivity = createBrickGrid(ni, nj, nk)
+        zone = TecplotFEZone(
+            "BrickGrid",
+            {"X": nodes[:, 0], "Y": nodes[:, 1], "Z": nodes[:, 2]},
+            connectivity,
+            zoneType=ZoneType.FEBRICK,
+        )
+
+        with self.assertRaises(TypeError):
+            triConn = zone.triConnectivity
