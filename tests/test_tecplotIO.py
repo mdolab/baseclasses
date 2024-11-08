@@ -598,7 +598,7 @@ class TestTecplotIO(unittest.TestCase):
         zone = TecplotFEZone("LineSeg", {"X": nodes[:, 0], "Y": nodes[:, 1]}, connectivity, zoneType=ZoneType.FELINESEG)
 
         with self.assertRaises(TypeError):
-            triConn = zone.triConnectivity
+            zone.triConnectivity
 
         # Create a tet zone
         ni, nj, nk = 10, 10, 10
@@ -611,7 +611,7 @@ class TestTecplotIO(unittest.TestCase):
         )
 
         with self.assertRaises(TypeError):
-            triConn = zone.triConnectivity
+            zone.triConnectivity
 
         # Create a brick zone
         ni, nj, nk = 10, 10, 10
@@ -624,4 +624,4 @@ class TestTecplotIO(unittest.TestCase):
         )
 
         with self.assertRaises(TypeError):
-            triConn = zone.triConnectivity
+            zone.triConnectivity
