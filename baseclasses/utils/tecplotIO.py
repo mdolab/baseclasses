@@ -359,6 +359,14 @@ class TecplotFEZone(TecplotZone):
         else:
             raise TypeError(f"'triConnectivity' not supported for {self.zoneType.name} zone type.")
 
+    @property
+    def uniqueIndices(self) -> npt.NDArray:
+        return np.unique(self.connectivity.flatten())
+
+    @property
+    def uniqueNodalData(self) -> Dict[str, npt.NDArray]:
+        return {var: self.data[var][self.uniqueIndices] for var in self.variables}
+
     def _validateZoneType(self) -> None:
         supportedZones = [zone.name for zone in ZoneType if zone.name != "ORDERED"]
         if isinstance(self.zoneType, str):
