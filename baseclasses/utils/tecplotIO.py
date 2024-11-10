@@ -341,10 +341,23 @@ class TecplotFEZone(TecplotZone):
             The strand id of the zone, by default -1
         """
         super().__init__(zoneName, data, solutionTime=solutionTime, strandID=strandID)
-        self.connectivity = connectivity
+        self._connectivity = connectivity
         self.zoneType = zoneType
         self._validateZoneType()
         self._validateConnectivity()
+        self._uniqueIndices = np.unique(self.connectivity.flatten())
+        self._uniqueConnectivity = self._remapConnectivity()
+
+    @property
+    def connectivity(self) -> npt.NDArray:
+        return self._connectivity
+
+    @connectivity.setter
+    def connectivity(self, value: npt.NDArray) -> None:
+        self._connectivity = value
+        self._validateConnectivity()
+        self._uniqueIndices = np.unique(self.connectivity.flatten())
+        self._uniqueConnectivity = self._remapConnectivity()
 
     @property
     def nElements(self) -> int:
@@ -360,12 +373,12 @@ class TecplotFEZone(TecplotZone):
             raise TypeError(f"'triConnectivity' not supported for {self.zoneType.name} zone type.")
 
     @property
-    def uniqueIndices(self) -> npt.NDArray:
-        return np.unique(self.connectivity.flatten())
+    def uniqueData(self) -> Dict[str, npt.NDArray]:
+        return {var: self.data[var][self._uniqueIndices] for var in self.variables}
 
     @property
-    def uniqueNodalData(self) -> Dict[str, npt.NDArray]:
-        return {var: self.data[var][self.uniqueIndices] for var in self.variables}
+    def uniqueConnectivity(self) -> npt.NDArray:
+        return self._uniqueConnectivity
 
     def _validateZoneType(self) -> None:
         supportedZones = [zone.name for zone in ZoneType if zone.name != "ORDERED"]
@@ -394,6 +407,13 @@ class TecplotFEZone(TecplotZone):
             # Prior validation step should ensure we don't reach this point
             # but raise an error just in case.
             raise TypeError("Invalid zone type.")
+
+    def _remapConnectivity(self) -> npt.NDArray:
+        uniqueIndices = self._uniqueIndices
+        remap = np.full(len(uniqueIndices), -1, dtype=int)
+        remap[uniqueIndices] = np.arange(len(uniqueIndices))
+        remappedConnectivity = remap[self.connectivity]
+        return remappedConnectivity
 
 
 # ==============================================================================

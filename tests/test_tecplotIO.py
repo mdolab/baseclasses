@@ -558,12 +558,31 @@ class TestTecplotIO(unittest.TestCase):
     def test_ASCIIReadWriteExternal(self):
         try:
             title, zones = readTecplot(self.externalFileAscii)
+
+            for zone in zones:
+                conn = zone.connectivity
+                uniqueConn = zone.uniqueConnectivity
+                data = zone.data
+                uniqueData = zone.uniqueData
+
+                for variable in zone.variables:
+                    np.testing.assert_allclose(data[variable][conn], uniqueData[variable][uniqueConn])
         except Exception as e:
             self.fail(f"Reading external ASCII file {self.externalFileAscii} failed with error: {e}")
 
     def test_BinaryReadWriteExternal(self):
         try:
             title, zones = readTecplot(self.externalFileBinary)
+
+            for zone in zones:
+                conn = zone.connectivity
+                uniqueConn = zone.uniqueConnectivity
+                data = zone.data
+                uniqueData = zone.uniqueData
+
+                for variable in zone.variables:
+                    np.testing.assert_allclose(data[variable][conn], uniqueData[variable][uniqueConn])
+
         except Exception as e:
             self.fail(f"Reading external binary file {self.externalFileBinary} failed with error: {e}")
 
