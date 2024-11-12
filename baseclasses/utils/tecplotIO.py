@@ -345,7 +345,7 @@ class TecplotFEZone(TecplotZone):
         self.zoneType = zoneType
         self._validateZoneType()
         self._validateConnectivity()
-        self._uniqueIndices = np.unique(self.connectivity.flatten())
+        self._uniqueIndices = np.unique(self._connectivity.flatten())
         self._uniqueConnectivity = self._remapConnectivity()
 
     @property
@@ -356,7 +356,7 @@ class TecplotFEZone(TecplotZone):
     def connectivity(self, value: npt.NDArray) -> None:
         self._connectivity = value
         self._validateConnectivity()
-        self._uniqueIndices = np.unique(self.connectivity.flatten())
+        self._uniqueIndices = np.unique(self._connectivity.flatten())
         self._uniqueConnectivity = self._remapConnectivity()
 
     @property
@@ -410,9 +410,8 @@ class TecplotFEZone(TecplotZone):
 
     def _remapConnectivity(self) -> npt.NDArray:
         uniqueIndices = self._uniqueIndices
-        remap = np.full(len(uniqueIndices), -1, dtype=int)
-        remap[uniqueIndices] = np.arange(len(uniqueIndices))
-        remappedConnectivity = remap[self.connectivity]
+        indexMap = {idx: i for i, idx in enumerate(uniqueIndices)}
+        remappedConnectivity = np.array([[indexMap[idx] for idx in row] for row in self._connectivity])
         return remappedConnectivity
 
 
