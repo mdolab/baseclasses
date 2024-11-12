@@ -409,10 +409,10 @@ class TecplotFEZone(TecplotZone):
             raise TypeError("Invalid zone type.")
 
     def _remapConnectivity(self) -> npt.NDArray:
-        uniqueIndices = self._uniqueIndices
-        indexMap = {idx: i for i, idx in enumerate(uniqueIndices)}
-        remappedConnectivity = np.array([[indexMap[idx] for idx in row] for row in self._connectivity])
-        return remappedConnectivity
+        # Create a remapping array that's as large as the maximum index
+        remap = np.full(self._uniqueIndices.max() + 1, -1, dtype=np.int64)
+        remap[self._uniqueIndices] = np.arange(len(self._uniqueIndices))
+        return remap[self._connectivity]
 
 
 # ==============================================================================
