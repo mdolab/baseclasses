@@ -4,8 +4,13 @@ pyWeight_problem
 Holds the weightProblem class for weightandbalance solvers.
 """
 
-import numpy as np
 import copy
+from pathlib import Path
+
+import numpy as np
+
+from ..utils import TecplotFEZone, TecplotOrderedZone, writeTecplot
+from ..utils.tecplotIO import ZoneType
 
 try:
     from pygeo import geo_utils
@@ -68,9 +73,9 @@ class WeightProblem:
         """
 
         # Check if components is of type Component or list, otherwise raise Error
-        if type(components) == list:
+        if isinstance(components, list):
             pass
-        elif type(components) == object:
+        elif isinstance(components, object):
             components = [components]
         else:
             raise Error("addComponents() takes in either a list of or a single component")
@@ -132,7 +137,7 @@ class WeightProblem:
 
         """
 
-        if type(surf) == list:
+        if isinstance(surf, list):
             self.p0 = np.array(surf[0])
             self.v1 = np.array(surf[1])
             self.v2 = np.array(surf[2])
@@ -194,24 +199,28 @@ class WeightProblem:
             File name for tecplot file. Should have a .dat extension.
 
         """
-        f = open(fileName, "w")
-        f.write('TITLE = "weight_problem Surface Mesh"\n')
-        f.write('VARIABLES = "CoordinateX" "CoordinateY" "CoordinateZ"\n')
-        f.write("Zone T=%s\n" % ("surf"))
-        f.write("Nodes = %d, Elements = %d ZONETYPE=FETRIANGLE\n" % (len(self.p0) * 3, len(self.p0)))
-        f.write("DATAPACKING=POINT\n")
-        for i in range(len(self.p0)):
-            points = []
-            points.append(self.p0[i])
-            points.append(self.p0[i] + self.v1[i])
-            points.append(self.p0[i] + self.v2[i])
-            for i in range(len(points)):
-                f.write(f"{points[i][0]:f} {points[i][1]:f} {points[i][2]:f}\n")
+        # Build the FETriangle data array
+        dataArrays = np.zeros((len(self.p0) * 3, 3), dtype=float)
+        dataArrays[::3] = self.p0
+        dataArrays[1::3] = self.p0 + self.v1
+        dataArrays[2::3] = self.p0 + self.v2
+        data = {"CoordinateX": dataArrays[:, 0], "CoordinateY": dataArrays[:, 1], "CoordinateZ": dataArrays[:, 2]}
 
+        # Create the connectivity
+        conn = np.zeros((len(self.p0), 3), dtype=int)
         for i in range(len(self.p0)):
-            f.write("%d %d %d\n" % (3 * i + 1, 3 * i + 2, 3 * i + 3))
+            conn[i, :] = [3 * i + 1, 3 * i + 2, 3 * i + 3]
 
-        f.close()
+        # Create the single zone
+        zones = [TecplotFEZone("surf", data, conn, zoneType=ZoneType.FETRIANGLE)]
+
+        writeTecplot(
+            fileName,
+            title="weight_problem Surface Mesh",
+            zones=zones,
+            datapacking="POINT",
+            precision="SINGLE",
+        )
 
     def writeTecplot(self, fileName):
         """
@@ -362,9 +371,9 @@ class WeightProblem:
         """
 
         # Check if case is a single entry or a list, otherwise raise Error
-        if type(cases) == list:
+        if isinstance(cases, list):
             pass
-        elif type(cases) == object:
+        elif isinstance(cases, object):
             cases = [cases]
         else:
             raise Error("addFuelCases() takes in either a list of or a single fuelcase")
@@ -447,7 +456,7 @@ class WeightProblem:
 
         if includeType is not None:
             # Specified a list of component types to include
-            if type(includeType) == str:
+            if isinstance(includeType, str):
                 includeType = [includeType]
             weightKeysTmp = set()
             for key in weightKeys:
@@ -457,21 +466,21 @@ class WeightProblem:
 
         if include is not None:
             # Specified a list of compoents to include
-            if type(include) == str:
+            if isinstance(include, str):
                 include = [include]
             include = set(include)
             weightKeys.intersection_update(include)
 
         if exclude is not None:
             # Specified a list of components to exclude
-            if type(exclude) == str:
+            if isinstance(exclude, str):
                 exclude = [exclude]
             exclude = set(exclude)
             weightKeys.difference_update(exclude)
 
         if excludeType is not None:
             # Specified a list of compoent types to exclude
-            if type(excludeType) == str:
+            if isinstance(excludeType, str):
                 excludeType = [excludeType]
             weightKeysTmp = copy.copy(weightKeys)
             for key in weightKeys:
@@ -490,48 +499,42 @@ class WeightProblem:
 
         filename: str
             filename for writing the masses. This string will have the
-            .dat suffix appended to it.
+            # .dat suffix appended to it if it does not already have it.
         """
 
-        fileHandle = filename + ".dat"
-        f = open(fileHandle, "w")
         nMasses = len(self.nameList)
-        f.write('TITLE = "%s: Mass Data"\n' % self.name)
-        f.write('VARIABLES = "X", "Y", "Z", "Mass"\n')
         locList = ["current", "fwd", "aft"]
 
+        zones = []
         for loc in locList:
-            f.write('ZONE T="%s", I=%d, J=1, K=1, DATAPACKING=POINT\n' % (loc, nMasses))
-
-            for key in self.components.keys():
+            dataArray = np.zeros((nMasses, 4), dtype=float)
+            for i, key in enumerate(self.components.keys()):
                 CG = self.components[key].getCG(loc)
                 mass = self.components[key].getMass()
-                x = np.real(CG[0])
-                y = np.real(CG[1])
-                z = np.real(CG[2])
-                m = np.real(mass)
+                dataArray[i, 0] = CG[0]
+                dataArray[i, 1] = CG[1]
+                dataArray[i, 2] = CG[2]
+                dataArray[i, 3] = mass
 
-                f.write(f"{x:f} {y:f} {z:f} {m:f}\n")
+            data = {
+                "CoordinateX": dataArray[:, 0],
+                "CoordinateY": dataArray[:, 1],
+                "CoordinateZ": dataArray[:, 2],
+                "Mass": dataArray[:, 3],
+            }
 
-            # end
-            f.write("\n")
-        # end
+            zones.append(TecplotOrderedZone(loc, data))
 
-        # textOffset = 0.5
-        # for loc in locList:
-        #     for name in self.nameList:
-        #         x= np.real(self.componentDict[name].CG[loc][0])
-        #         y= np.real(self.componentDict[name].CG[loc][1])
-        #         z= np.real(self.componentDict[name].CG[loc][2])+textOffset
-        #         m= np.real(self.componentDict[name].W)
+        # Create the path with the .dat extension
+        filePath = Path(filename).with_suffix(".dat")
 
-        #         f.write('TEXT CS=GRID3D, HU=POINT, X=%f, Y=%f, Z=%f, H=12, T="%s"\n'%(x,y,z,name+' '+loc))
-        #     # end
-
-        # # end
-
-        f.close()
-        return
+        writeTecplot(
+            filePath,
+            title=f"{self.name}: Mass Data",
+            zones=zones,
+            datapacking="POINT",
+            precision="SINGLE",
+        )
 
     def writeProblemData(self, fileName):
         """
