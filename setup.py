@@ -27,7 +27,7 @@ setup(
     license="Apache License Version 2.0",
     packages=find_packages(),
     install_requires=[
-        "numpy>=1.16",
+        "numpy>=1.21",
     ],
     extras_require={
         "docs": docs_require,
