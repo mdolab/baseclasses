@@ -500,9 +500,9 @@ class TecplotZoneWriterASCII(Generic[T], ABC):
         data = np.stack([self.zone.data[var] for var in self.zone.variables], axis=-1)
 
         if self.datapacking == "POINT":
-            data = data.reshape(-1, len(self.zone.variables))
+            data = data.reshape(-1, len(self.zone.variables), order="F")
         else:
-            data = data.reshape(-1, len(self.zone.variables)).T
+            data = data.reshape(-1, len(self.zone.variables), order="F").T
 
         writeArrayToFile(data, handle, maxLineWidth=4000, precision=self.fmtPrecision, separator=self.separator)
 
@@ -860,7 +860,7 @@ class TecplotZoneWriterBinary(Generic[T], ABC):
         data = np.stack([self.zone.data[var] for var in self.zone.variables], axis=-1)
 
         # Flatten the data such that each variable is a row
-        data = data.reshape(-1, len(self.zone.variables)).T
+        data = data.reshape(-1, len(self.zone.variables), order="F").T
 
         _writeFloat32(handle, SectionMarkers.ZONE.value)  # Write the zone marker
 
@@ -916,9 +916,9 @@ class TecplotOrderedZoneWriterBinary(TecplotZoneWriterBinary[TecplotOrderedZone]
         self._writeCommonHeader(handle)  # Write the common header information
 
         # --- Specific to Ordered Zones ---
-        _writeInteger(handle, self.zone.iMax)  # Write the I dimension
+        _writeInteger(handle, self.zone.iMax)  # Write the K dimension
         _writeInteger(handle, self.zone.jMax)  # Write the J dimension
-        _writeInteger(handle, self.zone.kMax)  # Write the K dimension
+        _writeInteger(handle, self.zone.kMax)  # Write the I dimension
         _writeInteger(handle, BinaryFlags.FALSE.value)  # No aux data
 
     def writeFooter(self, handle: TextIO):
