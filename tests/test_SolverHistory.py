@@ -103,7 +103,7 @@ class TestSolverHistoryWriting(unittest.TestCase):
                 "Random Float": rng.random() - 0.5,
                 "Random Complex": complex(rng.random() - 0.5, rng.random() - 0.5),
                 "Random String": str(rng.integers(low=-100, high=100)),
-                "Random List": [rng.integers(low=-100, high=100)],
+                "Random List": [rng.integers(low=-100, high=100, dtype=int)],
                 "Don't print": rng.random(),
             }
             self.solverHistory.write(iterData)
