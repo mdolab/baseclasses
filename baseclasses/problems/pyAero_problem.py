@@ -208,25 +208,25 @@ class AeroProblem(FluidProperties):
     Examples
     --------
     >>> # DPW4 Test condition (metric)
-    >>> ap = AeroProblem('tunnel_condition', mach=0.85, reynolds=5e6, \
-reynoldsLength=275.8*.0254, T=310.93, areaRef=594720*.0254**2, \
-chordRef=275.8*.0254, xRef=1325.9*0.0254, zRef=177.95*.0254)
+    >>> ap = AeroProblem('tunnel_condition', mach=0.85, reynolds=5e6,
+        reynoldsLength=275.8*.0254, T=310.93, areaRef=594720*.0254**2,
+        chordRef=275.8*.0254, xRef=1325.9*0.0254, zRef=177.95*.0254)
     >>> # DPW4 Flight condition (metric)
-    >>> ap = AeroProblem('flight_condition', mach=0.85, altitude=37000*.3048, \
-areaRef=594720*.0254**2, chordRef=275.8*.0254, \
-xRef=1325.9*0.0254, zRef=177.95*.0254)
+    >>> ap = AeroProblem('flight_condition', mach=0.85, altitude=37000*.3048,
+        areaRef=594720*.0254**2, chordRef=275.8*.0254,
+        xRef=1325.9*0.0254, zRef=177.95*.0254)
     >>> # Onera M6 Test condition (Euler)
-    >>> ap = AeroProblem('m6_tunnel', mach=0.8395, areaRef=0.772893541, chordRef=0.64607, \
-xRef=0.0, zRef=0.0, alpha=3.06)
+    >>> ap = AeroProblem('m6_tunnel', mach=0.8395, areaRef=0.772893541, chordRef=0.64607,
+        xRef=0.0, zRef=0.0, alpha=3.06)
     >>> # Onera M6 Test condition (RANS)
-    >>> ap = AeroProblem('m6_tunnel', mach=0.8395, reynolds=11.72e6, reynoldsLength=0.64607, \
-areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
+    >>> ap = AeroProblem('m6_tunnel', mach=0.8395, reynolds=11.72e6, reynoldsLength=0.64607,
+        areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     >>> # NACA0009 hydrofoil (0.9m semi-span) sailing condition (hacked for incompressible flow and viscosity)
     >>> # R=461.9 for water vapor, but we can lower it to get a higher Mach number
     >>> # Hack to get the dynamic viscosity of water, TSuthDim must equal T for this to work!
-    >>> ap = AeroProblem("hydrofoil", areaRef=0.243, alpha=6, chordRef=0.27, T=288.15, V=17, \
-rho=1025, xRef=0.18, yRef=0.0, zRef=0.0, evalFuncs=["cl","cd","lift","drag","cavitation","target_cavitation"], \
-R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
+    >>> ap = AeroProblem("hydrofoil", areaRef=0.243, alpha=6, chordRef=0.27, T=288.15, V=17,
+        rho=1025, xRef=0.18, yRef=0.0, zRef=0.0, evalFuncs=["cl","cd","lift","drag","cavitation","target_cavitation"],
+        R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
     """
 
     def __init__(self, name, **kwargs):
