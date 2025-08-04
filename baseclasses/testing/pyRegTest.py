@@ -182,7 +182,7 @@ class BaseRegTest:
                 self._add_values(name, values, **kwargs)
 
     def root_add_dict(self, name, d, **kwargs):
-        """
+        r"""
         Only write from the root proc
 
         Parameters
@@ -200,7 +200,7 @@ class BaseRegTest:
 
     # Add values from all processors
     def par_add_val(self, name, values, **kwargs):
-        """
+        r"""
         Add value(values) from parallel process in sorted order
 
         Parameters
@@ -220,7 +220,7 @@ class BaseRegTest:
                 self._add_values(name, values, **kwargs)
 
     def par_add_sum(self, name, values, **kwargs):
-        """
+        r"""
         Add the sum of sum of the values from all processors.
 
         Parameters

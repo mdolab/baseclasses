@@ -108,9 +108,6 @@ class LGProblem:
         g_load = (self.V_vert**2 + (2 * self.g * (1 - self.loadFrac) * (self.tireDef + self.shockDef))) / (
             2.0 * self.g * (self.tireEff * self.tireDef + self.shockEff * self.shockDef)
         )
-        # print('gload',self.V_vert**2,(2*self.g*(1-self.loadFrac)*(self.tireDef+self.shockDef)),2.0 , self.g,self.tireEff * self.tireDef,self.shockEff * self.shockDef,self.V_vert**2 /(2.0 * self.g ),  (self.tireEff * self.tireDef + self.shockEff * self.shockDef))
-        # f_dyn =  self.aircraftMass * self.V_vert**2 /\
-        #          (4.0 * (self.tireEff * self.tireDef + self.shockEff * self.shockDef))
 
         f_dyn = (1.0 / self.nMainGear) * g_load * self.aircraftMass * self.g
 

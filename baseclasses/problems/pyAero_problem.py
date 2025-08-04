@@ -5,15 +5,17 @@ pyAero_problem
 # =============================================================================
 # Imports
 # =============================================================================
-import numpy as np
 import warnings
-from .ICAOAtmosphere import ICAOAtmosphere
-from .FluidProperties import FluidProperties
+
+import numpy as np
+
 from ..utils import CaseInsensitiveDict, Error, SolverHistory
+from .FluidProperties import FluidProperties
+from .ICAOAtmosphere import ICAOAtmosphere
 
 
 class AeroProblem(FluidProperties):
-    """
+    r"""
     The main purpose of this class is to represent all relevant
     information for a single aerodynamic analysis. This will
     include the thermodynamic parameters defining the flow
@@ -27,7 +29,7 @@ class AeroProblem(FluidProperties):
         This is the preferred method for specifying flight conditions.
         This is suitable for all aerodynamic analysis codes, including aerostructural analysis.
         The 1976 standard atmosphere is used to compute :math:`P` and :math:`T`.
-        We then compute :math:`\\rho = P / RT`.
+        We then compute :math:`\rho = P / RT`.
         The remaining quantities are computed with :meth:`baseclasses.AeroProblem._updateFromM`.
         The resulting Reynolds number depends on the scale of the mesh.
 
@@ -41,32 +43,32 @@ class AeroProblem(FluidProperties):
 
     'mach' + 'T' + 'P':
         Any arbitrary temperature and pressure.
-        The inputs are first used to compute :math:`\\rho = P / RT`.
+        The inputs are first used to compute :math:`\rho = P / RT`.
         The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromM`.
 
     'mach' + 'T' + 'rho':
         Any arbitrary temperature and density.
-        The inputs are first used to compute :math:`P = \\rho RT`.
+        The inputs are first used to compute :math:`P = \rho RT`.
         The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromM`.
 
     'mach' + 'P' + 'rho':
         Any arbitrary density and pressure.
-        The inputs are first used to compute :math:`T = P / \\rho R`.
+        The inputs are first used to compute :math:`T = P / \rho R`.
         The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromM`.
 
     'V' + 'rho' + 'T'
         Generally for low-speed specifications.
-        The inputs are first used to compute :math:`P = \\rho RT`.
+        The inputs are first used to compute :math:`P = \rho RT`.
         The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromV`.
 
     'V' + 'rho' + 'P'
         Generally for low-speed specifications.
-        The inputs are first used to compute :math:`T = P / \\rho R`.
+        The inputs are first used to compute :math:`T = P / \rho R`.
         The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromV`.
 
     'V' + 'T' + 'P'
         Generally for low-speed specifications.
-        The inputs are first used to compute :math:`\\rho = P / RT`.
+        The inputs are first used to compute :math:`\rho = P / RT`.
         The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromV`.
 
     The combinations listed above are the **only** valid combinations
@@ -78,7 +80,7 @@ class AeroProblem(FluidProperties):
     set the 'P' (pressure) variable.
 
     For our compressible RANS solver, ADflow, the inputs from ``AeroProblem`` are the dimensional freestream values
-    :math:`M`, :math:`P`, :math:`T`, :math:`\\gamma`, :math:`\\rho`, :math:`R_{\\text{gas}}`,
+    :math:`M`, :math:`P`, :math:`T`, :math:`\gamma`, :math:`\rho`, :math:`R_{\text{gas}}`,
     Sutherland's law constants :math:`S`, :math:`T_{ref}`, :math:`\mu_{ref}`, and the Prandtl number :math:`Pr`.
     The non-dimensionalized inputs used in the actual ADflow CFD computations are derived from these inherited inputs.
 
@@ -919,15 +921,15 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
     #         self.__dict__['rho'] = self.re*self.mu/self.V
 
     def _updateFromRe(self):
-        """
+        r"""
         Update the full set of states from Re, T, and either V or M with the following steps:
 
-        #. :math:`a = \sqrt{\\gamma RT}`
-        #. Compute :math:`\\mu(T)` from Sutherland's law.
+        #. :math:`a = \sqrt{\gamma RT}`
+        #. Compute :math:`\mu(T)` from Sutherland's law.
         #. :math:`V = M a` or :math:`M = V / a`
-        #. :math:`\\rho = \\frac{Re \\mu}{V L}`
-        #. :math:`P = \\rho R T`
-        #. :math:`q = 0.5 \\rho V^2`
+        #. :math:`\rho = \frac{Re \mu}{V L}`
+        #. :math:`P = \rho R T`
+        #. :math:`q = 0.5 \rho V^2`
 
         """
         # Calculate the speed of sound
@@ -955,15 +957,15 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
         self.q = 0.5 * self.rho * self.V**2
 
     def _updateFromM(self):
-        """
+        r"""
         Update the full set of states from M, T, rho with the following steps:
 
-        #. :math:`a = \sqrt{\\gamma RT}`
-        #. Compute :math:`\\mu(T)` from Sutherland's law.
+        #. :math:`a = \sqrt{\gamma RT}`
+        #. Compute :math:`\mu(T)` from Sutherland's law.
         #. :math:`V = M a`
-        #. :math:`Re/L = \\rho V / \\mu`
-        #. :math:`\\nu = \\mu / \\rho`
-        #. :math:`q = 0.5 \\rho V^2`
+        #. :math:`Re/L = \rho V / \mu`
+        #. :math:`\nu = \mu / \rho`
+        #. :math:`q = 0.5 \rho V^2`
 
         """
         # Calculate the speed of sound
@@ -985,15 +987,15 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
         self.q = 0.5 * self.rho * self.V**2
 
     def _updateFromV(self):
-        """
+        r"""
         Update the full set of states from V, T, rho with the following steps:
 
-        #. :math:`a = \sqrt{\\gamma RT}`
-        #. Compute :math:`\\mu(T)` from Sutherland's law.
-        #. :math:`\\nu = \\mu / \\rho`
-        #. :math:`q = 0.5 \\rho V^2`
+        #. :math:`a = \sqrt{\gamma RT}`
+        #. Compute :math:`\mu(T)` from Sutherland's law.
+        #. :math:`\nu = \mu / \rho`
+        #. :math:`q = 0.5 \rho V^2`
         #. :math:`M = V / a`
-        #. :math:`Re/L = \\rho V / \\mu`
+        #. :math:`Re/L = \rho V / \mu`
 
         """
         # Calculate the speed of sound
