@@ -13,7 +13,8 @@ import numpy as np
 # Extension modules
 # =============================================================================
 from .BaseSolver import BaseSolver
-from ..utils import CaseInsensitiveDict, Error
+from ..utils import CaseInsensitiveDict, Error, TecplotFEZone, writeTecplot
+from ..utils.tecplotIO import ZoneType
 
 # =============================================================================
 # AeroSolver Class
@@ -21,7 +22,6 @@ from ..utils import CaseInsensitiveDict, Error
 
 
 class AeroSolver(BaseSolver):
-
     """
     Abstract Class for Aerodynamic Solver Object
     """
@@ -207,24 +207,25 @@ class AeroSolver(BaseSolver):
         """
         [p0, v1, v2] = self.getTriangulatedMeshSurface(groupName, **kwargs)
         if self.comm.rank == 0:
-            f = open(fileName, "w")
-            f.write('TITLE = "%s Surface Mesh"\n' % self.name)
-            f.write('VARIABLES = "CoordinateX" "CoordinateY" "CoordinateZ"\n')
-            f.write("Zone T=%s\n" % ("surf"))
-            f.write("Nodes = %d, Elements = %d ZONETYPE=FETRIANGLE\n" % (len(p0) * 3, len(p0)))
-            f.write("DATAPACKING=POINT\n")
-            for i in range(len(p0)):
-                points = []
-                points.append(p0[i])
-                points.append(p0[i] + v1[i])
-                points.append(p0[i] + v2[i])
-                for i in range(len(points)):
-                    f.write(f"{points[i][0]:f} {points[i][1]:f} {points[i][2]:f}\n")
+            dataArray = np.zeros((len(p0) * 3, 3), dtype=float)
+            dataArray[::3] = p0
+            dataArray[1::3] = p0 + v1
+            dataArray[2::3] = p0 + v2
+            data = {"CoordinateX": dataArray[:, 0], "CoordinateY": dataArray[:, 1], "CoordinateZ": dataArray[:, 2]}
 
+            conn = np.zeros((len(p0), 3), dtype=int)
             for i in range(len(p0)):
-                f.write("%d %d %d\n" % (3 * i + 1, 3 * i + 2, 3 * i + 3))
+                conn[i, :] = [3 * i + 1, 3 * i + 2, 3 * i + 3]
 
-            f.close()
+            zones = [TecplotFEZone("surf", data, conn, zoneType=ZoneType.FETRIANGLE)]
+
+            writeTecplot(
+                fileName,
+                title=f"{self.name} Surface Mesh",
+                zones=zones,
+                datapacking="POINT",
+                precision="SINGLE",
+            )
 
     def checkSolutionFailure(self, aeroProblem, funcs):
         """Take in a an aeroProblem and check for failure. Then append the
