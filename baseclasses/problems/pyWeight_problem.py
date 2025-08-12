@@ -4,8 +4,9 @@ pyWeight_problem
 Holds the weightProblem class for weightandbalance solvers.
 """
 
-import numpy as np
 import copy
+
+import numpy as np
 
 try:
     from pygeo import geo_utils
@@ -87,8 +88,8 @@ class WeightProblem:
                     comp._generateAreaMesh(self.p0, self.v1, self.v2)
                 else:
                     raise Error(
-                        "attempting to add a coordinate based component without\
-                    providing a surface. Please set a surface using setSurface()"
+                        "attempting to add a coordinate based component without providing a surface. "
+                        + "Please set a surface using setSurface()"
                     )
                 if self.DVGeo is not None:
                     self.DVGeo.addPointSet(comp.coords, comp.name)

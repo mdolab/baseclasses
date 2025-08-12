@@ -81,8 +81,7 @@ class FluidProperties:
         if "SSuthDim" in kwargs or "muSuthDim" in kwargs or "TSuthDim" in kwargs:
             if not all(name in kwargs for name in ("muSuthDim", "muSuthDim", "TSuthDim")):
                 warnings.warn(
-                    "One or more constant for Sutherlands law might be missing!\
-                Make sure to provide all three!",
+                    "One or more constant for Sutherlands law might be missing! Make sure to provide all three!",
                     stacklevel=2,
                 )
 
