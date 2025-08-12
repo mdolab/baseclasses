@@ -21,7 +21,6 @@ from ..utils import CaseInsensitiveDict, Error
 
 
 class AeroSolver(BaseSolver):
-
     """
     Abstract Class for Aerodynamic Solver Object
     """
@@ -317,7 +316,7 @@ class AeroSolver(BaseSolver):
         # Do some error checking
         if groupName in self.families:
             raise Error(
-                "The specified groupName '%s' already exists in the " "cgns file or has already been added." % groupName
+                "The specified groupName '%s' already exists in the cgns file or has already been added." % groupName
             )
 
         # We can actually allow for nested groups. That is, an entry
@@ -389,7 +388,7 @@ class AeroSolver(BaseSolver):
 
         self._updateGeomInfo = True
         if self.mesh is None:
-            raise Error("Cannot set new surface coordinate locations without a mesh" "warping object present.")
+            raise Error("Cannot set new surface coordinate locations without a meshwarping object present.")
 
         # First get the surface coordinates of the meshFamily in case
         # the groupName is a subset, those values will remain unchanged.
@@ -500,8 +499,7 @@ class AeroSolver(BaseSolver):
 
         if groupName not in self.families:
             raise Error(
-                "'%s' is not a family in the CGNS file or has not been added"
-                " as a combination of families" % groupName
+                "'%s' is not a family in the CGNS file or has not been added as a combination of families" % groupName
             )
 
         return self.families[groupName]

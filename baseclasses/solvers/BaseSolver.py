@@ -3,6 +3,7 @@ BaseSolver
 
 Holds a basic Python Analysis Classes (base and inherited).
 """
+
 from difflib import get_close_matches
 import copy
 import warnings
@@ -22,7 +23,7 @@ class BaseSolver:
         name,
         category,
         defaultOptions={},
-        options={},
+        options=None,
         immutableOptions=set(),
         deprecatedOptions={},
         comm=None,
@@ -86,8 +87,9 @@ class BaseSolver:
             else:
                 self.setOption(key, optionValue)
 
-        for key in options:
-            self.setOption(key, options[key])
+        if options is not None:
+            for key in options:
+                self.setOption(key, options[key])
 
         self.solverCreated = True
 

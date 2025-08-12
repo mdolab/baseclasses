@@ -6,3 +6,7 @@ doc/_build
 
 # VS code configurations
 *.vscode
+
+# pre-commit/ruff configuration
+.pre-commit-config.yaml
+ruff.toml
