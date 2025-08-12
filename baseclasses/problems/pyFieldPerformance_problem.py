@@ -6,13 +6,14 @@ pyFieldPerformance_problem
 # Imports
 # =============================================================================
 import warnings
-from .ICAOAtmosphere import ICAOAtmosphere
-from .FluidProperties import FluidProperties
+
 from ..utils import CaseInsensitiveDict, Error
+from .FluidProperties import FluidProperties
+from .ICAOAtmosphere import ICAOAtmosphere
 
 
 class FieldPerformanceProblem:
-    """
+    r"""
     The main purpose of this class is to represent all relevant
     information for a single field performance analysis. This includes
     an internal instance of the atmospheric calculation for computing
@@ -55,7 +56,7 @@ class FieldPerformanceProblem:
     span : float
         Total wingspan
 
-    \*\* Note \*\* Thrust and weight should be specified in terms of force.
+    ** Note ** Thrust and weight should be specified in terms of force.
 
     T_VA : float
         Idle thrust during approach. <force>
@@ -76,7 +77,7 @@ class FieldPerformanceProblem:
     TOW : float
         Takeoff gross weight. <force>
 
-    \*\* Note \*\* TSFC should be specified in terms of mass / time / force.
+    ** Note ** TSFC should be specified in terms of mass / time / force.
 
     TSFC_VA : float
         Thrust-specific fuel consumption with engine in idle during approach.

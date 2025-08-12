@@ -5,15 +5,17 @@ pyAero_problem
 # =============================================================================
 # Imports
 # =============================================================================
-import numpy as np
 import warnings
-from .ICAOAtmosphere import ICAOAtmosphere
-from .FluidProperties import FluidProperties
+
+import numpy as np
+
 from ..utils import CaseInsensitiveDict, Error, SolverHistory
+from .FluidProperties import FluidProperties
+from .ICAOAtmosphere import ICAOAtmosphere
 
 
 class AeroProblem(FluidProperties):
-    """
+    r"""
     The main purpose of this class is to represent all relevant
     information for a single aerodynamic analysis. This will
     include the thermodynamic parameters defining the flow
@@ -27,7 +29,7 @@ class AeroProblem(FluidProperties):
         This is the preferred method for specifying flight conditions.
         This is suitable for all aerodynamic analysis codes, including aerostructural analysis.
         The 1976 standard atmosphere is used to compute :math:`P` and :math:`T`.
-        We then compute :math:`\\rho = P / RT`.
+        We then compute :math:`\rho = P / RT`.
         The remaining quantities are computed with :meth:`baseclasses.AeroProblem._updateFromM`.
         The resulting Reynolds number depends on the scale of the mesh.
 
@@ -41,32 +43,32 @@ class AeroProblem(FluidProperties):
 
     'mach' + 'T' + 'P':
         Any arbitrary temperature and pressure.
-        The inputs are first used to compute :math:`\\rho = P / RT`.
+        The inputs are first used to compute :math:`\rho = P / RT`.
         The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromM`.
 
     'mach' + 'T' + 'rho':
         Any arbitrary temperature and density.
-        The inputs are first used to compute :math:`P = \\rho RT`.
+        The inputs are first used to compute :math:`P = \rho RT`.
         The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromM`.
 
     'mach' + 'P' + 'rho':
         Any arbitrary density and pressure.
-        The inputs are first used to compute :math:`T = P / \\rho R`.
+        The inputs are first used to compute :math:`T = P / \rho R`.
         The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromM`.
 
     'V' + 'rho' + 'T'
         Generally for low-speed specifications.
-        The inputs are first used to compute :math:`P = \\rho RT`.
+        The inputs are first used to compute :math:`P = \rho RT`.
         The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromV`.
 
     'V' + 'rho' + 'P'
         Generally for low-speed specifications.
-        The inputs are first used to compute :math:`T = P / \\rho R`.
+        The inputs are first used to compute :math:`T = P / \rho R`.
         The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromV`.
 
     'V' + 'T' + 'P'
         Generally for low-speed specifications.
-        The inputs are first used to compute :math:`\\rho = P / RT`.
+        The inputs are first used to compute :math:`\rho = P / RT`.
         The remaining quantities are then computed with :meth:`baseclasses.AeroProblem._updateFromV`.
 
     The combinations listed above are the **only** valid combinations
@@ -78,7 +80,7 @@ class AeroProblem(FluidProperties):
     set the 'P' (pressure) variable.
 
     For our compressible RANS solver, ADflow, the inputs from ``AeroProblem`` are the dimensional freestream values
-    :math:`M`, :math:`P`, :math:`T`, :math:`\\gamma`, :math:`\\rho`, :math:`R_{\\text{gas}}`,
+    :math:`M`, :math:`P`, :math:`T`, :math:`\gamma`, :math:`\rho`, :math:`R_{\text{gas}}`,
     Sutherland's law constants :math:`S`, :math:`T_{ref}`, :math:`\mu_{ref}`, and the Prandtl number :math:`Pr`.
     The non-dimensionalized inputs used in the actual ADflow CFD computations are derived from these inherited inputs.
 
@@ -206,25 +208,25 @@ class AeroProblem(FluidProperties):
     Examples
     --------
     >>> # DPW4 Test condition (metric)
-    >>> ap = AeroProblem('tunnel_condition', mach=0.85, reynolds=5e6, \
-reynoldsLength=275.8*.0254, T=310.93, areaRef=594720*.0254**2, \
-chordRef=275.8*.0254, xRef=1325.9*0.0254, zRef=177.95*.0254)
+    >>> ap = AeroProblem('tunnel_condition', mach=0.85, reynolds=5e6,
+        reynoldsLength=275.8*.0254, T=310.93, areaRef=594720*.0254**2,
+        chordRef=275.8*.0254, xRef=1325.9*0.0254, zRef=177.95*.0254)
     >>> # DPW4 Flight condition (metric)
-    >>> ap = AeroProblem('flight_condition', mach=0.85, altitude=37000*.3048, \
-areaRef=594720*.0254**2, chordRef=275.8*.0254, \
-xRef=1325.9*0.0254, zRef=177.95*.0254)
+    >>> ap = AeroProblem('flight_condition', mach=0.85, altitude=37000*.3048,
+        areaRef=594720*.0254**2, chordRef=275.8*.0254,
+        xRef=1325.9*0.0254, zRef=177.95*.0254)
     >>> # Onera M6 Test condition (Euler)
-    >>> ap = AeroProblem('m6_tunnel', mach=0.8395, areaRef=0.772893541, chordRef=0.64607, \
-xRef=0.0, zRef=0.0, alpha=3.06)
+    >>> ap = AeroProblem('m6_tunnel', mach=0.8395, areaRef=0.772893541, chordRef=0.64607,
+        xRef=0.0, zRef=0.0, alpha=3.06)
     >>> # Onera M6 Test condition (RANS)
-    >>> ap = AeroProblem('m6_tunnel', mach=0.8395, reynolds=11.72e6, reynoldsLength=0.64607, \
-areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
+    >>> ap = AeroProblem('m6_tunnel', mach=0.8395, reynolds=11.72e6, reynoldsLength=0.64607,
+        areaRef=0.772893541, chordRef=0.64607, xRef=0.0, zRef=0.0, alpha=3.06, T=255.56)
     >>> # NACA0009 hydrofoil (0.9m semi-span) sailing condition (hacked for incompressible flow and viscosity)
     >>> # R=461.9 for water vapor, but we can lower it to get a higher Mach number
     >>> # Hack to get the dynamic viscosity of water, TSuthDim must equal T for this to work!
-    >>> ap = AeroProblem("hydrofoil", areaRef=0.243, alpha=6, chordRef=0.27, T=288.15, V=17, \
-rho=1025, xRef=0.18, yRef=0.0, zRef=0.0, evalFuncs=["cl","cd","lift","drag","cavitation","target_cavitation"], \
-R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
+    >>> ap = AeroProblem("hydrofoil", areaRef=0.243, alpha=6, chordRef=0.27, T=288.15, V=17,
+        rho=1025, xRef=0.18, yRef=0.0, zRef=0.0, evalFuncs=["cl","cd","lift","drag","cavitation","target_cavitation"],
+        R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
     """
 
     def __init__(self, name, **kwargs):
@@ -919,15 +921,15 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
     #         self.__dict__['rho'] = self.re*self.mu/self.V
 
     def _updateFromRe(self):
-        """
+        r"""
         Update the full set of states from Re, T, and either V or M with the following steps:
 
-        #. :math:`a = \sqrt{\\gamma RT}`
-        #. Compute :math:`\\mu(T)` from Sutherland's law.
+        #. :math:`a = \sqrt{\gamma RT}`
+        #. Compute :math:`\mu(T)` from Sutherland's law.
         #. :math:`V = M a` or :math:`M = V / a`
-        #. :math:`\\rho = \\frac{Re \\mu}{V L}`
-        #. :math:`P = \\rho R T`
-        #. :math:`q = 0.5 \\rho V^2`
+        #. :math:`\rho = \frac{Re \mu}{V L}`
+        #. :math:`P = \rho R T`
+        #. :math:`q = 0.5 \rho V^2`
 
         """
         # Calculate the speed of sound
@@ -955,15 +957,15 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
         self.q = 0.5 * self.rho * self.V**2
 
     def _updateFromM(self):
-        """
+        r"""
         Update the full set of states from M, T, rho with the following steps:
 
-        #. :math:`a = \sqrt{\\gamma RT}`
-        #. Compute :math:`\\mu(T)` from Sutherland's law.
+        #. :math:`a = \sqrt{\gamma RT}`
+        #. Compute :math:`\mu(T)` from Sutherland's law.
         #. :math:`V = M a`
-        #. :math:`Re/L = \\rho V / \\mu`
-        #. :math:`\\nu = \\mu / \\rho`
-        #. :math:`q = 0.5 \\rho V^2`
+        #. :math:`Re/L = \rho V / \mu`
+        #. :math:`\nu = \mu / \rho`
+        #. :math:`q = 0.5 \rho V^2`
 
         """
         # Calculate the speed of sound
@@ -985,15 +987,15 @@ R=100, muSuthDim=1.22e-3, TSuthDim=288.15)
         self.q = 0.5 * self.rho * self.V**2
 
     def _updateFromV(self):
-        """
+        r"""
         Update the full set of states from V, T, rho with the following steps:
 
-        #. :math:`a = \sqrt{\\gamma RT}`
-        #. Compute :math:`\\mu(T)` from Sutherland's law.
-        #. :math:`\\nu = \\mu / \\rho`
-        #. :math:`q = 0.5 \\rho V^2`
+        #. :math:`a = \sqrt{\gamma RT}`
+        #. Compute :math:`\mu(T)` from Sutherland's law.
+        #. :math:`\nu = \mu / \rho`
+        #. :math:`q = 0.5 \rho V^2`
         #. :math:`M = V / a`
-        #. :math:`Re/L = \\rho V / \\mu`
+        #. :math:`Re/L = \rho V / \mu`
 
         """
         # Calculate the speed of sound
