@@ -198,7 +198,7 @@ class WeightProblem:
         f = open(fileName, "w")
         f.write('TITLE = "weight_problem Surface Mesh"\n')
         f.write('VARIABLES = "CoordinateX" "CoordinateY" "CoordinateZ"\n')
-        f.write(f"Zone T=surf\n")
+        f.write("Zone T=surf\n")
         f.write("Nodes = %d, Elements = %d ZONETYPE=FETRIANGLE\n" % (len(self.p0) * 3, len(self.p0)))
         f.write("DATAPACKING=POINT\n")
         for i in range(len(self.p0)):
