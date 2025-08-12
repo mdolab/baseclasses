@@ -231,7 +231,7 @@ class MissionProblem:
         """
 
         segCount = 1
-        string = "MISSION PROBLEM: %s \n" % self.name
+        string = f"MISSION PROBLEM: {self.name} \n"
         for i in range(len(self.missionProfiles)):
             # profTag = 'P%02d'%i
             string += self.missionProfiles[i].__str__(segCount)
@@ -453,14 +453,14 @@ class MissionProfile:
                     # end
                     if Alti is not None:
                         if not Alti == refAlt:
-                            raise Error("%s: Specified initAlt inconsistent with previous finalAlt" % (seg.phase))
+                            raise Error(f"{seg.phase}: Specified initAlt inconsistent with previous finalAlt")
                         # end
                     else:
                         seg.initAlt = refAlt
                     # end
                     if Mi is not None:
                         if not Mi == refMach:
-                            raise Error("%s: Specified initMach inconsistent with previous finalMach" % (seg.phase))
+                            raise Error(f"{seg.phase}: Specified initMach inconsistent with previous finalMach")
                         # end
                     else:
                         seg.initMach = refMach
@@ -477,7 +477,7 @@ class MissionProfile:
         Return a string representation of the segments within this profile
         """
 
-        string = "MISSION PROFILE: %s \n" % self.name
+        string = f"MISSION PROFILE: {self.name} \n"
         for i in range(len(self.segments)):
             # segTag = '%sS%02d'%(idTag,i)
             string += self.segments[i].__str__(segStartNum + i)
@@ -621,7 +621,7 @@ class MissionSegment:
             if "init" in var:
                 count += 1
         if count < 2 and self.fuelFraction is None:
-            raise Error("%s: There does not appear to be two inputs at the start of this segment" % self.phase)
+            raise Error(f"{self.phase}: There does not appear to be two inputs at the start of this segment")
         elif count > 2 and self.fuelFraction is None:
             raise Error(
                 "%s: There appears to be more than two inputs at the start of this segment, may not be consistent"
@@ -876,7 +876,7 @@ class MissionSegment:
             altTag = "finalAlt"
         else:
             # invalid endpoint
-            raise Error("%s: _calculateSpeed, invalid endPoint: %s" % (self.phase, endPoint))
+            raise Error(f"{self.phase}: _calculateSpeed, invalid endPoint: {endPoint}")
 
         CAS = getattr(self, CASTag)
         TAS = getattr(self, TASTag)
@@ -994,7 +994,7 @@ class MissionSegment:
 
         if M > 1:
             raise Error(
-                "%s_CAS2TAS: The current mission class is limited to subsonic missions: %f %f" % (self.phase, M, CAS)
+                f"{self.phase}_CAS2TAS: The current mission class is limited to subsonic missions: {M:f} {CAS:f}"
             )
             # M_diff = 1.0
             # while M_diff > 1e-4:
@@ -1204,7 +1204,7 @@ class MissionSegment:
             fuelFrac = np.nan
 
         string = f"{idTag:>3} {self.phase:>18}  "
-        string += "{:>8}  {:>8}  {:>8}  {:>8}  {:>8} \n".format("Alt", "Mach", "CAS", "TAS", "FuelFrac")
+        string += f"{'Alt':>8}  {'Mach':>8}  {'CAS':>8}  {'TAS':>8}  {'FuelFrac':>8} \n"
         string += "{:>22}  {:8.2f}  {:8.6f}  {:8.4f}  {:8.4f}  {:8.4f} \n".format(
             "",
             states[0, 0],

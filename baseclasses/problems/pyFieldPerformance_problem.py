@@ -288,7 +288,7 @@ class FieldPerformanceProblem:
             )
 
         if name is None:
-            dvName = key + "_%s" % self.name
+            dvName = f"{key}_{self.name}"
         else:
             dvName = name
 

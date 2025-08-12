@@ -589,7 +589,7 @@ class AeroProblem(FluidProperties):
         """
 
         if (key not in self.allVarFuncs) and (key not in self.possibleBCDVs):
-            raise ValueError("%s is not a valid design variable" % key)
+            raise ValueError(f"{key} is not a valid design variable")
 
         # First check if we are allowed to add the DV:
         elif (key not in self.possibleDVs) and (key in self.allVarFuncs):
@@ -614,7 +614,7 @@ class AeroProblem(FluidProperties):
                 value = self.bcVarData[key, family]
         else:
             if name is None:
-                dvName = key + "_%s" % self.name
+                dvName = f"{key}_{self.name}"
             else:
                 dvName = name
 
@@ -759,7 +759,7 @@ class AeroProblem(FluidProperties):
             # All the functions are ok:
             for f in evalFuncs:
                 # Save the key into funcNames
-                key = self.name + "_%s" % f
+                key = f"{self.name}_{f}"
                 self.funcNames[f] = key
                 funcs[key] = getattr(self, f)
         else:

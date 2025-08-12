@@ -90,11 +90,11 @@ class StructProblem:
         # First check if we are allowed to add the DV:
         if key not in self.possibleDVs:
             raise Error(
-                "The DV '%s' could not be added. The list of possible DVs are: %s." % (key, repr(self.possibleDVs))
+                f"The DV '{key}' could not be added. The list of possible DVs are: {self.possibleDVs!r}."
             )
 
         if name is None:
-            dvName = key + "_%s" % self.name
+            dvName = f"{key}_{self.name}"
         else:
             dvName = name
 
@@ -153,7 +153,7 @@ class StructProblem:
             # All the functions are ok:
             for f in evalFuncs:
                 # Save the key into funcNames
-                key = self.name + "_%s" % f
+                key = f"{self.name}_{f}"
                 self.funcNames[f] = key
                 funcs[key] = getattr(self, f)
         else:
