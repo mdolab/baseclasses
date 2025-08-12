@@ -89,9 +89,7 @@ class StructProblem:
 
         # First check if we are allowed to add the DV:
         if key not in self.possibleDVs:
-            raise Error(
-                f"The DV '{key}' could not be added. The list of possible DVs are: {self.possibleDVs!r}."
-            )
+            raise Error(f"The DV '{key}' could not be added. The list of possible DVs are: {self.possibleDVs!r}.")
 
         if name is None:
             dvName = f"{key}_{self.name}"

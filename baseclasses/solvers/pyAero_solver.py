@@ -21,7 +21,6 @@ from ..utils import CaseInsensitiveDict, Error
 
 
 class AeroSolver(BaseSolver):
-
     """
     Abstract Class for Aerodynamic Solver Object
     """

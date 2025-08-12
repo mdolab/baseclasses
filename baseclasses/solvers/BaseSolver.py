@@ -3,6 +3,7 @@ BaseSolver
 
 Holds a basic Python Analysis Classes (base and inherited).
 """
+
 from difflib import get_close_matches
 import copy
 import warnings
