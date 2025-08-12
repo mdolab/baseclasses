@@ -127,7 +127,7 @@ class WeightProblem:
         >>> surf = CFDsolver.getTriangulatedMeshSurface()
         >>> wp.setSurface(surf)
         >>> # Or using a pyGeo surface object:
-        >>> surf = pyGeo('iges',fileName='wing.igs')
+        >>> surf = pyGeo("iges", fileName="wing.igs")
         >>> wp.setSurface(surf)
 
         """
@@ -642,8 +642,8 @@ class FuelCase:
         Examples
         --------
         >>> # Add W variable with typical bounds
-        >>> fuelCase.addDV('fuelFraction', value=0.5, lower=0.0, upper=1.0, scale=0.1)
-        >>> fuelCase.addDV('reserveFraction', value=0.1, lower=0.0, upper=1.0, scale=0.1)
+        >>> fuelCase.addDV("fuelFraction", value=0.5, lower=0.0, upper=1.0, scale=0.1)
+        >>> fuelCase.addDV("reserveFraction", value=0.1, lower=0.0, upper=1.0, scale=0.1)
         """
 
         # First check if we are allowed to add the DV:

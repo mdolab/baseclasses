@@ -1152,7 +1152,7 @@ class MissionSegment:
         Examples
         --------
         >>> # Add initMach variable with typical bounds
-        >>> seg.addDV('initMach', value=0.75, lower=0.0, upper=1.0, scale=1.0)
+        >>> seg.addDV("initMach", value=0.75, lower=0.0, upper=1.0, scale=1.0)
         """
 
         # First check if we are allowed to add the DV:

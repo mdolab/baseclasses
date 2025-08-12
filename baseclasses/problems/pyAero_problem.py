@@ -585,7 +585,7 @@ class AeroProblem(FluidProperties):
         Examples
         --------
         >>> # Add alpha variable with typical bounds
-        >>> ap.addDV('alpha', value=2.5, lower=0.0, upper=10.0, scale=0.1)
+        >>> ap.addDV("alpha", value=2.5, lower=0.0, upper=10.0, scale=0.1)
         """
 
         if (key not in self.allVarFuncs) and (key not in self.possibleBCDVs):
