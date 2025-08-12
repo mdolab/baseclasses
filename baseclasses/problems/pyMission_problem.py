@@ -1213,9 +1213,7 @@ class MissionSegment:
             states[0, 3],
             fuelFrac,
         )
-        string += "{:>22}  {:8.2f}  {:8.6f}  {:8.4f}  {:8.4f} \n".format(
-            "", states[1, 0], states[1, 1], states[1, 2], states[1, 3]
-        )
+        string += f"{'':>22}  {states[1, 0]:8.2f}  {states[1, 1]:8.6f}  {states[1, 2]:8.4f}  {states[1, 3]:8.4f} \n"
 
         return string
 

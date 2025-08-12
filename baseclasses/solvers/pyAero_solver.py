@@ -499,8 +499,7 @@ class AeroSolver(BaseSolver):
 
         if groupName not in self.families:
             raise Error(
-                "'%s' is not a family in the CGNS file or has not been added"
-                " as a combination of families" % groupName
+                f"'{groupName}' is not a family in the CGNS file or has not been added as a combination of families"
             )
 
         return self.families[groupName]
