@@ -594,11 +594,10 @@ class AeroProblem(FluidProperties):
         # First check if we are allowed to add the DV:
         elif (key not in self.possibleDVs) and (key in self.allVarFuncs):
             raise Error(
-                "The DV '%s' could not be added. Potential DVs MUST "
-                "be specified when the aeroProblem class is created. "
-                "For example, if you want alpha as a design variable "
-                "(...,alpha=value, ...) must be given. The list of "
-                "possible DVs are: %s." % (key, repr(self.possibleDVs))
+                f"The DV '{key}' could not be added. "
+                "Potential DVs MUST be specified when the aeroProblem class is created. "
+                "For example, if you want alpha as a design variable (...,alpha=value, ...) must be given. "
+                f"The list of possible DVs are: {self.possibleDVs}."
             )
         if key in self.possibleBCDVs:
             if family is None:

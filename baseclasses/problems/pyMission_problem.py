@@ -406,15 +406,15 @@ class MissionProfile:
                     # Need to have at least the start alt and V or M
                     if seg.initAlt is None:
                         raise Error(
-                            "%s: Initial altitude must be specified for the first non fuel fraction segment in the profile"
-                            % (self.name)
+                            f"{self.name}: Initial altitude must be specified for the first non fuel fraction segment "
+                            + "in the profile"
                         )
                     # end
 
                     if (seg.initMach is None) and (seg.initCAS is None) and (seg.initTAS is None):
                         raise Error(
-                            "%s: One of initCAS,initTAS or initMach needs to be specified for the first non fuelfraction segment in the profile"
-                            % (self.name)
+                            f"{self.name}: One of initCAS, initTAS or initMach needs to be specified for the first "
+                            + "non fuelfraction segment in the profile"
                         )
                     # end
 
@@ -811,54 +811,52 @@ class MissionSegment:
             self._calculateSpeed(endPoint="start")
             self._calculateSpeed(endPoint="end")
 
-        """
-        elif self.phase.lower() in ['cvelclimb','climb_cvel']:
-            # we require that Vi,hi and Mf are specified
-            # calculate hf from Vi and Mf
-            self.finalCAS = self.initCAS
+        # elif self.phase.lower() in ['cvelclimb','climb_cvel']:
+        #     # we require that Vi,hi and Mf are specified
+        #     # calculate hf from Vi and Mf
+        #     self.finalCAS = self.initCAS
 
-            #solve for h given M and V
-            CAS = getattr(self,'finalCAS')
-            M = getattr(self,'finalMach')
-            finalAlt = self._solveMachCASIntercept(CAS, M)
-            TAS = self._CAS2TAS(CAS,finalAlt)
-            setattr(self,'finalAlt',finalAlt)
-            setattr(self,'finalTAS',TAS)
-        elif self.phase.lower() in ['cmachclimb','climb_cmach']:
-            # we require that Mi,hg and Vi are specified
-            # calculate hi from Vi and Mf
-            CAS = getattr(self,'initCAS')
-            M = getattr(self,'initMach')
-            setattr(self,'finalMach',M)
-            initAlt = self._solveMachCASIntercept(CAS, M)
-            setattr(self,'initAlt',initAlt)
-            TAS = self._CAS2TAS(CAS,initAlt)
-            setattr(self,'initTAS',TAS)
+        #     #solve for h given M and V
+        #     CAS = getattr(self,'finalCAS')
+        #     M = getattr(self,'finalMach')
+        #     finalAlt = self._solveMachCASIntercept(CAS, M)
+        #     TAS = self._CAS2TAS(CAS,finalAlt)
+        #     setattr(self,'finalAlt',finalAlt)
+        #     setattr(self,'finalTAS',TAS)
+        # elif self.phase.lower() in ['cmachclimb','climb_cmach']:
+        #     # we require that Mi,hg and Vi are specified
+        #     # calculate hi from Vi and Mf
+        #     CAS = getattr(self,'initCAS')
+        #     M = getattr(self,'initMach')
+        #     setattr(self,'finalMach',M)
+        #     initAlt = self._solveMachCASIntercept(CAS, M)
+        #     setattr(self,'initAlt',initAlt)
+        #     TAS = self._CAS2TAS(CAS,initAlt)
+        #     setattr(self,'initTAS',TAS)
 
-        elif self.phase.lower() in ['cmachdescent','descent_cmach']:
-            # use final CAS and init Mach (copied to final Mach)
-            # to calculate the intersection altitude of the M and
-            # CAS values
-            CAS = getattr(self,'finalCAS')
-            M = getattr(self,'initMach')
-            setattr(self,'finalMach',M)
-            finalAlt = self._solveMachCASIntercept(CAS, M)
-            setattr(self,'finalAlt',finalAlt)
-            TAS = self._CAS2TAS(CAS,finalAlt)
-            setattr(self,'finalTAS',TAS)
-        elif self.phase.lower() in ['cveldescent','descent_cvel']:
-            # copy CAS directly, then compute TAS and M from CAS
-            # and h
-            CAS = getattr(self,'initCAS')
-            setattr(self,'finalCAS',CAS)
-            finalAlt = getattr(self,'finalAlt')
-            TAS = self._CAS2TAS(CAS,finalAlt)
-            a = self._getSoundSpeed(finalAlt)
-            M = TAS/a
-            setattr(self,'finalTAS',TAS)
-            setattr(self,'finalMach',M)
-        # end
-        """
+        # elif self.phase.lower() in ['cmachdescent','descent_cmach']:
+        #     # use final CAS and init Mach (copied to final Mach)
+        #     # to calculate the intersection altitude of the M and
+        #     # CAS values
+        #     CAS = getattr(self,'finalCAS')
+        #     M = getattr(self,'initMach')
+        #     setattr(self,'finalMach',M)
+        #     finalAlt = self._solveMachCASIntercept(CAS, M)
+        #     setattr(self,'finalAlt',finalAlt)
+        #     TAS = self._CAS2TAS(CAS,finalAlt)
+        #     setattr(self,'finalTAS',TAS)
+        # elif self.phase.lower() in ['cveldescent','descent_cvel']:
+        #     # copy CAS directly, then compute TAS and M from CAS
+        #     # and h
+        #     CAS = getattr(self,'initCAS')
+        #     setattr(self,'finalCAS',CAS)
+        #     finalAlt = getattr(self,'finalAlt')
+        #     TAS = self._CAS2TAS(CAS,finalAlt)
+        #     a = self._getSoundSpeed(finalAlt)
+        #     M = TAS/a
+        #     setattr(self,'finalTAS',TAS)
+        #     setattr(self,'finalMach',M)
+        # # end
 
     def _calculateSpeed(self, endPoint="start"):
         """
@@ -1121,8 +1119,10 @@ class MissionSegment:
         # First check if we are allowed to add the DV:
         if paramKey not in self.possibleDVs:
             raise Error(
-                "The DV '%s' could not be added. Potential DVs MUST be specified when the missionSegment class is created. For example, if you want initMach as a design variable (...,initMach=value, ...) must be given. The list of possible DVs are: %s."
-                % (paramKey, repr(self.possibleDVs))
+                f"The DV '{paramKey}' could not be added. "
+                + "Potential DVs MUST be specified when the missionSegment class is created. "
+                + "For example, if you want initMach as a design variable (...,initMach=value, ...) must be given. "
+                + f"The list of possible DVs are: {self.possibleDVs}."
             )
 
         if name is None:
