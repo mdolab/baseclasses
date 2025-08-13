@@ -4,8 +4,9 @@ pyWeight_problem
 Holds the weightProblem class for weightandbalance solvers.
 """
 
-import numpy as np
 import copy
+
+import numpy as np
 
 try:
     from pygeo import geo_utils
@@ -87,8 +88,8 @@ class WeightProblem:
                     comp._generateAreaMesh(self.p0, self.v1, self.v2)
                 else:
                     raise Error(
-                        "attempting to add a coordinate based component without\
-                    providing a surface. Please set a surface using setSurface()"
+                        "attempting to add a coordinate based component without providing a surface. "
+                        + "Please set a surface using setSurface()"
                     )
                 if self.DVGeo is not None:
                     self.DVGeo.addPointSet(comp.coords, comp.name)
@@ -197,7 +198,7 @@ class WeightProblem:
         f = open(fileName, "w")
         f.write('TITLE = "weight_problem Surface Mesh"\n')
         f.write('VARIABLES = "CoordinateX" "CoordinateY" "CoordinateZ"\n')
-        f.write("Zone T=%s\n" % ("surf"))
+        f.write("Zone T=surf\n")
         f.write("Nodes = %d, Elements = %d ZONETYPE=FETRIANGLE\n" % (len(self.p0) * 3, len(self.p0)))
         f.write("DATAPACKING=POINT\n")
         for i in range(len(self.p0)):
@@ -396,7 +397,7 @@ class WeightProblem:
         if currentCase:
             return currentCase
         else:
-            raise Error("Supplied fuel caseName: %s, not found" % caseName)
+            raise Error(f"Supplied fuel caseName: {caseName}, not found")
 
     def setFuelCase(self, case):
         """
@@ -496,7 +497,7 @@ class WeightProblem:
         fileHandle = filename + ".dat"
         f = open(fileHandle, "w")
         nMasses = len(self.nameList)
-        f.write('TITLE = "%s: Mass Data"\n' % self.name)
+        f.write(f'TITLE = "{self.name}: Mass Data"\n')
         f.write('VARIABLES = "X", "Y", "Z", "Mass"\n')
         locList = ["current", "fwd", "aft"]
 
@@ -651,12 +652,12 @@ class FuelCase:
             raise Error(f"The DV '{key}' could not be added.  The list of possible DVs are: {repr(self.possibleDVs)}.")
 
         if name is None:
-            dvName = "%s_" % self.name + key
+            dvName = f"{self.name}_{key}"
         else:
             dvName = name
 
         if axis is not None:
-            dvName += "_%s" % axis
+            dvName += f"_{axis}"
 
         if value is None:
             value = getattr(self, key)

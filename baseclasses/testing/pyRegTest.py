@@ -3,13 +3,14 @@ try:
 except ImportError:
     # parallel functions will throw errors
     MPI = None
-from pprint import pformat
-import numpy as np
 import os
 import sys
 from contextlib import contextmanager
-from ..utils import Error
-from ..utils import writeJSON, readJSON
+from pprint import pformat
+
+import numpy as np
+
+from ..utils import Error, readJSON, writeJSON
 
 
 def getTol(**kwargs):
@@ -240,7 +241,7 @@ class BaseRegTest:
                 self._add_values(name, reducedSum, **kwargs)
 
     def par_add_norm(self, name, values, **kwargs):
-        """
+        r"""
         Add the norm across values from all processors.
 
         Parameters

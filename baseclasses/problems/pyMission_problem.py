@@ -4,13 +4,14 @@ pyMission_problem
 Holds the Segment, Profile and Problem classes for the mission solvers.
 """
 
-import sys
-import numpy as np
 import copy
+import sys
 
-from .ICAOAtmosphere import ICAOAtmosphere
-from .FluidProperties import FluidProperties
+import numpy as np
+
 from ..utils import Error
+from .FluidProperties import FluidProperties
+from .ICAOAtmosphere import ICAOAtmosphere
 
 
 class MissionProblem:
@@ -230,7 +231,7 @@ class MissionProblem:
         """
 
         segCount = 1
-        string = "MISSION PROBLEM: %s \n" % self.name
+        string = f"MISSION PROBLEM: {self.name} \n"
         for i in range(len(self.missionProfiles)):
             # profTag = 'P%02d'%i
             string += self.missionProfiles[i].__str__(segCount)
@@ -405,19 +406,15 @@ class MissionProfile:
                     # Need to have at least the start alt and V or M
                     if seg.initAlt is None:
                         raise Error(
-                            "%s: Initial altitude must be\
-                                     specified for the first non fuel fraction\
-                                     segment in the profile"
-                            % (self.name)
+                            f"{self.name}: Initial altitude must be specified for the first non fuel fraction segment "
+                            + "in the profile"
                         )
                     # end
 
                     if (seg.initMach is None) and (seg.initCAS is None) and (seg.initTAS is None):
                         raise Error(
-                            "%s: One of initCAS,initTAS or initMach needs to be\
-                                     specified for the first non fuelfraction\
-                                     segment in the profile"
-                            % (self.name)
+                            f"{self.name}: One of initCAS, initTAS or initMach needs to be specified for the first "
+                            + "non fuelfraction segment in the profile"
                         )
                     # end
 
@@ -437,10 +434,7 @@ class MissionProfile:
                     if CASi is not None:
                         if not CASi == refCAS:
                             raise Error(
-                                "%s: Specified initCAS \
-                                          inconsistent with\
-                                          previous finalCAS: %f, %f \
-                                          "
+                                "%s: Specified initCAS inconsistent with previous finalCAS: %f, %f"
                                 % (seg.phase, CASi, refCAS)
                             )
                         # end
@@ -450,10 +444,7 @@ class MissionProfile:
                     if TASi is not None:
                         if not TASi == refTAS:
                             raise Error(
-                                "%s: Specified initTAS \
-                                          inconsistent with\
-                                          previous finalTAS: %f, %f \
-                                          "
+                                "%s: Specified initTAS inconsistent with previous finalTAS: %f, %f"
                                 % (seg.phase, TASi, refTAS)
                             )
                         # end
@@ -462,24 +453,14 @@ class MissionProfile:
                     # end
                     if Alti is not None:
                         if not Alti == refAlt:
-                            raise Error(
-                                "%s: Specified initAlt \
-                                         inconsistent with\
-                                         previous finalAlt"
-                                % (seg.phase)
-                            )
+                            raise Error(f"{seg.phase}: Specified initAlt inconsistent with previous finalAlt")
                         # end
                     else:
                         seg.initAlt = refAlt
                     # end
                     if Mi is not None:
                         if not Mi == refMach:
-                            raise Error(
-                                "%s: Specified initMach \
-                                          inconsistent with\
-                                          previous finalMach"
-                                % (seg.phase)
-                            )
+                            raise Error(f"{seg.phase}: Specified initMach inconsistent with previous finalMach")
                         # end
                     else:
                         seg.initMach = refMach
@@ -496,7 +477,7 @@ class MissionProfile:
         Return a string representation of the segments within this profile
         """
 
-        string = "MISSION PROFILE: %s \n" % self.name
+        string = f"MISSION PROFILE: {self.name} \n"
         for i in range(len(self.segments)):
             # segTag = '%sS%02d'%(idTag,i)
             string += self.segments[i].__str__(segStartNum + i)
@@ -640,15 +621,10 @@ class MissionSegment:
             if "init" in var:
                 count += 1
         if count < 2 and self.fuelFraction is None:
-            raise Error(
-                "%s: There does not appear to be two inputs at the \
-                         start of this segment"
-                % self.phase
-            )
+            raise Error(f"{self.phase}: There does not appear to be two inputs at the start of this segment")
         elif count > 2 and self.fuelFraction is None:
             raise Error(
-                "%s: There appears to be more than two inputs at the \
-                         start of this segment, may not be consistent"
+                "%s: There appears to be more than two inputs at the start of this segment, may not be consistent"
                 % self.phase
             )
 
@@ -662,8 +638,7 @@ class MissionSegment:
             return
         elif count > 2:
             raise Error(
-                "%s: There appears to be more than two inputs at the \
-                         start of this segment, may not be consistent"
+                "%s: There appears to be more than two inputs at the start of this segment, may not be consistent"
                 % self.phase
             )
         else:
@@ -695,68 +670,62 @@ class MissionSegment:
             #     if 'finalTAS' not in self.segInputs and 'initTAS' in self.segInputs:
             #         self.segInputs.add('finalTAS')
 
-    """
-    def _syncMachVAndAlt(self,endPoint='start'):
-        # get speed of sound at initial point
-        if endPoint.lower()=='start':
-            CAS = getattr(self,'initCAS')
-            TAS = getattr(self,'initTAS')
-            M = getattr(self,'initMach')
-            h = getattr(self,'initAlt')
-            CASTag = 'initCAS'
-            TASTag = 'initTAS'
-            machTag = 'initMach'
-            altTag = 'initAlt'
-        elif endPoint.lower()=='end':
-            TAS = getattr(self,'finalTAS')
-            CAS = getattr(self,'finalCAS')
-            M = getattr(self,'finalMach')
-            h = getattr(self,'finalAlt')
-            CASTag = 'finalCAS'
-            TASTag = 'finalTAS'
-            machTag = 'finalMach'
-            altTag = 'finalAlt'
-        else:
-            # invalid endpoint
-            raise Error('%s: _syncMachAndV, invalid endPoint:\
-                         %s'%(self.phase,endPoint))
-        # end
-        if h is None:
-            # initial altitude is missing calculate from M and V
-            h = self._solveMachCASIntercept(CAS, M)
-            setattr(self,altTag,h)
-        # end
-        a = self._getSoundSpeed(h)
-        P,T,Rho = self._getPTRho(h)
+    # def _syncMachVAndAlt(self,endPoint='start'):
+    #     # get speed of sound at initial point
+    #     if endPoint.lower()=='start':
+    #         CAS = getattr(self,'initCAS')
+    #         TAS = getattr(self,'initTAS')
+    #         M = getattr(self,'initMach')
+    #         h = getattr(self,'initAlt')
+    #         CASTag = 'initCAS'
+    #         TASTag = 'initTAS'
+    #         machTag = 'initMach'
+    #         altTag = 'initAlt'
+    #     elif endPoint.lower()=='end':
+    #         TAS = getattr(self,'finalTAS')
+    #         CAS = getattr(self,'finalCAS')
+    #         M = getattr(self,'finalMach')
+    #         h = getattr(self,'finalAlt')
+    #         CASTag = 'finalCAS'
+    #         TASTag = 'finalTAS'
+    #         machTag = 'finalMach'
+    #         altTag = 'finalAlt'
+    #     else:
+    #         # invalid endpoint
+    #         raise Error('%s: _syncMachAndV, invalid endPoint: %s'%(self.phase,endPoint))
+    #     # end
+    #     if h is None:
+    #         # initial altitude is missing calculate from M and V
+    #         h = self._solveMachCASIntercept(CAS, M)
+    #         setattr(self,altTag,h)
+    #     # end
+    #     a = self._getSoundSpeed(h)
+    #     P,T,Rho = self._getPTRho(h)
 
-        if not (CAS is None and TAS is None):
-            # Specified either (h,CAS) or (h,TAS)
-            if CAS is None:
-                CAS = self._TAS2CAS(TAS,h)
-                setattr(self,CASTag,CAS)
-            elif TAS is None:
-                TAS= self._CAS2TAS(CAS,h)
-                setattr(self,TASTag,TAS)
-            # end
-            MCalc = TAS/a
-            if not M is None:
-                if not abs(MCalc-M)<1e-11:
-                    raise Error('%s: _syncMachAndV, Specified V \
-                                 inconsistent with specified M: \
-                                 %f %f %s'%(self.phase, M, MCalc,
-                                            endPoint))
-                # end
-            else:
-                setattr(self,machTag,MCalc)
-            # end
-        else:
-            # Specified (M,h)
-            TAS = M*a
-            CAS = self._TAS2CAS(TAS,h)
-            setattr(self,TASTag,TAS)
-            setattr(self,CASTag,CAS)
-        # end
-    """
+    #     if not (CAS is None and TAS is None):
+    #         # Specified either (h,CAS) or (h,TAS)
+    #         if CAS is None:
+    #             CAS = self._TAS2CAS(TAS,h)
+    #             setattr(self,CASTag,CAS)
+    #         elif TAS is None:
+    #             TAS= self._CAS2TAS(CAS,h)
+    #             setattr(self,TASTag,TAS)
+    #         # end
+    #         MCalc = TAS/a
+    #         if not M is None:
+    #             if not abs(MCalc-M)<1e-11:
+    #                 raise Error('%s: _syncMachAndV, Specified V inconsistent with specified M: %f %f %s'%(self.phase, M, MCalc, endPoint))
+    #             # end
+    #         else:
+    #             setattr(self,machTag,MCalc)
+    #         # end
+    #     else:
+    #         # Specified (M,h)
+    #         TAS = M*a
+    #         CAS = self._TAS2CAS(TAS,h)
+    #         setattr(self,TASTag,TAS)
+    #         setattr(self,CASTag,CAS)
+    #     # end
 
     def propagateParameters(self):
         """
@@ -842,54 +811,52 @@ class MissionSegment:
             self._calculateSpeed(endPoint="start")
             self._calculateSpeed(endPoint="end")
 
-        """
-        elif self.phase.lower() in ['cvelclimb','climb_cvel']:
-            # we require that Vi,hi and Mf are specified
-            # calculate hf from Vi and Mf
-            self.finalCAS = self.initCAS
+        # elif self.phase.lower() in ['cvelclimb','climb_cvel']:
+        #     # we require that Vi,hi and Mf are specified
+        #     # calculate hf from Vi and Mf
+        #     self.finalCAS = self.initCAS
 
-            #solve for h given M and V
-            CAS = getattr(self,'finalCAS')
-            M = getattr(self,'finalMach')
-            finalAlt = self._solveMachCASIntercept(CAS, M)
-            TAS = self._CAS2TAS(CAS,finalAlt)
-            setattr(self,'finalAlt',finalAlt)
-            setattr(self,'finalTAS',TAS)
-        elif self.phase.lower() in ['cmachclimb','climb_cmach']:
-            # we require that Mi,hg and Vi are specified
-            # calculate hi from Vi and Mf
-            CAS = getattr(self,'initCAS')
-            M = getattr(self,'initMach')
-            setattr(self,'finalMach',M)
-            initAlt = self._solveMachCASIntercept(CAS, M)
-            setattr(self,'initAlt',initAlt)
-            TAS = self._CAS2TAS(CAS,initAlt)
-            setattr(self,'initTAS',TAS)
+        #     #solve for h given M and V
+        #     CAS = getattr(self,'finalCAS')
+        #     M = getattr(self,'finalMach')
+        #     finalAlt = self._solveMachCASIntercept(CAS, M)
+        #     TAS = self._CAS2TAS(CAS,finalAlt)
+        #     setattr(self,'finalAlt',finalAlt)
+        #     setattr(self,'finalTAS',TAS)
+        # elif self.phase.lower() in ['cmachclimb','climb_cmach']:
+        #     # we require that Mi,hg and Vi are specified
+        #     # calculate hi from Vi and Mf
+        #     CAS = getattr(self,'initCAS')
+        #     M = getattr(self,'initMach')
+        #     setattr(self,'finalMach',M)
+        #     initAlt = self._solveMachCASIntercept(CAS, M)
+        #     setattr(self,'initAlt',initAlt)
+        #     TAS = self._CAS2TAS(CAS,initAlt)
+        #     setattr(self,'initTAS',TAS)
 
-        elif self.phase.lower() in ['cmachdescent','descent_cmach']:
-            # use final CAS and init Mach (copied to final Mach)
-            # to calculate the intersection altitude of the M and
-            # CAS values
-            CAS = getattr(self,'finalCAS')
-            M = getattr(self,'initMach')
-            setattr(self,'finalMach',M)
-            finalAlt = self._solveMachCASIntercept(CAS, M)
-            setattr(self,'finalAlt',finalAlt)
-            TAS = self._CAS2TAS(CAS,finalAlt)
-            setattr(self,'finalTAS',TAS)
-        elif self.phase.lower() in ['cveldescent','descent_cvel']:
-            # copy CAS directly, then compute TAS and M from CAS
-            # and h
-            CAS = getattr(self,'initCAS')
-            setattr(self,'finalCAS',CAS)
-            finalAlt = getattr(self,'finalAlt')
-            TAS = self._CAS2TAS(CAS,finalAlt)
-            a = self._getSoundSpeed(finalAlt)
-            M = TAS/a
-            setattr(self,'finalTAS',TAS)
-            setattr(self,'finalMach',M)
-        # end
-        """
+        # elif self.phase.lower() in ['cmachdescent','descent_cmach']:
+        #     # use final CAS and init Mach (copied to final Mach)
+        #     # to calculate the intersection altitude of the M and
+        #     # CAS values
+        #     CAS = getattr(self,'finalCAS')
+        #     M = getattr(self,'initMach')
+        #     setattr(self,'finalMach',M)
+        #     finalAlt = self._solveMachCASIntercept(CAS, M)
+        #     setattr(self,'finalAlt',finalAlt)
+        #     TAS = self._CAS2TAS(CAS,finalAlt)
+        #     setattr(self,'finalTAS',TAS)
+        # elif self.phase.lower() in ['cveldescent','descent_cvel']:
+        #     # copy CAS directly, then compute TAS and M from CAS
+        #     # and h
+        #     CAS = getattr(self,'initCAS')
+        #     setattr(self,'finalCAS',CAS)
+        #     finalAlt = getattr(self,'finalAlt')
+        #     TAS = self._CAS2TAS(CAS,finalAlt)
+        #     a = self._getSoundSpeed(finalAlt)
+        #     M = TAS/a
+        #     setattr(self,'finalTAS',TAS)
+        #     setattr(self,'finalMach',M)
+        # # end
 
     def _calculateSpeed(self, endPoint="start"):
         """
@@ -909,11 +876,7 @@ class MissionSegment:
             altTag = "finalAlt"
         else:
             # invalid endpoint
-            raise Error(
-                "%s: _calculateSpeed, invalid endPoint:\
-                         %s"
-                % (self.phase, endPoint)
-            )
+            raise Error(f"{self.phase}: _calculateSpeed, invalid endPoint: {endPoint}")
 
         CAS = getattr(self, CASTag)
         TAS = getattr(self, TASTag)
@@ -1031,9 +994,7 @@ class MissionSegment:
 
         if M > 1:
             raise Error(
-                "%s_CAS2TAS: The current mission class is\
-                         limited to subsonic missions: %f %f"
-                % (self.phase, M, CAS)
+                f"{self.phase}_CAS2TAS: The current mission class is limited to subsonic missions: {M:f} {CAS:f}"
             )
             # M_diff = 1.0
             # while M_diff > 1e-4:
@@ -1158,12 +1119,10 @@ class MissionSegment:
         # First check if we are allowed to add the DV:
         if paramKey not in self.possibleDVs:
             raise Error(
-                "The DV '%s' could not be added. Potential DVs MUST\
-            be specified when the missionSegment class is created. \
-            For example, if you want initMach as a design variable \
-            (...,initMach=value, ...) must\
-            be given. The list of possible DVs are: %s."
-                % (paramKey, repr(self.possibleDVs))
+                f"The DV '{paramKey}' could not be added. "
+                + "Potential DVs MUST be specified when the missionSegment class is created. "
+                + "For example, if you want initMach as a design variable (...,initMach=value, ...) must be given. "
+                + f"The list of possible DVs are: {self.possibleDVs}."
             )
 
         if name is None:
@@ -1245,7 +1204,7 @@ class MissionSegment:
             fuelFrac = np.nan
 
         string = f"{idTag:>3} {self.phase:>18}  "
-        string += "{:>8}  {:>8}  {:>8}  {:>8}  {:>8} \n".format("Alt", "Mach", "CAS", "TAS", "FuelFrac")
+        string += f"{'Alt':>8}  {'Mach':>8}  {'CAS':>8}  {'TAS':>8}  {'FuelFrac':>8} \n"
         string += "{:>22}  {:8.2f}  {:8.6f}  {:8.4f}  {:8.4f}  {:8.4f} \n".format(
             "",
             states[0, 0],
@@ -1254,9 +1213,7 @@ class MissionSegment:
             states[0, 3],
             fuelFrac,
         )
-        string += "{:>22}  {:8.2f}  {:8.6f}  {:8.4f}  {:8.4f} \n".format(
-            "", states[1, 0], states[1, 1], states[1, 2], states[1, 3]
-        )
+        string += f"{'':>22}  {states[1, 0]:8.2f}  {states[1, 1]:8.6f}  {states[1, 2]:8.4f}  {states[1, 3]:8.4f} \n"
 
         return string
 

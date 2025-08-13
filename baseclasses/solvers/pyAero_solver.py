@@ -21,7 +21,6 @@ from ..utils import CaseInsensitiveDict, Error
 
 
 class AeroSolver(BaseSolver):
-
     """
     Abstract Class for Aerodynamic Solver Object
     """
@@ -208,9 +207,9 @@ class AeroSolver(BaseSolver):
         [p0, v1, v2] = self.getTriangulatedMeshSurface(groupName, **kwargs)
         if self.comm.rank == 0:
             f = open(fileName, "w")
-            f.write('TITLE = "%s Surface Mesh"\n' % self.name)
+            f.write(f'TITLE = "{self.name} Surface Mesh"\n')
             f.write('VARIABLES = "CoordinateX" "CoordinateY" "CoordinateZ"\n')
-            f.write("Zone T=%s\n" % ("surf"))
+            f.write("Zone T=surf\n")
             f.write("Nodes = %d, Elements = %d ZONETYPE=FETRIANGLE\n" % (len(p0) * 3, len(p0)))
             f.write("DATAPACKING=POINT\n")
             for i in range(len(p0)):
@@ -317,7 +316,7 @@ class AeroSolver(BaseSolver):
         # Do some error checking
         if groupName in self.families:
             raise Error(
-                "The specified groupName '%s' already exists in the " "cgns file or has already been added." % groupName
+                f"The specified groupName '{groupName}' already exists in the cgns file or has already been added."
             )
 
         # We can actually allow for nested groups. That is, an entry
@@ -500,8 +499,7 @@ class AeroSolver(BaseSolver):
 
         if groupName not in self.families:
             raise Error(
-                "'%s' is not a family in the CGNS file or has not been added"
-                " as a combination of families" % groupName
+                f"'{groupName}' is not a family in the CGNS file or has not been added as a combination of families"
             )
 
         return self.families[groupName]

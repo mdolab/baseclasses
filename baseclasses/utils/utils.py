@@ -1,6 +1,7 @@
 """
 Helper methods for supporting python3 and python2 at the same time
 """
+
 import re
 import sys
 from pprint import pformat
