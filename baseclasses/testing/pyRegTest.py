@@ -73,6 +73,7 @@ class BaseRegTest:
         else:
             try:
                 from mpi4py import MPI
+
                 self.comm = MPI.COMM_WORLD
                 self.rank = self.comm.rank
             except ImportError:
