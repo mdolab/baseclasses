@@ -5,9 +5,9 @@ pyAeroStruct_problem
 # ======================================================================
 # Imports
 # ======================================================================
+from ..utils import Error, SolverHistory
 from .pyAero_problem import AeroProblem
 from .pyStruct_problem import StructProblem
-from ..utils import Error, SolverHistory
 
 
 class AeroStructProblem:
@@ -40,8 +40,7 @@ class AeroStructProblem:
         # are the same:
         if self.AP.name != self.SP.name:
             raise Error(
-                "The name of the AeroProblem and the StructProblem \
-            used to create this clsss *must* be the same"
+                "The name of the AeroProblem and the StructProblem used to create this clsss *must* be the same"
             )
         self.name = self.AP.name
         self.funcNames = {}

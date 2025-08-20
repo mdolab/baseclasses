@@ -1,15 +1,11 @@
-try:
-    from mpi4py import MPI
-except ImportError:
-    # parallel functions will throw errors
-    MPI = None
-from pprint import pformat
-import numpy as np
 import os
 import sys
 from contextlib import contextmanager
-from ..utils import Error
-from ..utils import writeJSON, readJSON
+from pprint import pformat
+
+import numpy as np
+
+from ..utils import Error, readJSON, writeJSON
 
 
 def getTol(**kwargs):
@@ -72,15 +68,17 @@ class BaseRegTest:
             Note this option does not currently work.
         """
         self.ref_file = ref_file
-        if MPI is None:
-            self.comm = None
-            self.rank = 0
+        if comm is not None:
+            self.comm = comm
         else:
-            if comm is not None:
-                self.comm = comm
-            else:
+            try:
+                from mpi4py import MPI
+
                 self.comm = MPI.COMM_WORLD
-            self.rank = self.comm.rank
+                self.rank = self.comm.rank
+            except ImportError:
+                self.comm = None
+                self.rank = 0
 
         self.train = train
         if self.train:
@@ -240,7 +238,7 @@ class BaseRegTest:
                 self._add_values(name, reducedSum, **kwargs)
 
     def par_add_norm(self, name, values, **kwargs):
-        """
+        r"""
         Add the norm across values from all processors.
 
         Parameters
@@ -385,7 +383,7 @@ def multi_proc_exception_check(comm):
     comm : MPI communicator or None
         Communicator from the ParallelGroup that owns the calling solver.
     """
-    if MPI is None or comm is None or comm.size == 1:
+    if comm is None or comm.size == 1:
         yield
     else:
         try:
