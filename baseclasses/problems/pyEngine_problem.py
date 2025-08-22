@@ -29,7 +29,8 @@ class EngineProblem(AeroProblem):
         Initial value for throttle variable
 
     ISA : float
-        Initial value for ISA temperature variable"""
+        Initial value for ISA temperature variable
+    """
 
     def __init__(self, name, throttle=1.0, ISA=0.0, **kwargs):
         # Initialize AeroProblem

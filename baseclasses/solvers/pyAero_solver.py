@@ -347,7 +347,7 @@ class AeroSolver(BaseSolver):
         pass
 
     def getInitialSurfaceCoordinates(self, groupName=None):
-        """"""
+        """Return Initial Surface Coordinates"""
         if groupName is None:
             groupName = self.allWallsGroup
 
@@ -388,7 +388,7 @@ class AeroSolver(BaseSolver):
 
         self._updateGeomInfo = True
         if self.mesh is None:
-            raise Error("Cannot set new surface coordinate locations without a mesh" "warping object present.")
+            raise Error("Cannot set new surface coordinate locations without a meshwarping object present.")
 
         # First get the surface coordinates of the meshFamily in case
         # the groupName is a subset, those values will remain unchanged.

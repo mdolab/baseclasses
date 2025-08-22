@@ -23,7 +23,6 @@ class LGProblem:
 
     Parameters
     ----------
-
     name : str
         A name for the configuration
 
@@ -118,7 +117,7 @@ class LGProblem:
 
     def getLoadFactor(self):
         """
-        return the load factor for this load case
+        Return the load factor for this load case
         """
         f_stat, f_dyn, f_sb, g_load = self._computeLGForces()
         if self.loadCaseType.lower() == "braking":
@@ -223,7 +222,7 @@ class LGProblem:
 
     def writeLoadData(self, fileName):
         """
-        write a table based on the weight condition
+        Write a table based on the weight condition
         """
 
         f_stat, f_dyn, f_sb, g_load = self._computeLGForces()

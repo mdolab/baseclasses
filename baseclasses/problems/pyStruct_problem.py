@@ -26,7 +26,7 @@ class StructProblem:
 
     Examples
     --------
-    >>> sp = StructProblem('lc0', loadFile='loads.txt')
+    >>> sp = StructProblem("lc0", loadFile="loads.txt")
     """
 
     def __init__(self, name, loadFile=None, loadFactor=None, evalFuncs=None):

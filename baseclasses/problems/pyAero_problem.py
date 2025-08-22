@@ -501,7 +501,7 @@ class AeroProblem(FluidProperties):
 
     def setBCVar(self, varName, value, familyName):
         """
-        set the value of a BC variable on a specific variable
+        Set the value of a BC variable on a specific variable
         """
 
         self.bcVarData[varName, familyName] = value
@@ -585,7 +585,7 @@ class AeroProblem(FluidProperties):
         Examples
         --------
         >>> # Add alpha variable with typical bounds
-        >>> ap.addDV('alpha', value=2.5, lower=0.0, upper=10.0, scale=0.1)
+        >>> ap.addDV("alpha", value=2.5, lower=0.0, upper=10.0, scale=0.1)
         """
 
         if (key not in self.allVarFuncs) and (key not in self.possibleBCDVs):
@@ -629,7 +629,8 @@ class AeroProblem(FluidProperties):
         A specialized function that allows for the updating of the
         internally stored DVs. This would be used for, example, if a
         CLsolve is done before the optimization and that value needs
-        to be used."""
+        to be used.
+        """
 
         for dvName in self.DVs:
             if self.DVs[dvName].family is None:
@@ -687,7 +688,7 @@ class AeroProblem(FluidProperties):
         for dvName in self.DVs:
             dv = self.DVs[dvName]
             if dv.addToPyOpt:
-                if type(dv.value) == np.ndarray:
+                if type(dv.value) is np.ndarray:
                     optProb.addVarGroup(
                         dvName,
                         dv.value.size,

@@ -8,7 +8,6 @@ class FluidProperties:
 
     Parameters
     ----------
-
     gamma : float (default = 1.4)
         Set the ratio of the specific heats.
 
