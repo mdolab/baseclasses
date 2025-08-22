@@ -373,6 +373,15 @@ class TecplotFEZone(TecplotZone):
             raise TypeError(f"'triConnectivity' not supported for {self.zoneType.name} zone type.")
 
     @property
+    def uniqueTriConnectivity(self) -> npt.NDArray:
+        if self.zoneType == ZoneType.FETRIANGLE:
+            return self.uniqueConnectivity
+        elif self.zoneType == ZoneType.FEQUADRILATERAL:
+            return np.row_stack((self.uniqueConnectivity[:, [0, 1, 2]], self.uniqueConnectivity[:, [0, 2, 3]]))
+        else:
+            raise TypeError(f"'uniqueTriConnectivity' not supported for {self.zoneType.name} zone type.")
+
+    @property
     def uniqueData(self) -> Dict[str, npt.NDArray]:
         return {var: self.data[var][self._uniqueIndices] for var in self.variables}
 
@@ -1154,8 +1163,8 @@ class TecplotASCIIReader:
         headerString = ", ".join(header)
 
         # Use regex to parse the header information
-        zoneNameMatch = re.search(r'(zone t)\s*=\s*[\'""]?([^\'""\n,]+)[\'""]?(?=[,\n]|$)', headerString, re.IGNORECASE)
-        zoneName = zoneNameMatch.group(2) if zoneNameMatch else None
+        zoneNameMatch = re.search(r'zone t\s*=\s*["\']([^"\']*)["\']', headerString, re.IGNORECASE)
+        zoneName = zoneNameMatch.group(1) if zoneNameMatch else None
 
         zoneTypeMatch = re.search(r"zonetype\s*=\s*(\w+)", headerString, re.IGNORECASE)
         zoneType = zoneTypeMatch.group(1) if zoneTypeMatch else "ORDERED"
