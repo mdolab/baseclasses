@@ -1,3 +1,7 @@
+# Ignore ruff and precommit config files
+ruff.toml
+.pre-commit-config.yaml
+
 *.pyc
 *.egg-info
 *.DS_Store

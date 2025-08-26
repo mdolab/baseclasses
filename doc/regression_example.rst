@@ -38,5 +38,5 @@ Then, when running ``testflo`` we can specify to run all of the training functio
 
 Normally, when ``testflo`` is run, it looks for all functions that begin with ``test_``.
 The ``-m`` flag allows us to specify a different prefix.
-In this case, by using the ``train_`` prefix on all of the training functions we can run them all at once with the above command. 
+In this case, by using the ``train_`` prefix on all of the training functions we can run them all at once with the above command.
 Once the reference files are created, just calling ``testflo`` will run all the regression tests.

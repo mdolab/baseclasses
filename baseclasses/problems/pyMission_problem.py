@@ -24,7 +24,6 @@ class MissionProblem:
 
     Parameters
     ----------
-
     name : str
         A name for the mission
 
@@ -62,9 +61,9 @@ class MissionProblem:
         """
 
         # Check if profile is of type MissionProfile or list, otherwise raise Error
-        if type(profiles) == MissionProfile:
+        if type(profiles) is MissionProfile:
             profiles = [profiles]
-        elif type(profiles) == list:
+        elif type(profiles) is list:
             pass
         else:
             raise Error("addProfile() takes in either a list of or a single MissionProfile")
@@ -166,11 +165,11 @@ class MissionProblem:
         Solve for the altitude at which CAS=mach
         """
 
-        if type(CAS) == str and CAS in self.currentDVs:
+        if type(CAS) is str and CAS in self.currentDVs:
             CAS = self.currentDVs[CAS]
-        if type(mach) == str and mach in self.currentDVs:
+        if type(mach) is str and mach in self.currentDVs:
             mach = self.currentDVs[mach]
-        if type(alt) == str and alt in self.currentDVs:
+        if type(alt) is str and alt in self.currentDVs:
             alt = self.currentDVs[alt]
 
         seg = self.missionSegments[0]
@@ -186,31 +185,31 @@ class MissionProblem:
         seg = self.missionSegments[0]
         altSens = {}
 
-        if type(CAS) == str and CAS in self.currentDVs:
+        if type(CAS) is str and CAS in self.currentDVs:
             CASVal = self.currentDVs[CAS]
             dAltdCAS = seg._solveMachCASIntercept(CASVal + stepSize * 1j, mach)
             altSens[CAS] = -dAltdCAS.imag / stepSize
 
-        if type(mach) == str and mach in self.currentDVs:
+        if type(mach) is str and mach in self.currentDVs:
             machVal = self.currentDVs[mach]
             dAltdMach = seg._solveMachCASIntercept(CAS, machVal + stepSize * 1j)
             altSens[mach] = -dAltdMach.imag / stepSize
 
-        if type(alt) == str and alt in self.currentDVs:
+        if type(alt) is str and alt in self.currentDVs:
             altSens[alt] = 1.0
 
         return altSens
 
     def getNSeg(self):
         """
-        return the number of segments in the mission
+        Return the number of segments in the mission
         """
 
         return self.segCounter - 1
 
     def getSegments(self):
         """
-        return a list of the segments in the mission in order
+        Return a list of the segments in the mission in order
         """
 
         return self.missionSegments
@@ -270,9 +269,9 @@ class MissionProfile:
         """
 
         # Check if profile is of type MissionProfile or list, otherwise raise Error
-        if type(segments) == MissionSegment:
+        if type(segments) is MissionSegment:
             segments = [segments]
-        elif type(segments) == list:
+        elif type(segments) is list:
             pass
         else:
             raise Error("addSegments() takes in either a list or a single MissionSegment")
@@ -904,7 +903,7 @@ class MissionSegment:
 
     def _getSoundSpeed(self, alt):
         """
-        compute the speed of sound at this altitude
+        Compute the speed of sound at this altitude
         """
         # evaluate the atmosphere model
         P, T = self.atm(alt)
@@ -914,7 +913,7 @@ class MissionSegment:
 
     def _getPTRho(self, alt):
         """
-        compute the pressure at this altitude
+        Compute the pressure at this altitude
         """
         # evaluate the atmosphere model
         P, T = self.atm(alt)
@@ -1010,7 +1009,7 @@ class MissionSegment:
 
     def setMissionData(self, module, segTypeDict, engTypeDict, idx, segIdx):
         """
-        set the data for the current segment in the fortran module
+        Set the data for the current segment in the fortran module
         """
         h1 = self.initAlt
         if h1 is None:
@@ -1113,7 +1112,7 @@ class MissionSegment:
         Examples
         --------
         >>> # Add initMach variable with typical bounds
-        >>> seg.addDV('initMach', value=0.75, lower=0.0, upper=1.0, scale=1.0)
+        >>> seg.addDV("initMach", value=0.75, lower=0.0, upper=1.0, scale=1.0)
         """
 
         # First check if we are allowed to add the DV:

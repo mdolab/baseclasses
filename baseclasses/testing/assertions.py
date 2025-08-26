@@ -8,7 +8,7 @@ def assert_equal(a, b):
     This replaces the assertEqual functionality provided by unittest.TestCase
     so that we can call this outside the class
     """
-    if type(a) != type(b):
+    if type(a) is not type(b):
         raise AssertionError("The two objects are not the same type!")
     if isinstance(a, np.ndarray):
         if not np.all(a == b):

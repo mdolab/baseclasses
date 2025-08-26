@@ -275,7 +275,7 @@ class FieldPerformanceProblem:
         Examples
         --------
         >>> # Add alpha variable with typical bounds
-        >>> fpp.addDV('TOW', value=250000, lower=0.0, upper=300000.0, scale=0.1)
+        >>> fpp.addDV("TOW", value=250000, lower=0.0, upper=300000.0, scale=0.1)
         """
 
         # First check if we are allowed to add the DV:
