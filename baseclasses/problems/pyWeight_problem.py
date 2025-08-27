@@ -68,9 +68,9 @@ class WeightProblem:
         """
 
         # Check if components is of type Component or list, otherwise raise Error
-        if type(components) is list:
+        if isinstance(components,list):
             pass
-        elif type(components) is object:
+        elif isinstance(components,object):
             components = [components]
         else:
             raise Error("addComponents() takes in either a list of or a single component")
@@ -132,7 +132,7 @@ class WeightProblem:
 
         """
 
-        if type(surf) is list:
+        if isinstance(surf,list):
             self.p0 = np.array(surf[0])
             self.v1 = np.array(surf[1])
             self.v2 = np.array(surf[2])
@@ -362,9 +362,9 @@ class WeightProblem:
         """
 
         # Check if case is a single entry or a list, otherwise raise Error
-        if type(cases) is list:
+        if isinstance(cases,list):
             pass
-        elif type(cases) is object:
+        elif isinstance(cases,object):
             cases = [cases]
         else:
             raise Error("addFuelCases() takes in either a list of or a single fuelcase")
@@ -447,7 +447,7 @@ class WeightProblem:
 
         if includeType is not None:
             # Specified a list of component types to include
-            if type(includeType) is str:
+            if isinstance(includeType,str):
                 includeType = [includeType]
             weightKeysTmp = set()
             for key in weightKeys:
@@ -457,21 +457,21 @@ class WeightProblem:
 
         if include is not None:
             # Specified a list of compoents to include
-            if type(include) is str:
+            if isinstance(include,str):
                 include = [include]
             include = set(include)
             weightKeys.intersection_update(include)
 
         if exclude is not None:
             # Specified a list of components to exclude
-            if type(exclude) is str:
+            if isinstance(exclude,str):
                 exclude = [exclude]
             exclude = set(exclude)
             weightKeys.difference_update(exclude)
 
         if excludeType is not None:
             # Specified a list of compoent types to exclude
-            if type(excludeType) is str:
+            if isinstance(excludeType,str):
                 excludeType = [excludeType]
             weightKeysTmp = copy.copy(weightKeys)
             for key in weightKeys:

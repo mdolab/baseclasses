@@ -61,9 +61,9 @@ class MissionProblem:
         """
 
         # Check if profile is of type MissionProfile or list, otherwise raise Error
-        if type(profiles) is MissionProfile:
+        if isinstance(profiles,MissionProfile):
             profiles = [profiles]
-        elif type(profiles) is list:
+        elif isinstance(profiles,list):
             pass
         else:
             raise Error("addProfile() takes in either a list of or a single MissionProfile")
@@ -165,11 +165,11 @@ class MissionProblem:
         Solve for the altitude at which CAS=mach
         """
 
-        if type(CAS) is str and CAS in self.currentDVs:
+        if isinstance(CAS,str) and CAS in self.currentDVs:
             CAS = self.currentDVs[CAS]
-        if type(mach) is str and mach in self.currentDVs:
+        if isinstance(mach,str) and mach in self.currentDVs:
             mach = self.currentDVs[mach]
-        if type(alt) is str and alt in self.currentDVs:
+        if isinstance(alt,str) and alt in self.currentDVs:
             alt = self.currentDVs[alt]
 
         seg = self.missionSegments[0]
@@ -185,17 +185,17 @@ class MissionProblem:
         seg = self.missionSegments[0]
         altSens = {}
 
-        if type(CAS) is str and CAS in self.currentDVs:
+        if isinstance(CAS,str) and CAS in self.currentDVs:
             CASVal = self.currentDVs[CAS]
             dAltdCAS = seg._solveMachCASIntercept(CASVal + stepSize * 1j, mach)
             altSens[CAS] = -dAltdCAS.imag / stepSize
 
-        if type(mach) is str and mach in self.currentDVs:
+        if isinstance(mach,str) and mach in self.currentDVs:
             machVal = self.currentDVs[mach]
             dAltdMach = seg._solveMachCASIntercept(CAS, machVal + stepSize * 1j)
             altSens[mach] = -dAltdMach.imag / stepSize
 
-        if type(alt) is str and alt in self.currentDVs:
+        if isinstance(alt,str) and alt in self.currentDVs:
             altSens[alt] = 1.0
 
         return altSens
@@ -269,9 +269,9 @@ class MissionProfile:
         """
 
         # Check if profile is of type MissionProfile or list, otherwise raise Error
-        if type(segments) is MissionSegment:
+        if isinstance(segments,MissionSegment):
             segments = [segments]
-        elif type(segments) is list:
+        elif isinstance(segments,list):
             pass
         else:
             raise Error("addSegments() takes in either a list or a single MissionSegment")
