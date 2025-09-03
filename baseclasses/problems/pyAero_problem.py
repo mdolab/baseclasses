@@ -688,7 +688,7 @@ class AeroProblem(FluidProperties):
         for dvName in self.DVs:
             dv = self.DVs[dvName]
             if dv.addToPyOpt:
-                if isinstance(dv.value,np.ndarray):
+                if isinstance(dv.value, np.ndarray):
                     optProb.addVarGroup(
                         dvName,
                         dv.value.size,
