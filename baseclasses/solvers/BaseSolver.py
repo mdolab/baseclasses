@@ -116,12 +116,14 @@ class BaseSolver:
         if self.checkDefaultOptions:
             try:
                 defaultType, defaultValue = self.defaultOptions[name]
-            except KeyError:
+            except KeyError as error:
                 if name in self.deprecatedOptions:
-                    raise Error(f"Option {name} is deprecated. {self.deprecatedOptions[name]}")
+                    raise Error(f"Option {name} is deprecated. {self.deprecatedOptions[name]}") from error
                 else:
                     guess = get_close_matches(name, list(self.defaultOptions.keys()), n=1, cutoff=0.0)[0]
-                    raise Error(f"Option {name} is not a valid {self.name} option. Perhaps you meant {guess}?")
+                    raise Error(
+                        f"Option {name} is not a valid {self.name} option. Perhaps you meant {guess}?"
+                    ) from error
 
         # Make sure we are not trying to change an immutable option if
         # we are not allowed to.

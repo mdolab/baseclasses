@@ -24,7 +24,6 @@ class WeightProblem:
 
     Parameters
     ----------
-
     name : str
         A name for the configuration
 
@@ -68,13 +67,9 @@ class WeightProblem:
         Append a list of components to the interal component list
         """
 
-        # Check if components is of type Component or list, otherwise raise Error
-        if type(components) == list:
-            pass
-        elif type(components) == object:
+        # Ensure components is a list
+        if not isinstance(components, list):
             components = [components]
-        else:
-            raise Error("addComponents() takes in either a list of or a single component")
 
         # Add the components to the internal list
         for comp in components:
@@ -128,12 +123,12 @@ class WeightProblem:
         >>> surf = CFDsolver.getTriangulatedMeshSurface()
         >>> wp.setSurface(surf)
         >>> # Or using a pyGeo surface object:
-        >>> surf = pyGeo('iges',fileName='wing.igs')
+        >>> surf = pyGeo("iges", fileName="wing.igs")
         >>> wp.setSurface(surf)
 
         """
 
-        if type(surf) == list:
+        if isinstance(surf, list):
             self.p0 = np.array(surf[0])
             self.v1 = np.array(surf[1])
             self.v2 = np.array(surf[2])
@@ -362,13 +357,9 @@ class WeightProblem:
         Append a list of fuel cases to the weight problem
         """
 
-        # Check if case is a single entry or a list, otherwise raise Error
-        if type(cases) == list:
-            pass
-        elif type(cases) == object:
+        # Ensure cases is a list
+        if not isinstance(cases, list):
             cases = [cases]
-        else:
-            raise Error("addFuelCases() takes in either a list of or a single fuelcase")
 
         # Add the fuel cases to the problem
         for case in cases:
@@ -401,7 +392,7 @@ class WeightProblem:
 
     def setFuelCase(self, case):
         """
-        loop over the components and set the specified fuel case
+        Loop over the components and set the specified fuel case
 
         Parameters
         ----------
@@ -419,7 +410,7 @@ class WeightProblem:
 
     def resetFuelCase(self):
         """
-        reset the fuel weight for this case.
+        Reset the fuel weight for this case.
         """
         # Get just the fuel components
         fuelKeys = self._getComponentKeys(includeType="fuel")
@@ -448,7 +439,7 @@ class WeightProblem:
 
         if includeType is not None:
             # Specified a list of component types to include
-            if type(includeType) == str:
+            if isinstance(includeType, str):
                 includeType = [includeType]
             weightKeysTmp = set()
             for key in weightKeys:
@@ -458,21 +449,21 @@ class WeightProblem:
 
         if include is not None:
             # Specified a list of compoents to include
-            if type(include) == str:
+            if isinstance(include, str):
                 include = [include]
             include = set(include)
             weightKeys.intersection_update(include)
 
         if exclude is not None:
             # Specified a list of components to exclude
-            if type(exclude) == str:
+            if isinstance(exclude, str):
                 exclude = [exclude]
             exclude = set(exclude)
             weightKeys.difference_update(exclude)
 
         if excludeType is not None:
             # Specified a list of compoent types to exclude
-            if type(excludeType) == str:
+            if isinstance(excludeType, str):
                 excludeType = [excludeType]
             weightKeysTmp = copy.copy(weightKeys)
             for key in weightKeys:
@@ -488,7 +479,6 @@ class WeightProblem:
 
         Parameters
         ----------
-
         filename: str
             filename for writing the masses. This string will have the
             .dat suffix appended to it.
@@ -554,7 +544,7 @@ class WeightProblem:
 
     def __str__(self):
         """
-        loop over the components and call the owned print function
+        Loop over the components and call the owned print function
         """
         for key in self.components.keys():
             print(key)
@@ -574,7 +564,6 @@ class FuelCase:
 
         Parameters
         ----------
-
         name : str
            A name for the fuel case.
 
@@ -643,8 +632,8 @@ class FuelCase:
         Examples
         --------
         >>> # Add W variable with typical bounds
-        >>> fuelCase.addDV('fuelFraction', value=0.5, lower=0.0, upper=1.0, scale=0.1)
-        >>> fuelCase.addDV('reserveFraction', value=0.1, lower=0.0, upper=1.0, scale=0.1)
+        >>> fuelCase.addDV("fuelFraction", value=0.5, lower=0.0, upper=1.0, scale=0.1)
+        >>> fuelCase.addDV("reserveFraction", value=0.1, lower=0.0, upper=1.0, scale=0.1)
         """
 
         # First check if we are allowed to add the DV:
@@ -684,7 +673,7 @@ class FuelCase:
 
     def addLinearConstraint(self, optProb=None, prefix=None):
         """
-        add the linear constraint for the fuel fractions
+        Add the linear constraint for the fuel fractions
         """
         reserveDV = False
         fuelDV = False
