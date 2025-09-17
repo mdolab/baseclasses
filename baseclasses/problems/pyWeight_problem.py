@@ -67,13 +67,9 @@ class WeightProblem:
         Append a list of components to the interal component list
         """
 
-        # Check if components is of type Component or list, otherwise raise Error
-        if isinstance(components, list):
-            pass
-        elif isinstance(components, object):
+        # Ensure components is a list
+        if not isinstance(components, list):
             components = [components]
-        else:
-            raise Error("addComponents() takes in either a list of or a single component")
 
         # Add the components to the internal list
         for comp in components:
@@ -361,13 +357,9 @@ class WeightProblem:
         Append a list of fuel cases to the weight problem
         """
 
-        # Check if case is a single entry or a list, otherwise raise Error
-        if isinstance(cases, list):
-            pass
-        elif isinstance(cases, object):
+        # Ensure cases is a list
+        if not isinstance(cases, list):
             cases = [cases]
-        else:
-            raise Error("addFuelCases() takes in either a list of or a single fuelcase")
 
         # Add the fuel cases to the problem
         for case in cases:
