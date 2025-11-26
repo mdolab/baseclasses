@@ -33,6 +33,14 @@ class AeroProblem(FluidProperties):
         The remaining quantities are computed with :meth:`baseclasses.AeroProblem._updateFromM`.
         The resulting Reynolds number depends on the scale of the mesh.
 
+    'mach' + 'altitude' + 'reynoldsLength'
+        Used to specify the flight condition using both Mach number and altitude while also offerring a way to scale the Reynolds number manually.
+        This is suitable for all aerodynamic analysis codes, including aerostructural analysis.
+        The 1976 standard atmosphere is used to compute :math:`P` and :math:`T`.
+        We then compute :math:`\rho = P / RT`.
+        The remaining quantities are computed with :meth:`baseclasses.AeroProblem._updateFromM`.
+        The resulting Reynolds number depends on the provided Reynolds length.
+
     'mach' + 'reynolds' + 'reynoldsLength' + 'T':
         Used to precisely match Reynolds numbers.
         The remaining quantities are computed with :meth:`baseclasses.AeroProblem._updateFromRe`.
@@ -467,6 +475,16 @@ class AeroProblem(FluidProperties):
             self.__dict__["P"] = P
             self.__dict__["rho"] = self.P / (self.R * self.T)
             self._updateFromM()
+        elif {"mach", "altitude", "reynoldsLength"} <= inKeys:
+            self.__dict__["mach"] = self.inputs["mach"]
+            self.__dict__["altitude"] = self.inputs["altitude"]
+            P, T = self.atm(self.inputs["altitude"])
+            self.__dict__["T"] = T
+            self.__dict__["P"] = P
+            self.__dict__["rho"] = self.P / (self.R * self.T)
+            self.__dict__["reynoldsLength"] = self.inputs["reynoldsLength"]
+            self._updateFromM()
+            self.__dict__["re"] = self.__dict__["re"] / self.__dict__["reynoldsLength"]
         elif {"V", "rho", "T"} <= inKeys:
             self.__dict__["V"] = self.inputs["V"]
             self.__dict__["rho"] = self.inputs["rho"]
