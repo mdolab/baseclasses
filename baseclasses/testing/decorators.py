@@ -1,4 +1,6 @@
 import functools
+from importlib.metadata import version
+from packaging.version import Version
 import unittest
 from importlib.util import find_spec
 
@@ -62,3 +64,45 @@ def base_require(func, moduleName, message=None):
     # module found, we just return the function and proceed normally
     else:
         return func
+
+
+def fails_at_version(packageName: str, removalVersion: str):
+    """Decorator that fails a unittest test method once a package reaches ``removalVersion``.
+
+    Use to self-decommission tests that covers a deprecated API. When the installed
+    package version reaches the stated removal version, the test raises an
+    ``AssertionError`` reminding the developer to delete both the deprecated code
+    path and the test.
+
+    Parameters
+    ----------
+    packageName : str
+        The name of the package to check. Needs to match the name you would use in a pip install command, e.g.
+        ``"mdolab-baseclasses"`` rather than ``"baseclasses"``.
+    removalVersion : str
+        Removal version, e.g. ``"3.14"``. Parsed with :class:`packaging.version.Version`.
+
+    Examples
+    --------
+    >>> class TestDeprecated(unittest.TestCase):
+    ...     @fails_at_version("pygeo", "1.20")
+    ...     def test_old_api_still_warns(self): ...
+    """
+    removal = Version(removalVersion)
+
+    def decorator(method):
+        @functools.wraps(method)
+        def wrapper(self, *args, **kwargs):
+            current = Version(version(packageName))
+            if current >= removal:
+                raise AssertionError(
+                    f"{type(self).__name__}.{method.__name__} is testing a "
+                    f"deprecation that should be removed in {packageName} v{removal}, "
+                    f"current version is v{current}. Please delete the "
+                    f"deprecated API and this test."
+                )
+            return method(self, *args, **kwargs)
+
+        return wrapper
+
+    return decorator

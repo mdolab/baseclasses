@@ -29,6 +29,7 @@ setup(
     python_requires=">=3.11",
     install_requires=[
         "numpy>=1.25",
+        "packaging",
     ],
     extras_require={
         "docs": docs_require,
