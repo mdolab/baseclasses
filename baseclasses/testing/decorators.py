@@ -69,6 +69,21 @@ def base_require(func, moduleName, message=None):
 
 
 def expire_deprecation(package_name: str, removal_version: str, new_name: Optional[str] = None):
+    """Decorator for methods that have been deprecated and potentially replaced by a new method
+
+    This decorator will raise a warning when the decorated method is called, and will raise an error if the current
+    version of the package is greater than or equal to the specified removal version, helping to ensure that deprecated
+    APIs are removed in a timely manner.
+
+    Parameters
+    ----------
+    package_name : str
+        _description_
+    removal_version : str
+        _description_
+    new_name : Optional[str], optional
+        _description_, by default None
+    """
     removal = Version(removal_version)
     current = Version(version(package_name))
 
