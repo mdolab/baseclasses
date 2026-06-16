@@ -3,6 +3,7 @@ from .error import Error
 from .utils import getPy3SafeString, pp, ParseStringFormat
 from .fileIO import writeJSON, readJSON, writePickle, readPickle, redirectIO, redirectingIO
 from .solverHistory import SolverHistory
+from .deprecation import expire_deprecation
 
 __all__ = [
     "CaseInsensitiveSet",
@@ -18,4 +19,5 @@ __all__ = [
     "redirectingIO",
     "SolverHistory",
     "ParseStringFormat",
+    "expire_deprecation",
 ]
