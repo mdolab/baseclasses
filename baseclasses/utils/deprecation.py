@@ -36,11 +36,13 @@ def expire_deprecation(package_name: str, removal_version: str, new_name: Option
     Parameters
     ----------
     package_name : str
-        _description_
+        Name of the package whose version the removal is based on. Note that the package name is the name as listed on
+        pyPI (and used to pip install), not necessarily the name you import the package as (e.g the
+        ``mdolab-baseclasses`` package is imported as ``baseclasses``).
     removal_version : str
-        _description_
+        Version of the package at which the deprecated API will be removed (e.g., "1.2.3", "2.3", "3").
     new_name : Optional[str], optional
-        _description_, by default None
+        Name of the new method that should be used instead of the deprecated one if applicable, by default None
     """
     removal = Version(removal_version)
     current = Version(version(package_name))
